@@ -28,11 +28,11 @@ while isempty(ExpInfo.subjID) == 1
 end
 
 switch ExpInfo.practice
-    case 1
+    case 1 
         outFileName = sprintf('uniçLoc_sub%s_ses%s', ExpInfo.subjID, ExpInfo.session);
         ExpInfo.nRep = 20; % number of trial per condition level
         ExpInfo.numBlocks = 4;
-    case 2
+    case 2 
         outFileName = sprintf('uniLoc_practice_sub%s_ses%s', ExpInfo.subjID, ExpInfo.session);
         ExpInfo.nRep = 1; % number of trial per condition level
         ExpInfo.numBlocks = 2;
@@ -79,17 +79,12 @@ ExpInfo.randAudLoc = ExpInfo.audLoc(ExpInfo.randIdx);
 % split all the trials into blocks
 ExpInfo.nTrials = ExpInfo.nLevel * ExpInfo.nRep;
 blocks = linspace(0,ExpInfo.nTotalTrials,...
-    ExpInfo.numBlocks+1);
+                            ExpInfo.numBlocks+1); 
 ExpInfo.breakTrials       = floor(blocks(2:(end-1)));
 ExpInfo.numTrialsPerBlock = ExpInfo.breakTrials(1);
 
 % define durations
-ExpInfo.tFixation = 0.5;
-ExpInfo.tBlank1 = 0.7;
-ExpInfo.tBlank2 = 0.7;
-ExpInfo.tStim = 1;
-ExpInfo.ITI = 0.8;
-
+ExpInfo.
 %% Screen Setup
 PsychDefaultSetup(2);
 AssertOpenGL();
@@ -105,16 +100,16 @@ screens = Screen('Screens');
 screenNumber = max(screens);
 [windowPtr,rect] = Screen('OpenWindow', screenNumber, [0,0,0],windowSize);
 [ScreenInfo.xaxis, ScreenInfo.yaxis] = Screen('WindowSize',windowPtr);
-Screen('TextSize', windowPtr, 35) ;
+Screen('TextSize', windowPtr, 35) ;   
 Screen('TextFont', windowPtr,'Times');
-Screen('TextStyle', windowPtr,1);
+Screen('TextStyle', windowPtr,1); 
 
 [center(1), center(2)]     = RectCenter(rect);
 ScreenInfo.xmid            = center(1); % horizontal center
 ScreenInfo.ymid            = center(2); % vertical center
 ScreenInfo.backgroundColor = 105;
 ScreenInfo.numPixels_perCM = 7.5;
-ScreenInfo.liftingYaxis    = 300;
+ScreenInfo.liftingYaxis    = 300; 
 
 %fixation locations
 ScreenInfo.x1_lb = ScreenInfo.xmid-7; ScreenInfo.x2_lb = ScreenInfo.xmid-1;
@@ -138,17 +133,17 @@ our_device=devices(3).DeviceIndex;
 AudInfo.fs                  = 44100;
 audioSamples                = linspace(1,AudInfo.fs,AudInfo.fs);
 standardFrequency_gwn       = 10;
-AudInfo.stimDura            = 0.1;
-AudInfo.tf                  = 400;
+AudInfo.stimDura            = 0.1; 
+AudInfo.tf                  = 400; 
 AudInfo.intensity           = 0.65;
 duration_gwn                = length(audioSamples)*AudInfo.stimDura;
 timeline_gwn                = linspace(1,duration_gwn,duration_gwn);
-sineWindow_gwn              = sin(standardFrequency_gwn/2*2*pi*timeline_gwn/AudInfo.fs);
+sineWindow_gwn              = sin(standardFrequency_gwn/2*2*pi*timeline_gwn/AudInfo.fs); 
 carrierSound_gwn            = randn(1, max(timeline_gwn));
 AudInfo.intensity_GWN       = 15;
 AudInfo.GaussianWhiteNoise  = [AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn;...
-    AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn];
-AudInfo.inBetweenGWN        = AudInfo.intensity*AudInfo.GaussianWhiteNoise;
+                                 AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn]; 
+AudInfo.inBetweenGWN        = AudInfo.intensity*AudInfo.GaussianWhiteNoise; 
 pahandle                    = PsychPortAudio('Open', our_device, [], [], [], 2);%open device
 
 %% make visual stimuli
@@ -158,10 +153,10 @@ ExpInfo.sittingDistance              = 113.0;
 ExpInfo.leftspeaker2center           = 65.5;
 ExpInfo.rightspeaker2center          = 65.5;
 ExpInfo.leftmostVisualAngle          = (180/pi) * atan(ExpInfo.leftspeaker2center / ...
-    ExpInfo.sittingDistance);
+                                       ExpInfo.sittingDistance);
 VSinfo.rightmostVisualAngle         = (180/pi) * atan(ExpInfo.leftspeaker2center / ...
-    ExpInfo.sittingDistance);
-
+                                       ExpInfo.sittingDistance);
+                                   
 % intensity of standard stimulus
 VSinfo.scaling                       = 0.4; % a ratio between 0 to 1 to be multipled by 255
 pblack                               = 1/8; % set contrast to 1*1/8 for the "black" background, so it's not too dark and the projector doesn't complain
@@ -179,13 +174,13 @@ x                                    = 1:1:VSinfo.boxSize; y = x;
 VSinfo.x                             = x; VSinfo.y = y;
 [X,Y]                                = meshgrid(x,y);
 cloud_temp                           = mvnpdf([X(:) Y(:)],[median(x) median(y)],...
-    [VSinfo.width 0; 0 VSinfo.width]);
+                                       [VSinfo.width 0; 0 VSinfo.width]);
 pscale                               = (1-pblack)/max(cloud_temp); % the max contrast of the blob adds the background contrast should <= 1
 cloud_temp                           = cloud_temp .* pscale;
 VSinfo.Cloud                         = VSinfo.scaling.*reshape(cloud_temp,length(x),length(y));
 VSinfo.blk_texture                   = Screen('MakeTexture', windowPtr, VSinfo.blackBackground,[],[],[],2);
-
-%% Run the experiment
+                                   
+%% Run the experiment 
 
 %start the experiment
 DrawFormattedText(windowPtr, 'Press any button to start the unimodal localization task.',...
@@ -195,43 +190,21 @@ KbWait(-3); WaitSecs(1);
 Screen('Flip',windowPtr);
 
 for i = 1:ExpInfo.nTrials
-
+    
     % fixation
     Screen('FillRect', windowPtr,[255 0 0], [ScreenInfo.x1_lb,...
         ScreenInfo.y1_lb, ScreenInfo.x1_ub, ScreenInfo.y1_ub]);
     Screen('FillRect', windowPtr,[255 0 0], [ScreenInfo.x2_lb,...
         ScreenInfo.y2_lb, ScreenInfo.x2_ub, ScreenInfo.y2_ub]);
-    Screen('Flip',windowPtr); WaitSecs(ExpInfo.tFixation);
+    Screen('Flip',windowPtr); WaitSecs(1);
 
-    % blank screen 1
+    % blank screen
     Screen('Flip',windowPtr);
     Screen('DrawTexture',windowPtr,VSinfo.blk_texture,[],...
         [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
-    WaitSecs(ExpInfo.tBlank1);
+    WaitSecs(0.5);
 
-    % present stimulus
-    input_on = ['<',num2str(1),':',num2str((ExpInfo.randAudLoc+1)/2),'>']; %arduino takes input in this format
-    fprintf(Arduino,input_on);
-    PsychPortAudio('FillBuffer',pahandle, AudInfo.GaussianWhiteNoise);
-    PsychPortAudio('Start',pahandle,1,0,0);
-
-    % blank screen 2
-    Screen('Flip',windowPtr);
-    Screen('DrawTexture',windowPtr,VSinfo.blk_texture,[],...
-        [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
-    WaitSecs(ExpInfo.tBlank2);
-
-    % perception response
-
-    % confidence response
-
-    % ITI
-    Screen('Flip',windowPtr);
-    Screen('DrawTexture',windowPtr,VSinfo.blk_texture,[],...
-        [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
-    WaitSecs(ExpInfo.ITI);
-
-    %%add breaks
+    %%add breaks     
     if ismember(i,ExpInfo.breakTrials)
         DrawFormattedText(windowPtr, 'You''ve finished one block. Please take a break.',...
             'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis-30,...
@@ -241,8 +214,21 @@ for i = 1:ExpInfo.nTrials
             [255 255 255]);
         Screen('Flip',windowPtr); KbWait(-3); WaitSecs(1);
         Screen('Flip',windowPtr); WaitSecs(0.5);
-    end
+    end  
 end
+
+%% Move the arduino to the leftmost place
+if abs(AudInfo.InitialLoc - AudInfo.Location_Matrix(end))>=0.01
+    steps_goingBack = round((tan(deg2rad(AudInfo.InitialLoc))-...
+                      tan(deg2rad(AudInfo.Location_Matrix(end))))*...
+                      ExpInfo.sittingDistance/3,2);
+    if steps_goingBack < 0 
+        fprintf(motorArduino,['%c','%d'], ['p',noOfSteps*abs(steps_goingBack)]);
+    else
+        fprintf(motorArduino,['%c','%d'], ['n',noOfSteps*abs(steps_goingBack)]);
+    end 
+end
+delete(motorArduino)
 
 %% Save data and end the experiment
 Unimodal_localization_data = {ExpInfo,ScreenInfo,VSinfo,AudInfo};
