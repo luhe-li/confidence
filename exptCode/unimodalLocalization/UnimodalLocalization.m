@@ -1,5 +1,5 @@
 
-% In this task, participants localized visual and auditory stimuli
+% In this task, participants localized visual and auditory stimulic
 % presented alone in separate sessions. Each trial started with a fixation
 % cross presented straight ahead for 500 ms, followed by 700 ms of blank
 % screen. Then, either an auditory or a visual 100 ms-long stimulus was
@@ -16,24 +16,25 @@
 % pseudorandomly, resulting in 180 trials.
 
 %% Enter experiment info
-clear; close all; clc; rng('Shuffle');
+clear; close all;  rng('Shuffle');
+addpath(genpath('/e/3.3/p3/hong/Desktop/Project5/Psychtoolbox'));
 
 ExpInfo.subjID = [];
 while isempty(ExpInfo.subjID) == 1
     try ExpInfo.subjID = input('Please enter participant ID#: ') ; %'s'
         ExpInfo.session = input('Please enter session#: ');
-        ExpInfo.practice  = input('Experiment mode: 1; Practice mode: 2#: ');
+        ExpInfo.practice  = input('Main expt: 1; Practice: 2#: ');
     catch
     end
 end
 
 switch ExpInfo.practice
     case 1
-        outFileName = sprintf('uniçLoc_sub%s_ses%s', ExpInfo.subjID, ExpInfo.session);
+        outFileName = sprintf('uniLoc_sub%i_ses%i', ExpInfo.subjID, ExpInfo.session);
         ExpInfo.nRep = 20; % number of trial per condition level
         ExpInfo.numBlocks = 4;
     case 2
-        outFileName = sprintf('uniLoc_practice_sub%s_ses%s', ExpInfo.subjID, ExpInfo.session);
+        outFileName = sprintf('uniLoc_practice_sub%i_ses%i', ExpInfo.subjID, ExpInfo.session);
         ExpInfo.nRep = 1; % number of trial per condition level
         ExpInfo.numBlocks = 2;
 end
@@ -41,7 +42,6 @@ end
 % path control
 outDir = fullfile(pwd, 'data');
 if ~exist(outDir,'dir') mkdir(outDir); end
-addpath(genpath('/e/3.3/p3/hong/Desktop/Project5/Psychtoolbox'));
 addpath(genpath(PsychtoolboxRoot))
 
 % avoid rewriting data
@@ -69,8 +69,8 @@ end
 
 %% Experiment set up
 
-% choose auditory locations out of 31 speakers
-ExpInfo.audLevel = 4:3:28;
+% choose auditory locations out of 16 speakers
+ExpInfo.audLevel = 1:16;
 ExpInfo.nLevel = numel(ExpInfo.audLevel);
 ExpInfo.audLoc = repmat(ExpInfo.audLevel, [1, ExpInfo.nRep]);
 ExpInfo.randIdx = randperm(numel(ExpInfo.audLoc));
@@ -78,7 +78,7 @@ ExpInfo.randAudLoc = ExpInfo.audLoc(ExpInfo.randIdx);
 
 % split all the trials into blocks
 ExpInfo.nTrials = ExpInfo.nLevel * ExpInfo.nRep;
-blocks = linspace(0,ExpInfo.nTotalTrials,...
+blocks = linspace(0,ExpInfo.nTrials,...
     ExpInfo.numBlocks+1);
 ExpInfo.breakTrials       = floor(blocks(2:(end-1)));
 ExpInfo.numTrialsPerBlock = ExpInfo.breakTrials(1);
@@ -164,12 +164,13 @@ VSinfo.rightmostVisualAngle         = (180/pi) * atan(ExpInfo.leftspeaker2center
 
 % intensity of standard stimulus
 VSinfo.scaling                       = 0.4; % a ratio between 0 to 1 to be multipled by 255
-pblack                               = 1/8; % set contrast to 1*1/8 for the "black" background, so it's not too dark and the projector doesn't complain
+pblack                               = 0;%1/8; % set contrast to 1*1/8 for the "black" background, so it's not too dark and the projector doesn't complain
 % define the visual stimuli
 VSinfo.Distance                      = linspace(-30,31,16); %in deg
 VSinfo.numLocs                       = length(VSinfo.Distance);
 VSinfo.numFrames                     = 6;
-VSinfo.duration                      = VSinfo.numFrames * ifi;%s
+VSinfo.ifi                           = Screen('GetFlipInterval', windowPtr);
+VSinfo.duration                      = VSinfo.numFrames * VSinfo.ifi;%s
 VSinfo.width                         = 201; %(pixel) Increasing this value will make the cloud more blurry (arbituary value)
 VSinfo.boxSize                       = 101; %This is the box size for each cloud (arbituary value)
 %set the parameters for the visual stimuli
@@ -196,42 +197,14 @@ Screen('Flip',windowPtr);
 
 for i = 1:ExpInfo.nTrials
 
-    % fixation
-    Screen('FillRect', windowPtr,[255 0 0], [ScreenInfo.x1_lb,...
-        ScreenInfo.y1_lb, ScreenInfo.x1_ub, ScreenInfo.y1_ub]);
-    Screen('FillRect', windowPtr,[255 0 0], [ScreenInfo.x2_lb,...
-        ScreenInfo.y2_lb, ScreenInfo.x2_ub, ScreenInfo.y2_ub]);
-    Screen('Flip',windowPtr); WaitSecs(ExpInfo.tFixation);
+    %% present stimuli
+    Resp(i) = LocalizeAuditoryStim(i, ExpInfo,...
+    ScreenInfo,AudInfo,VSinfo,Arduino,pahandle,windowPtr);
 
-    % blank screen 1
-    Screen('Flip',windowPtr);
-    Screen('DrawTexture',windowPtr,VSinfo.blk_texture,[],...
-        [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
-    WaitSecs(ExpInfo.tBlank1);
+    %% save by trial
+    save(fullfile(outDir, outFileName),'Resp','ExpInfo','ScreenInfo','VSinfo','AudInfo');
 
-    % present stimulus
-    input_on = ['<',num2str(1),':',num2str((ExpInfo.randAudLoc+1)/2),'>']; %arduino takes input in this format
-    fprintf(Arduino,input_on);
-    PsychPortAudio('FillBuffer',pahandle, AudInfo.GaussianWhiteNoise);
-    PsychPortAudio('Start',pahandle,1,0,0);
-
-    % blank screen 2
-    Screen('Flip',windowPtr);
-    Screen('DrawTexture',windowPtr,VSinfo.blk_texture,[],...
-        [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
-    WaitSecs(ExpInfo.tBlank2);
-
-    % perception response
-
-    % confidence response
-
-    % ITI
-    Screen('Flip',windowPtr);
-    Screen('DrawTexture',windowPtr,VSinfo.blk_texture,[],...
-        [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
-    WaitSecs(ExpInfo.ITI);
-
-    %%add breaks
+    %% add breaks
     if ismember(i,ExpInfo.breakTrials)
         DrawFormattedText(windowPtr, 'You''ve finished one block. Please take a break.',...
             'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis-30,...
@@ -244,7 +217,8 @@ for i = 1:ExpInfo.nTrials
     end
 end
 
-%% Save data and end the experiment
-Unimodal_localization_data = {ExpInfo,ScreenInfo,VSinfo,AudInfo};
-save(outFileName,'Unimodal_localization_data');
+%% Save sorted data and end the experiment
+[~, resp_idx] = sort(ExpInfo.randIdx);
+sortedResp = Resp(resp_idx);
+save(fullfile(outDir, outFileName),'Resp','ExpInfo','ScreenInfo','VSinfo','AudInfo');
 Screen('CloseAll');
