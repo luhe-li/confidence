@@ -2,7 +2,7 @@ clear; clc; close all;
 
 %% set up
 
-sub = 1;
+sub = 2;
 ses = '-A';
 save_fig = 1;
 
@@ -22,11 +22,9 @@ nRep = ExpInfo.nRep;
 nLevel = ExpInfo.nLevel;
 
 % sort by level
-[~, temp] = sort([Resp(1:end).aLoc_idx]);
-sortedResp = Resp(temp);
-locRep = reshape([sortedResp(1:end).aLoc_cm],[ExpInfo.nRep,ExpInfo.nLevel]);
+locRep = reshape([sortedResp(1:end).loc_deg],[ExpInfo.nRep,ExpInfo.nLevel]);
 loc = locRep(1,:);
-est = reshape([sortedResp(1:end).Response_cm],[ExpInfo.nRep,ExpInfo.nLevel]);
+est = reshape([sortedResp(1:end).response_deg],[ExpInfo.nRep,ExpInfo.nLevel]);
 
 estMu = mean(est, 1);
 sdMu = std(est, [], 1);
@@ -48,12 +46,13 @@ e = errorbar(loc, estMu, sdMu,'LineWidth',lw);
 e.CapSize = 0; e.Color = clt(2,:);
 xlim([min(loc)-5, max(loc)+5])
 ylim([min(loc)-5, max(loc)+5])
+title(sprintf('S%i', sub))
 
 switch ses
 
     case '-A'
-        xlabel('Auditory stimulus location (cm)')
-        ylabel('Visual estimate location (cm)')
+        xlabel('Auditory stimulus location (deg)')
+        ylabel('Visual estimate location (deg)')
 
 end
 
