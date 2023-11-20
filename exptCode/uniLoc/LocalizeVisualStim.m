@@ -2,7 +2,7 @@ function Resp = LocalizeVisualStim(i, ExpInfo,...
     ScreenInfo,VSinfo,windowPtr)
 
 % fixation
-Screen('DrawTexture',windowPtr,VSinfo.gray_texture,[],...
+Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
     [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
 Screen('FillRect', windowPtr,[255 255 255], [ScreenInfo.x1_lb,...
     ScreenInfo.y1_lb, ScreenInfo.x1_ub, ScreenInfo.y1_ub]);
@@ -12,7 +12,7 @@ Screen('Flip',windowPtr);
 WaitSecs(ExpInfo.tFixation);
 
 % blank screen 1
-Screen('DrawTexture',windowPtr,VSinfo.gray_texture,[],...
+Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
     [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
 Screen('Flip',windowPtr);
 WaitSecs(ExpInfo.tBlank1);
@@ -20,7 +20,8 @@ WaitSecs(ExpInfo.tBlank1);
 %%  present visual stimulus
 
 %first compute the location of the visual stimulus in pixels
-targetLoc = ScreenInfo.xmid + ExpInfo.loc_pixel(i);
+loc_pixel = round(ExpInfo.loc_pixel(i));
+targetLoc = ScreenInfo.xmid + loc_pixel;
 
 while 1
     %randomly draw 10 (x,y) coordinates based on the centroid
@@ -33,12 +34,12 @@ while 1
     %make sure the center of the 10 blobs are aligned with the
     %predetermined location of the test stimulus
     dots_targetLoc_coordinates_shifted = shiftDotClouds(...
-        dots_targetLoc_coordinates,VSinfo.data(1,i),ScreenInfo);
+        dots_targetLoc_coordinates,loc_pixel,ScreenInfo);
 
     %check if they are within the boundaries
     check_withinTheLimit = CheckWithinTheBoundaries(...
         dots_targetLoc_coordinates_shifted,VSinfo.boxSize,ScreenInfo);
-
+    
     %if the generated dots are within boundaries, then pass the
     %coordinates to the function generateDotClouds that gives out the
     %image texture.
@@ -49,15 +50,8 @@ while 1
     end
 end
 
+
 % display visual stimulus
-Screen('FillRect', windowPtr,[255 255 255], [ScreenInfo.xmid-7 ...
-    ScreenInfo.yaxis-ScreenInfo.liftingYaxis-1 ScreenInfo.xmid+7 ...
-    ScreenInfo.yaxis-ScreenInfo.liftingYaxis+1]);
-Screen('FillRect', windowPtr,[255 255 255], [ScreenInfo.xmid-1 ...
-    ScreenInfo.yaxis-ScreenInfo.liftingYaxis-7 ScreenInfo.xmid+1 ...
-    ScreenInfo.yaxis-ScreenInfo.liftingYaxis+7]);
-Screen('Flip',windowPtr); WaitSecs(0.5);
-Screen('Flip',windowPtr); WaitSecs(1);
 
 for j = 1:VSinfo.numFrames %100 ms
     Screen('DrawTexture',windowPtr,dotClouds_targetLoc,[],...
@@ -78,7 +72,7 @@ tic
 while sum(buttons)==0
     [x,~,buttons] = GetMouse(windowPtr); HideCursor;
     x = min(x, ScreenInfo.xmid*2); x = max(0,x);
-    Screen('DrawTexture',windowPtr, VSinfo.gray_texture,[],...
+    Screen('DrawTexture',windowPtr, VSinfo.grey_texture,[],...
         [0,0,ScreenInfo.xaxis, ScreenInfo.yaxis]);
     Screen('DrawLine', windowPtr, [255 255 255],x, yLoc-3, x, yLoc+3, 1);
     Screen('Flip',windowPtr);
@@ -98,13 +92,13 @@ Resp.response_deg   = rad2deg(atan(Resp.response_cm/ExpInfo.sittingDistance));
 % confidence response
 SetMouse(x, ScreenInfo.ymid*2, windowPtr);
 buttons = 0;
-WaitSecs(0.2)
+WaitSecs(0.2);
 tic
 while sum(buttons)==0
     [conf_x,~,buttons] = GetMouse(windowPtr); HideCursor;
     conf_radius = abs(conf_x - x);
 
-    Screen('DrawTexture',windowPtr, VSinfo.gray_texture,[],...
+    Screen('DrawTexture',windowPtr, VSinfo.grey_texture,[],...
         [0,0,ScreenInfo.xaxis, ScreenInfo.yaxis]);
     Screen('DrawLine', windowPtr, [255 255 255],x, yLoc+3, x, yLoc-3, 1);
     Screen('DrawLine', windowPtr, [255 255 255],x-conf_radius, yLoc, x+conf_radius, yLoc, 1);
@@ -121,7 +115,7 @@ Resp.conf_radius_pixel= conf_radius;
 Resp.conf_radius_cm  = Resp.conf_radius_pixel/ScreenInfo.numPixels_perCM;
 
 % ITI
-Screen('DrawTexture',windowPtr,VSinfo.gray_texture,[],...
+Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
     [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
 Screen('Flip',windowPtr);
 WaitSecs(ExpInfo.ITI);

@@ -4,6 +4,7 @@ clear; clc; close all;
 
 sub = 1;
 ses = '-A';
+save_fig = 1;
 
 %% manage path
 
@@ -21,9 +22,11 @@ nRep = ExpInfo.nRep;
 nLevel = ExpInfo.nLevel;
 
 % sort by level
-locRep = reshape([sortedResp(1:end).loc_cm],[ExpInfo.nRep,ExpInfo.nLevel]);
+[~, temp] = sort([Resp(1:end).aLoc_idx]);
+sortedResp = Resp(temp);
+locRep = reshape([sortedResp(1:end).aLoc_cm],[ExpInfo.nRep,ExpInfo.nLevel]);
 loc = locRep(1,:);
-est = reshape([sortedResp(1:end).Response_deg],[ExpInfo.nRep,ExpInfo.nLevel]);
+est = reshape([sortedResp(1:end).Response_cm],[ExpInfo.nRep,ExpInfo.nLevel]);
 
 estMu = mean(est, 1);
 sdMu = std(est, [], 1);
