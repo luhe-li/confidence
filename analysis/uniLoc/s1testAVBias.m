@@ -51,8 +51,8 @@ title(sprintf('S%i', sub))
 switch ses
 
     case '-A'
-        xlabel('Auditory stimulus location (deg)')
-        ylabel('Visual estimate location (deg)')
+        xlabel('Auditory stimulus location (dva)')
+        ylabel('Visual estimate location (dva)')
 
 end
 
