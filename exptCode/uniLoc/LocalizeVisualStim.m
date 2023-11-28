@@ -125,8 +125,7 @@ Resp.loc_idx = ExpInfo.loc_idx(i);
 Resp.loc_cm  = ExpInfo.loc_cm(i);
 Resp.loc_deg = ExpInfo.loc_deg(i);
 Resp.loc_pixel = ExpInfo.loc_pixel(i);
-Resp.enclosed = Resp.loc_cm >= Resp.response_cm - Resp.conf_radius_cm & ...
-    Resp.loc_cm <= Resp.response_cm + Resp.conf_radius_cm;
+Resp.enclosed = abs(Resp.loc_cm - Resp.response_cm) <= Resp.conf_radius_cm;
 if Resp.enclosed
     Resp.point = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * Resp.conf_radius_cm, ExpInfo.minPoint);
 else

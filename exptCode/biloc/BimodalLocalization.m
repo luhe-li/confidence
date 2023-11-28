@@ -56,7 +56,7 @@ if exist(fullfile(outDir, [outFileName '.mat']), 'file')
 end
 
 % switch between debug mode
-ExpInfo.mode  = 2; %input('Experiment mode: 1; Debug mode: 2#: ');
+ExpInfo.mode  = 1; %input('Experiment mode: 1; Debug mode: 2#: ');
 switch ExpInfo.mode
     case 1 % experiment mode
         windowSize = [];
@@ -132,7 +132,13 @@ AudInfo.GaussianWhiteNoise  = [AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSou
     AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn];
 AudInfo.inBetweenGWN        = AudInfo.intensity*AudInfo.GaussianWhiteNoise;
 pahandle                    = PsychPortAudio('Open', our_device, [], [], [], 2);%open device
-
+%% audio test
+PsychPortAudio('FillBuffer',pahandle, AudInfo.GaussianWhiteNoise);
+    PsychPortAudio('Start',pahandle,1,0,0);
+    WaitSecs(ExpInfo.tStim);
+    input_off = ['<',num2str(0),':',num2str(ExpInfo.randAudLoc(i)),'>'];
+    fprintf(Arduino,input_off);
+    PsychPortAudio('Stop',pahandle);
 %% make visual stimuli
 
 if strcmp(ExpInfo.session, 'V1')
@@ -180,7 +186,7 @@ ExpInfo.speakerLocCM = linspace(-ExpInfo.LRmostSpeakers2center, ExpInfo.LRmostSp
 ExpInfo.speakerLocVA = linspace(-ExpInfo.LRmostVisualAngle, ExpInfo.LRmostVisualAngle, ExpInfo.numSpeaker);
 ExpInfo.speakerLocPixel = round(ExpInfo.speakerLocCM * ScreenInfo.numPixels_perCM);
 
-% convert target speaker locations in to other units
+% convert target speaker locations in to other units for G.T. visual reference
 ExpInfo.loc_idx = ExpInfo.randAudLoc;
 ExpInfo.loc_cm  = ExpInfo.speakerLocCM(ExpInfo.randAudLoc);
 ExpInfo.loc_deg = rad2deg(atan(ExpInfo.loc_cm/ExpInfo.sittingDistance));
@@ -225,18 +231,8 @@ KbWait(-3); WaitSecs(1);
 for i = 1:ExpInfo.nTrials
 
     %% present stimuli
-    
-    if strcmp(ExpInfo.session, 'A')
-     
-            Resp(i) = LocalizeAuditoryStim(i, ExpInfo,...
-                ScreenInfo,AudInfo,VSinfo,Arduino,pahandle,windowPtr);
-
-    else
-
-            Resp(i)= LocalizeVisualStim(i, ExpInfo,...
-                ScreenInfo,VSinfo,windowPtr);
-
-    end
+    Resp(i) = LocalizeBothStim(i, ExpInfo,...
+        ScreenInfo,AudInfo,VSinfo,Arduino,pahandle,windowPtr);
 
     %% save by trial
     save(fullfile(outDir,outFileName),'Resp','ExpInfo','ScreenInfo','VSinfo','AudInfo');
