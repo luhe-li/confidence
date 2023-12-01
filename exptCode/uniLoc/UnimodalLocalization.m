@@ -14,10 +14,9 @@
 % Auditory stimuli were presenetd at nine locations, corresponding to
 % speaker indices -12:3:12. Each location was tested 20 times
 % pseudorandomly, resulting in 180 trials.
-
+SCASCA
 %% Enter experiment info
 clear; close all;  rng('Shuffle');
-addpath(genpath('/e/3.3/p3/hong/Desktop/Project5/Psychtoolbox'));
 
 ExpInfo.subjID = [];
 while isempty(ExpInfo.subjID) == 1
@@ -48,7 +47,7 @@ addpath(genpath(PsychtoolboxRoot))
 
 % avoid rewriting data
 if exist(fullfile(outDir, [outFileName '.mat']), 'file')
-    resp = input('To replace the existing file, press y', 's');
+    resp = input('Replace the existing file? Y/N', 's');
     if ~strcmp(resp,'Y')
         disp('Experiment terminated.')
         return
@@ -56,14 +55,15 @@ if exist(fullfile(outDir, [outFileName '.mat']), 'file')
 end
 
 % switch between debug mode
-ExpInfo.mode  = 2; %input('Experiment mode: 1; Debug mode: 2#: ');
+ExpInfo.mode  = 1; %input('Experiment mode: 1; Debug mode: 2#: ');
 switch ExpInfo.mode
     case 1 % experiment mode
         windowSize = [];
         opacity = 1;
         HideCursor();
         if strcmp(ExpInfo.session, 'A')
-        Arduino = serial('/dev/cu.usbmodemFD131','BaudRate',115200); % make sure this value matches with the baudrate in the arduino code
+        %Arduino = serial('/dev/cu.usbmodemFD131','BaudRate',115200); % make sure this value matches with the baudrate in the arduino code
+        Arduino = serial('/dev/cu.usbmodem14301','BaudRate',115200);
         fopen(Arduino);
         end
     case 2 % debug mode
@@ -84,7 +84,7 @@ Screen('Preference', 'SkipSyncTests', 1);
 PsychDebugWindowConfiguration([], opacity)
 screens = Screen('Screens');
 screenNumber = max(screens);
-[windowPtr,rect] = Screen('OpenWindow', screenNumber, [0,0,0],windowSize);
+[windowPtr,rect] = Screen('OpenWindow', screenNumber, [0,0,0], windowSize);
 [ScreenInfo.xaxis, ScreenInfo.yaxis] = Screen('WindowSize',windowPtr);
 Screen('TextSize', windowPtr, 30);
 Screen('TextFont', windowPtr,'Times');
@@ -114,7 +114,7 @@ PsychDefaultSetup(2);
 % get correct sound card
 InitializePsychSound
 devices = PsychPortAudio('GetDevices');
-our_device=devices(3).DeviceIndex;
+our_device=devices(2).DeviceIndex;
 
 % Gaussian white noise
 AudInfo.fs                  = 44100;

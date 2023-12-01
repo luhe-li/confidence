@@ -54,9 +54,9 @@ function Resp = LocalizeAuditoryStim(i, ExpInfo,...
     Resp.response_cm    = (Resp.response_pixel -  ScreenInfo.xmid)/ScreenInfo.numPixels_perCM;
     Resp.response_deg   = rad2deg(atan(Resp.response_cm/ExpInfo.sittingDistance));
     
-    
+    disp(x)
     % confidence response
-    SetMouse(x, ScreenInfo.ymid*2, windowPtr);
+    SetMouse(x, ScreenInfo.ymid, windowPtr);
     buttons = 0;
     WaitSecs(0.2)
     tic
