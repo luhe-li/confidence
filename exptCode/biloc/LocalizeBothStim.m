@@ -79,51 +79,51 @@ end
 
     % perception response
     yLoc = ScreenInfo.yaxis-ScreenInfo.liftingYaxis;
-    SetMouse(randi(ScreenInfo.xmid*2,1), ScreenInfo.ymid*2, windowPtr);
+    SetMouse(randi(ScreenInfo.xmid*2,1), yLoc*2, windowPtr);
     buttons = 0;
-    tic
+    tic;
     while sum(buttons)==0
-        [x,~,buttons] = GetMouse(windowPtr); HideCursor;
+        [x,~,buttons] = GetMouse(windowPtr); HideCursor(windowPtr);
         x = min(x, ScreenInfo.xmid*2); x = max(0,x);
         Screen('DrawTexture',windowPtr, VSinfo.grey_texture,[],...
                 [0,0,ScreenInfo.xaxis, ScreenInfo.yaxis]);
         Screen('DrawLine', windowPtr, [255 255 255],x, yLoc-3, x, yLoc+3, 1);
         Screen('Flip',windowPtr);
-        [~, ~, keyCode] = KbCheck();
+        [~, ~, keyCode] = KbCheck(-1);
         if keyCode(KbName('ESCAPE'))
            sca;
+           ShowCursor;
            error('Escape');
         end
     end
     Resp.RT1  = toc;
-    HideCursor;
+    HideCursor(windowPtr);
     Resp.response_pixel = x;
     Resp.response_cm    = (Resp.response_pixel -  ScreenInfo.xmid)/ScreenInfo.numPixels_perCM;
     Resp.response_deg   = rad2deg(atan(Resp.response_cm/ExpInfo.sittingDistance));
     
-    
     % confidence response
-    SetMouse(x, ScreenInfo.ymid*2, windowPtr);
+    SetMouse(x*2, yLoc*2, windowPtr);HideCursor(windowPtr);
     buttons = 0;
-    WaitSecs(0.2)
-    tic
+    WaitSecs(0.2);
+    tic;
     while sum(buttons)==0
-        [conf_x,~,buttons] = GetMouse(windowPtr); HideCursor;
+        [conf_x,~,buttons] = GetMouse(windowPtr); HideCursor(windowPtr);
         conf_radius = abs(conf_x - x);
-        
         Screen('DrawTexture',windowPtr, VSinfo.grey_texture,[],...
             [0,0,ScreenInfo.xaxis, ScreenInfo.yaxis]);
         Screen('DrawLine', windowPtr, [255 255 255],x, yLoc+3, x, yLoc-3, 1);
         Screen('DrawLine', windowPtr, [255 255 255],x-conf_radius, yLoc, x+conf_radius, yLoc, 1);
-        Screen('Flip',windowPtr);
-        [~, ~, keyCode] = KbCheck();
+        Screen('Flip',windowPtr);HideCursor(windowPtr);
+        [~, ~, keyCode] = KbCheck(-1);
         if keyCode(KbName('ESCAPE'))
             sca;
+            ShowCursor;
             error('Escape');
         end
     end
-    Resp.RT2             = toc;
-    HideCursor;
+    Resp.RT2  = toc;
+    HideCursor(windowPtr);
     Resp.conf_radius_pixel= conf_radius;
     Resp.conf_radius_cm  = Resp.conf_radius_pixel/ScreenInfo.numPixels_perCM;
   

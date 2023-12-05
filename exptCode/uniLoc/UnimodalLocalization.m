@@ -14,7 +14,7 @@
 % Auditory stimuli were presenetd at nine locations, corresponding to
 % speaker indices -12:3:12. Each location was tested 20 times
 % pseudorandomly, resulting in 180 trials.
-SCASCA
+
 %% Enter experiment info
 clear; close all;  rng('Shuffle');
 

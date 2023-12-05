@@ -17,12 +17,11 @@
 
 %% Enter experiment info
 clear; close all;  rng('Shuffle');
-addpath(genpath('/e/3.3/p3/hong/Desktop/Project5/Psychtoolbox'));
 
 ExpInfo.subjID = [];
 while isempty(ExpInfo.subjID) == 1
     try ExpInfo.subjID = input('Participant ID#: ') ;
-        ExpInfo.session = input('Session: A/V1/V2#: ','s');
+        ExpInfo.session = input('Session: V1/V2#: ','s');
         ExpInfo.practice  = input('Main expt: 1; Practice: 2#: ');
     catch
     end
@@ -48,7 +47,7 @@ addpath(genpath(PsychtoolboxRoot))
 
 % avoid rewriting data
 if exist(fullfile(outDir, [outFileName '.mat']), 'file')
-    resp = input('To replace the existing file, press y', 's');
+    resp = input('Replace the existing file? Y/N', 's');
     if ~strcmp(resp,'Y')
         disp('Experiment terminated.')
         return
@@ -62,10 +61,9 @@ switch ExpInfo.mode
         windowSize = [];
         opacity = 1;
         HideCursor();
-        if strcmp(ExpInfo.session, 'A')
-        Arduino = serial('/dev/cu.usbmodemFD131','BaudRate',115200); % make sure this value matches with the baudrate in the arduino code
+        %Arduino = serial('/dev/cu.usbmodemFD131','BaudRate',115200); % make sure this value matches with the baudrate in the arduino code
+        Arduino = serial('/dev/cu.usbmodem14301','BaudRate',115200);
         fopen(Arduino);
-        end
     case 2 % debug mode
         windowSize = [100 100 1000 600]; % open a smaller window
         opacity = 0.4;
@@ -114,7 +112,7 @@ PsychDefaultSetup(2);
 % get correct sound card
 InitializePsychSound
 devices = PsychPortAudio('GetDevices');
-our_device=devices(3).DeviceIndex;
+our_device=devices(end).DeviceIndex;
 
 % Gaussian white noise
 AudInfo.fs                  = 44100;
@@ -132,13 +130,15 @@ AudInfo.GaussianWhiteNoise  = [AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSou
     AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn];
 AudInfo.inBetweenGWN        = AudInfo.intensity*AudInfo.GaussianWhiteNoise;
 pahandle                    = PsychPortAudio('Open', our_device, [], [], [], 2);%open device
+
 %% audio test
 PsychPortAudio('FillBuffer',pahandle, AudInfo.GaussianWhiteNoise);
-    PsychPortAudio('Start',pahandle,1,0,0);
-    WaitSecs(ExpInfo.tStim);
-    input_off = ['<',num2str(0),':',num2str(ExpInfo.randAudLoc(i)),'>'];
-    fprintf(Arduino,input_off);
-    PsychPortAudio('Stop',pahandle);
+PsychPortAudio('Start',pahandle,1,0,0);
+WaitSecs(0.1);
+input_off = ['<',num2str(0),':',num2str(8),'>'];
+fprintf(Arduino,input_off);
+PsychPortAudio('Stop',pahandle);
+
 %% make visual stimuli
 
 if strcmp(ExpInfo.session, 'V1')
@@ -151,7 +151,7 @@ VSinfo.num_randomDots      = 10; %number of blobs
 VSinfo.numFrames           = 6; %for visual stimuli (100 ms)
 
 % create background
-VSinfo.pblack                     = 1/8; % set contrast to 1*1/8 for the "black" background, so it's not too dark and the projector doesn't complain
+VSinfo.pblack                      = 1/8; % set contrast to 1*1/8 for the "black" background, so it's not too dark and the projector doesn't complain
 VSinfo.greyScreen                  = VSinfo.pblack * ones(ScreenInfo.xaxis,ScreenInfo.yaxis)*255;
 VSinfo.grey_texture                = Screen('MakeTexture', windowPtr, VSinfo.greyScreen,[],[],[],2);
 VSinfo.blankScreen                 = zeros(ScreenInfo.xaxis,ScreenInfo.yaxis);
