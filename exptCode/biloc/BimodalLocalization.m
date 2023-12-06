@@ -75,7 +75,7 @@ AssertOpenGL();
 GetSecs();
 WaitSecs(0.1);
 KbCheck();
-ListenChar(2); % silence the keyboard
+% ListenChar(2); % silence the keyboard
 
 Screen('Preference', 'VisualDebugLevel', 1);
 Screen('Preference', 'SkipSyncTests', 1);
@@ -226,7 +226,8 @@ Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
 DrawFormattedText(windowPtr, 'Press any button to start the unimodal localization task.',...
     'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis,[255 255 255]);
 Screen('Flip',windowPtr);
-KbWait(-3); WaitSecs(1);
+% KbWait(-3);
+WaitSecs(1);
 
 for i = 1:ExpInfo.nTrials
 

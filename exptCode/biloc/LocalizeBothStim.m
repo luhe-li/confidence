@@ -129,10 +129,11 @@ end
     
     % Common Cause response
     SetMouse(ScreenInfo.xmid*2, yLoc*2, windowPtr);HideCursor(windowPtr);
+    yLoc = ScreenInfo.yaxis-ScreenInfo.liftingYaxis;
     ccSliderLength = 50; % common cause slide length
     ccSliderHeight = 5; % common cause slide length
     ccSliderBound = ScreenInfo.xmid + [-ccSliderLength/2,ccSliderLength/2];
-    ccSliderRect = [ccSliderBound(1);yLoc+ccSliderHeight/2;ccSliderBound(2);yLoc-ccSliderHeight/2];
+    ccSliderRect = [ccSliderBound(1);yLoc-ccSliderHeight/2;ccSliderBound(2);yLoc+ccSliderHeight/2];
     buttons = 0;
     WaitSecs(0.2);
     tic;
@@ -146,10 +147,10 @@ end
         Screen('FrameRect', windowPtr, [255 255 255], ccSliderRect, 1);
         DrawFormattedText(windowPtr, 'Common', 'left', 'center', ...
             [255 255 255],[], [], [], [], [], ...
-            ccSliderRect + [ccSliderLength;0;ccSliderLength;0])
+            ccSliderRect' + [ccSliderLength,0,ccSliderLength,0])
         DrawFormattedText(windowPtr, 'Separate', 'right', 'center', ...
             [255 255 255],[], [], [], [], [], ...
-            ccSliderRect - [ccSliderLength;0;ccSliderLength;0])
+            ccSliderRect' - [ccSliderLength,0,ccSliderLength,0])
         Screen('Flip',windowPtr);HideCursor(windowPtr);
         [~, ~, keyCode] = KbCheck(-1);
         if keyCode(KbName('ESCAPE'))
