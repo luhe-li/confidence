@@ -232,6 +232,8 @@ WaitSecs(1);
 for i = 1:ExpInfo.nTrials
 
     %% present stimuli
+    SetMouse(ScreenInfo.xaxis*2, ScreenInfo.yaxis*2, windowPtr);
+    HideCursor(windowPtr);
     Resp(i) = LocalizeBothStim(i, ExpInfo,...
         ScreenInfo,AudInfo,VSinfo,Arduino,pahandle,windowPtr);
 
@@ -268,4 +270,4 @@ ExpInfo.finish  = sprintf('%04d/%02d/%02d_%02d:%02d:%02d',c(1),c(2),c(3),c(4),c(
 [~, temp] = sort([Resp(1:end).loc_idx]);
 sortedResp = Resp(temp);
 save(fullfile(outDir,outFileName),'Resp','sortedResp','ExpInfo','ScreenInfo','VSinfo','AudInfo');
-Screen('CloseAll');
+ 
