@@ -60,9 +60,8 @@ switch ExpInfo.mode
     case 1 % experiment mode
         windowSize = [];
         opacity = 1;
-        HideCursor();
         %Arduino = serial('/dev/cu.usbmodemFD131','BaudRate',115200); % make sure this value matches with the baudrate in the arduino code
-        Arduino = serial('/dev/cu.usbmodem14301','BaudRate',115200);
+        Arduino = serial('/dev/cu.usbmodem14101','BaudRate',115200);
         fopen(Arduino);
     case 2 % debug mode
         windowSize = [100 100 1000 600]; % open a smaller window
@@ -233,7 +232,7 @@ for i = 1:ExpInfo.nTrials
 
     %% present stimuli
     SetMouse(ScreenInfo.xaxis*2, ScreenInfo.yaxis*2, windowPtr);
-    HideCursor(windowPtr);
+    HideCursor;
     Resp(i) = LocalizeBothStim(i, ExpInfo,...
         ScreenInfo,AudInfo,VSinfo,Arduino,pahandle,windowPtr);
 

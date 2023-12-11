@@ -40,6 +40,7 @@ while 1
         end
     end
 end
+
 %%
 
 % fixation
@@ -64,7 +65,7 @@ input_on = ['<',num2str(1),':',num2str(ExpInfo.randAudLoc(i)),'>']; %arduino tak
 fprintf(Arduino,input_on);
 PsychPortAudio('FillBuffer',pahandle, AudInfo.GaussianWhiteNoise);
 Resp.audStartTime = PsychPortAudio('Start',pahandle,0,0,1,GetSecs+AudInfo.stimDura);
-% WaitSecs(ExpInfo.tStim);
+WaitSecs(ExpInfo.tStim);
 for j = 1:VSinfo.numFrames %100 ms, 6 frames
     Screen('DrawTexture',windowPtr,dotClouds_targetLoc,[],...
         [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
@@ -72,7 +73,7 @@ for j = 1:VSinfo.numFrames %100 ms, 6 frames
 end
 input_off = ['<',num2str(0),':',num2str(ExpInfo.randAudLoc(i)),'>'];
 fprintf(Arduino,input_off);
-% PsychPortAudio('Stop',pahandle);
+PsychPortAudio('Stop',pahandle);
 
 % blank screen 2
 WaitSecs(ExpInfo.tBlank2);
@@ -80,11 +81,10 @@ WaitSecs(ExpInfo.tBlank2);
 % perception response
 yLoc = ScreenInfo.yaxis-ScreenInfo.liftingYaxis;
 SetMouse(randi(ScreenInfo.xmid*4,1), yLoc, windowPtr);%yLoc*2
-HideCursor(windowPtr);
 buttons = 0;
 tic;
 while sum(buttons)==0
-    [x,~,buttons] = GetMouse(windowPtr); HideCursor(windowPtr);
+    [x,~,buttons] = GetMouse(windowPtr); 
     x = min(x, ScreenInfo.xmid*2); x = max(0,x);
     Screen('DrawTexture',windowPtr, VSinfo.grey_texture,[],...
         [0,0,ScreenInfo.xaxis, ScreenInfo.yaxis]);
@@ -98,25 +98,23 @@ while sum(buttons)==0
     end
 end
 Resp.RT1  = toc;
-HideCursor(windowPtr);
 Resp.response_pixel = x;
 Resp.response_cm    = (Resp.response_pixel -  ScreenInfo.xmid)/ScreenInfo.numPixels_perCM;
 Resp.response_deg   = rad2deg(atan(Resp.response_cm/ExpInfo.sittingDistance));
 
 % confidence response
 SetMouse(x*2, yLoc, windowPtr);
-HideCursor(windowPtr);
 buttons = 0;
 WaitSecs(0.2);
 tic;
 while sum(buttons)==0
-    [conf_x,~,buttons] = GetMouse(windowPtr); HideCursor(windowPtr);
+    [conf_x,~,buttons] = GetMouse(windowPtr); 
     conf_radius = abs(conf_x - x);
     Screen('DrawTexture',windowPtr, VSinfo.grey_texture,[],...
         [0,0,ScreenInfo.xaxis, ScreenInfo.yaxis]);
     Screen('DrawLine', windowPtr, [255 255 255],x, yLoc+3, x, yLoc-3, 1);
     Screen('DrawLine', windowPtr, [255 255 255],x-conf_radius, yLoc, x+conf_radius, yLoc, 1);
-    Screen('Flip',windowPtr);HideCursor(windowPtr);
+    Screen('Flip',windowPtr);
     [~, ~, keyCode] = KbCheck(-1);
     if keyCode(KbName('ESCAPE'))
         sca;
@@ -125,13 +123,11 @@ while sum(buttons)==0
     end
 end
 Resp.RT2  = toc;
-HideCursor(windowPtr);
 Resp.conf_radius_pixel= conf_radius;
 Resp.conf_radius_cm  = Resp.conf_radius_pixel/ScreenInfo.numPixels_perCM;
 
 % Common Cause response
-SetMouse(ScreenInfo.xmid*2, ScreenInfo.yaxis*2, windowPtr);
-HideCursor(windowPtr);
+SetMouse(ScreenInfo.xmid*2, yLoc, windowPtr);
 
 yLoc = ScreenInfo.yaxis-ScreenInfo.liftingYaxis;
 ccSliderLength = 200; % common cause slide length
@@ -143,9 +139,6 @@ WaitSecs(0.2);
 tic;
 while sum(buttons)==0
     [caus_x,~,buttons] = GetMouse(windowPtr);
-%     if y < ScreenInfo.yaxis - 50
-%     SetMouse(caus_x, max(y*2,ScreenInfo.yaxis*2), windowPtr);
-%     end
     caus_x = min(caus_x, ccSliderRect(3));
     caus_x = max(ccSliderRect(1),caus_x);
     Screen('DrawTexture',windowPtr, VSinfo.grey_texture,[],...
@@ -158,7 +151,7 @@ while sum(buttons)==0
     DrawFormattedText(windowPtr, 'Separate', 'center', 'center', ...
         [255 255 255],[], [], [], [], [], ...
         ccSliderRect + [ccSliderLength*1.2,0,ccSliderLength*1.2,0]);
-    Screen('Flip',windowPtr);HideCursor(windowPtr);
+    Screen('Flip',windowPtr);
     [~, ~, keyCode] = KbCheck(-1);
     if keyCode(KbName('ESCAPE'))
         sca;
@@ -167,17 +160,16 @@ while sum(buttons)==0
     end
 end
 Resp.RT3  = toc;
-HideCursor(windowPtr);
 Resp.estPcomm= caus_x - ccSliderRect(1);
 
 
-% ITI
+%ITI
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
     [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
 Screen('Flip',windowPtr);
 WaitSecs(ExpInfo.ITI);
 
-% calculate points
+%calculate points
 Resp.loc_idx = ExpInfo.randAudLoc(i);
 Resp.loc_cm  = ExpInfo.loc_cm(i);
 Resp.loc_deg = rad2deg(atan(Resp.loc_cm/ExpInfo.sittingDistance));

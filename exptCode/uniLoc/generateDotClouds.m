@@ -18,6 +18,5 @@ function dotClouds = generateDotClouds(windowPtr,locations,VSinfo,ScreenInfo)
     %if the color value hits beyond 255 (maximum), then we clip it
     VSinfo.greyScreen(VSinfo.greyScreen>255)=255;
     %Turn the matrix to texture    
-    % dotClouds =  Screen('MakeTexture', windowPtr, VSinfo.greyScreen,[],[],[],2);
-    dotClouds = locations;
+    dotClouds =  Screen('MakeTexture', windowPtr, VSinfo.greyScreen,[],[],[],2);
 end

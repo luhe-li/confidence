@@ -86,6 +86,7 @@ screens = Screen('Screens');
 screenNumber = max(screens);
 [windowPtr,rect] = Screen('OpenWindow', screenNumber, [0,0,0], windowSize);
 [ScreenInfo.xaxis, ScreenInfo.yaxis] = Screen('WindowSize',windowPtr);
+ScreenInfo.screenNumber = screenNumber;
 Screen('TextSize', windowPtr, 30);
 Screen('TextFont', windowPtr,'Times');
 Screen('TextStyle', windowPtr,1);
