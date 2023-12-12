@@ -63,7 +63,7 @@ switch ExpInfo.mode
         HideCursor();
         if strcmp(ExpInfo.session, 'A')
         %Arduino = serial('/dev/cu.usbmodemFD131','BaudRate',115200); % make sure this value matches with the baudrate in the arduino code
-        Arduino = serial('/dev/cu.usbmodem14301','BaudRate',115200);
+        Arduino = serial('/dev/cu.usbmodem14101','BaudRate',115200);
         fopen(Arduino);
         end
     case 2 % debug mode
@@ -121,9 +121,9 @@ our_device=devices(2).DeviceIndex;
 AudInfo.fs                  = 44100;
 audioSamples                = linspace(1,AudInfo.fs,AudInfo.fs);
 standardFrequency_gwn       = 10;
-AudInfo.stimDura            = 0.1;
+AudInfo.stimDura            = 1;
 AudInfo.tf                  = 400;
-AudInfo.intensity           = 0.65;
+AudInfo.intensity           = 0.4;
 duration_gwn                = length(audioSamples)*AudInfo.stimDura;
 timeline_gwn                = linspace(1,duration_gwn,duration_gwn);
 sineWindow_gwn              = sin(standardFrequency_gwn/2*2*pi*timeline_gwn/AudInfo.fs);
@@ -163,8 +163,8 @@ VSinfo.Cloud                         = reshape(cloud_temp,length(x),length(y)) .
 %% Experiment set up
 
 % choose auditory locations out of 16 speakers, in index
-ExpInfo.audIdx = [2,4,6,8,9,11,13,15];
-ExpInfo.nLevel = numel(ExpInfo.audIdx);
+ExpInfo.audLevel = [2,4,6,8,9,11,13,15];
+ExpInfo.nLevel = numel(ExpInfo.audLevel);
 for tt = 1:ExpInfo.nRep
     ExpInfo.randIdx(:,tt) = randperm(ExpInfo.nLevel)';
 end
@@ -209,7 +209,7 @@ ExpInfo.dropRate = (ExpInfo.maxPoint - ExpInfo.minPoint)/ScreenInfo.halfScreenSi
 ExpInfo.tFixation = 0.5;
 ExpInfo.tBlank1 = 0.3;
 ExpInfo.tBlank2 = 0.2;
-ExpInfo.tStim = 0.5;
+ExpInfo.tStim = 0.033;
 ExpInfo.ITI = 0.3;
 
 %% Run the experiment

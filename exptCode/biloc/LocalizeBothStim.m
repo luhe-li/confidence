@@ -1,7 +1,9 @@
 function Resp = LocalizeBothStim(i, ExpInfo,...
     ScreenInfo,AudInfo,VSinfo,Arduino,pahandle,windowPtr)
 
-%% randomly draw VSinfo.num_randomDots [x;y] coordinates based on the centroid
+%% generate stimulus
+
+% randomly draw VSinfo.num_randomDots [x;y] coordinates based on the centroid
 % first compute the location of the visual stimulus in pixels
 loc_pixel = round(ExpInfo.randVisPixel(i));
 targetLoc = ScreenInfo.xmid + loc_pixel;
@@ -41,7 +43,7 @@ while 1
     end
 end
 
-%%
+%% trial start
 
 % fixation
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
@@ -60,17 +62,16 @@ Screen('Flip',windowPtr);
 WaitSecs(ExpInfo.tBlank1);
 
 % present auditory stimulus
-Resp.visFrameTime = NaN(1,VSinfo.numFrames);
 input_on = ['<',num2str(1),':',num2str(ExpInfo.randAudIdx(i)),'>']; %arduino takes input in this format
 fprintf(Arduino,input_on);
 PsychPortAudio('FillBuffer',pahandle, AudInfo.GaussianWhiteNoise);
-Resp.audStartTime = PsychPortAudio('Start',pahandle,0,0,1,GetSecs+AudInfo.stimDura);
-WaitSecs(ExpInfo.tStim);
-for j = 1:VSinfo.numFrames %100 ms, 6 frames
-    Screen('DrawTexture',windowPtr,dotClouds_targetLoc,[],...
+Screen('DrawTexture',windowPtr,dotClouds_targetLoc,[],...
         [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
-    Resp.visFrameTime(j) = Screen('Flip',windowPtr);
-end
+vbl = Screen('Flip',windowPtr); % v onset
+PsychPortAudio('Start',pahandle,0,0,0);
+Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
+    [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
+Screen('Flip',windowPtr, vbl + (ExpInfo.frameStim - 0.5) * ScreenInfo.ifi);
 input_off = ['<',num2str(0),':',num2str(ExpInfo.randAudIdx(i)),'>'];
 fprintf(Arduino,input_off);
 PsychPortAudio('Stop',pahandle);
@@ -78,9 +79,12 @@ PsychPortAudio('Stop',pahandle);
 % blank screen 2
 WaitSecs(ExpInfo.tBlank2);
 
+%% response
+
 % perception response
 yLoc = ScreenInfo.yaxis-ScreenInfo.liftingYaxis;
-SetMouse(randi(ScreenInfo.xmid*4,1), yLoc, windowPtr);%yLoc*2
+Screen('TextSize',windowPtr,12);
+SetMouse(randi(ScreenInfo.xmid*4,1), yLoc*2, windowPtr);
 buttons = 0;
 tic;
 while sum(buttons)==0
@@ -90,7 +94,9 @@ while sum(buttons)==0
     Screen('DrawTexture',windowPtr, VSinfo.grey_texture,[],...
         [0,0,ScreenInfo.xaxis, ScreenInfo.yaxis]);
     Screen('DrawLine', windowPtr, [255 255 255],x, yLoc-3, x, yLoc+3, 1);
-    Screen('DrawText', windowPtr, ExpInfo.cue{ExpInfo.randAVIdx(3,i)},x,yLoc+6,[255 255 255]);
+    DrawFormattedText(windowPtr, ExpInfo.cue{ExpInfo.randAVIdx(3,i)}, 'center', 'center', ...
+        [255 255 255],[], [], [], [], [], ...
+        [x-20,yLoc-12,x+20,yLoc-6]);
     Screen('Flip',windowPtr);
     [~, ~, keyCode] = KbCheck(-1);
     if keyCode(KbName('ESCAPE'))
@@ -105,7 +111,7 @@ Resp.response_cm    = (Resp.response_pixel -  ScreenInfo.xmid)/ScreenInfo.numPix
 Resp.response_deg   = rad2deg(atan(Resp.response_cm/ExpInfo.sittingDistance));
 
 % confidence response
-SetMouse(x*2, yLoc, windowPtr);
+SetMouse(x*2, yLoc*2, windowPtr);
 buttons = 0;
 WaitSecs(0.2);
 tic;
@@ -116,6 +122,9 @@ while sum(buttons)==0
         [0,0,ScreenInfo.xaxis, ScreenInfo.yaxis]);
     Screen('DrawLine', windowPtr, [255 255 255],x, yLoc+3, x, yLoc-3, 1);
     Screen('DrawLine', windowPtr, [255 255 255],x-conf_radius, yLoc, x+conf_radius, yLoc, 1);
+    DrawFormattedText(windowPtr,ExpInfo.cue{ExpInfo.randAVIdx(3,i)}, 'center', 'center', ...
+        [255 255 255],[], [], [], [], [], ...
+        [x-20,yLoc-12,x+20,yLoc-6]);
     Screen('Flip',windowPtr);
     [~, ~, keyCode] = KbCheck(-1);
     if keyCode(KbName('ESCAPE'))
@@ -129,13 +138,13 @@ Resp.conf_radius_pixel= conf_radius;
 Resp.conf_radius_cm  = Resp.conf_radius_pixel/ScreenInfo.numPixels_perCM;
 
 % Common Cause response
-SetMouse(ScreenInfo.xmid*2, yLoc, windowPtr);
-
-yLoc = ScreenInfo.yaxis-ScreenInfo.liftingYaxis;
+Screen('TextSize',windowPtr,30);
 ccSliderLength = 200; % common cause slide length
-ccSliderHeight = 25; % common cause slide length
-ccSliderRect([1,3]) = ScreenInfo.xmid + [-ccSliderLength/2,ccSliderLength/2];
+ccSliderHeight = 26; % common cause slide length
+ccSliderRect([1,3]) = ScreenInfo.xmid-1 + [-ccSliderLength/2+1,ccSliderLength/2];
 ccSliderRect([2,4]) = yLoc + [-ccSliderHeight/2,ccSliderHeight/2];
+SetMouse(randi(ccSliderRect([1,3]),1)*2, yLoc*2, windowPtr);
+
 buttons = 0;
 WaitSecs(0.2);
 tic;
@@ -162,8 +171,8 @@ while sum(buttons)==0
     end
 end
 Resp.RT3  = toc;
-Resp.estPcomm= caus_x - ccSliderRect(1);
-
+Resp.unityConf = (caus_x - ccSliderRect(1) ) / ccSliderLength * 2 -1;
+Resp.unity = Resp.unityConf > 0;
 
 %ITI
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...

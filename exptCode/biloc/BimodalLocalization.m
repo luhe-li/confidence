@@ -85,6 +85,7 @@ screenNumber = max(screens);
 Screen('TextSize', windowPtr, 30);
 Screen('TextFont', windowPtr,'Times');
 Screen('TextStyle', windowPtr,1);
+ScreenInfo.ifi = Screen('GetFlipInterval', windowPtr);
 
 [center(1), center(2)]     = RectCenter(rect);
 ScreenInfo.xmid            = center(1); % horizontal center
@@ -116,9 +117,9 @@ our_device=devices(end).DeviceIndex;
 AudInfo.fs                  = 44100;
 audioSamples                = linspace(1,AudInfo.fs,AudInfo.fs);
 standardFrequency_gwn       = 10;
-AudInfo.stimDura            = 0.1;
+AudInfo.stimDura            = 5; %s
 AudInfo.tf                  = 400;
-AudInfo.intensity           = 0.65;
+AudInfo.intensity           = 0.4;
 duration_gwn                = length(audioSamples)*AudInfo.stimDura;
 timeline_gwn                = linspace(1,duration_gwn,duration_gwn);
 sineWindow_gwn              = sin(standardFrequency_gwn/2*2*pi*timeline_gwn/AudInfo.fs);
@@ -192,7 +193,7 @@ ExpInfo.speakerLocPixel = round(ExpInfo.speakerLocCM * ScreenInfo.numPixels_perC
 ExpInfo.randAudIdx = ExpInfo.randAVIdx(1,:);
 ExpInfo.v_loc_cm  = ExpInfo.speakerLocCM(ExpInfo.randAVIdx(2,:));
 ExpInfo.v_loc_deg = rad2deg(atan(ExpInfo.v_loc_cm/ExpInfo.sittingDistance));
-ExpInfo.randVisPixel = ExpInfo.loc_cm .* ScreenInfo.numPixels_perCM;
+ExpInfo.randVisPixel = ExpInfo.v_loc_cm .* ScreenInfo.numPixels_perCM;
 
 % split all the trials into blocks
 ExpInfo.nTrials = ExpInfo.nLevel * ExpInfo.nRep;
@@ -203,7 +204,7 @@ ExpInfo.firstTrial     = blocks(1:ExpInfo.numBlocks)+1;
 ExpInfo.lastTrial    = blocks(2:(ExpInfo.numBlocks+1));
 ExpInfo.numTrialsPerBlock = ExpInfo.breakTrials(1);
 
-% points set up
+% cost-function set up
 ExpInfo.maxPoint = 100;
 ExpInfo.minPoint = 1; % if enclosed
 % maxPoint - droprate * 2 * confidence_radius = minPoint
@@ -214,7 +215,7 @@ ExpInfo.dropRate = (ExpInfo.maxPoint - ExpInfo.minPoint)/ScreenInfo.halfScreenSi
 ExpInfo.tFixation = 0.5;
 ExpInfo.tBlank1 = 0.3;
 ExpInfo.tBlank2 = 0.2;
-ExpInfo.tStim = 0.5;
+ExpInfo.frameStim = 2;
 ExpInfo.ITI = 0.3;
 
 %% Run the experiment
