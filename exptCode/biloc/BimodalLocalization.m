@@ -74,7 +74,6 @@ AssertOpenGL();
 GetSecs();
 WaitSecs(0.1);
 KbCheck();
-% ListenChar(2); % silence the keyboard
 
 Screen('Preference', 'VisualDebugLevel', 1);
 Screen('Preference', 'SkipSyncTests', 1);
@@ -166,14 +165,18 @@ VSinfo.Cloud                         = reshape(cloud_temp,length(x),length(y)) .
 
 %% Experiment set up
 
-% choose auditory locations out of 16 speakers, in index
-ExpInfo.audLevel = [2,4,6,8,9,11,13,15];
-ExpInfo.nLevel = numel(ExpInfo.audLevel);
+% choose audiovisual locations out of 16 speakers, in index
+ExpInfo.audIdx = [4,7,10,13];
+ExpInfo.visIdx = [4,7,10,13];
+ExpInfo.cueIdx = [1,2]; % 1 = A, 2 = V
+ExpInfo.cue = {'A','V'};
+ExpInfo.avIdx = combvec(ExpInfo.audIdx, ExpInfo.visIdx,ExpInfo.cueIdx);
+ExpInfo.nLevel = size(ExpInfo.avIdx, 2);
 for tt = 1:ExpInfo.nRep
     ExpInfo.randIdx(:,tt) = randperm(ExpInfo.nLevel)';
 end
 ExpInfo.randIdx = reshape(ExpInfo.randIdx, [], 1)';
-ExpInfo.randAudLoc = ExpInfo.audLevel(ExpInfo.randIdx);
+ExpInfo.randAVIdx = ExpInfo.avIdx(:,ExpInfo.randIdx);
 
 % location of speakers in CM, visual angle, and pixel
 ExpInfo.sittingDistance              = 113.0; %cm
@@ -185,11 +188,11 @@ ExpInfo.speakerLocCM = linspace(-ExpInfo.LRmostSpeakers2center, ExpInfo.LRmostSp
 ExpInfo.speakerLocVA = linspace(-ExpInfo.LRmostVisualAngle, ExpInfo.LRmostVisualAngle, ExpInfo.numSpeaker);
 ExpInfo.speakerLocPixel = round(ExpInfo.speakerLocCM * ScreenInfo.numPixels_perCM);
 
-% convert target speaker locations in to other units for G.T. visual reference
-ExpInfo.loc_idx = ExpInfo.randAudLoc;
-ExpInfo.loc_cm  = ExpInfo.speakerLocCM(ExpInfo.randAudLoc);
-ExpInfo.loc_deg = rad2deg(atan(ExpInfo.loc_cm/ExpInfo.sittingDistance));
-ExpInfo.loc_pixel = ExpInfo.loc_cm .* ScreenInfo.numPixels_perCM;
+% randoized locations, aud in speaker index and vis in pixel
+ExpInfo.randAudIdx = ExpInfo.randAVIdx(1,:);
+ExpInfo.v_loc_cm  = ExpInfo.speakerLocCM(ExpInfo.randAVIdx(2,:));
+ExpInfo.v_loc_deg = rad2deg(atan(ExpInfo.v_loc_cm/ExpInfo.sittingDistance));
+ExpInfo.randVisPixel = ExpInfo.loc_cm .* ScreenInfo.numPixels_perCM;
 
 % split all the trials into blocks
 ExpInfo.nTrials = ExpInfo.nLevel * ExpInfo.nRep;

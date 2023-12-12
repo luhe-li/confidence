@@ -18,12 +18,12 @@ function Resp = LocalizeAuditoryStim(i, ExpInfo,...
     WaitSecs(ExpInfo.tBlank1);
 
     % present auditory stimulus
-    input_on = ['<',num2str(1),':',num2str(ExpInfo.randAudLoc(i)),'>']; %arduino takes input in this format
+    input_on = ['<',num2str(1),':',num2str(ExpInfo.randAudIdx(i)),'>']; %arduino takes input in this format
     fprintf(Arduino,input_on);
     PsychPortAudio('FillBuffer',pahandle, AudInfo.GaussianWhiteNoise);
     PsychPortAudio('Start',pahandle,1,0,0);
     WaitSecs(ExpInfo.tStim);
-    input_off = ['<',num2str(0),':',num2str(ExpInfo.randAudLoc(i)),'>'];
+    input_off = ['<',num2str(0),':',num2str(ExpInfo.randAudIdx(i)),'>'];
     fprintf(Arduino,input_off);
     PsychPortAudio('Stop',pahandle);
 
@@ -85,13 +85,12 @@ function Resp = LocalizeAuditoryStim(i, ExpInfo,...
         [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
     Screen('Flip',windowPtr);
     WaitSecs(ExpInfo.ITI);
-  
+
     % calculate points
-    Resp.loc_idx = ExpInfo.randAudLoc(i);
-    Resp.loc_cm  = ExpInfo.loc_cm(i);
-    Resp.loc_deg = rad2deg(atan(Resp.loc_cm/ExpInfo.sittingDistance));
-    Resp.enclosed = Resp.loc_cm >= Resp.response_cm - Resp.conf_radius_cm & ...
-        Resp.loc_cm <= Resp.response_cm + Resp.conf_radius_cm;
+    Resp.target_idx = ExpInfo.randAudIdx(i);
+    Resp.target_cm = ExpInfo.speakerLocCM(Resp.target_idx);
+    Resp.target_deg = rad2deg(atan(Resp.target_cm/ExpInfo.sittingDistance));
+    Resp.enclosed = abs(Resp.target_cm - Resp.response_cm) <= Resp.conf_radius_cm;
     if Resp.enclosed
         Resp.point = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * Resp.conf_radius_cm, ExpInfo.minPoint);
     else

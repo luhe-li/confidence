@@ -4,7 +4,7 @@ function Resp = LocalizeVisualStim(i, ExpInfo,...
 %% precompute visual stimuli
 
 %first compute the location of the visual stimulus in pixels
-loc_pixel = round(ExpInfo.loc_pixel(i));
+loc_pixel = round(ExpInfo.randVisPixel(i));
 targetLoc = ScreenInfo.xmid + loc_pixel;
 RNcoordinates = randn(2,1);
 dots_targetLoc_coordinates = [targetLoc+(...
@@ -128,11 +128,10 @@ Screen('Flip',windowPtr);
 WaitSecs(ExpInfo.ITI);
 
 % calculate points
-Resp.loc_idx = ExpInfo.loc_idx(i);
-Resp.loc_cm  = ExpInfo.loc_cm(i);
-Resp.loc_deg = ExpInfo.loc_deg(i);
-Resp.loc_pixel = ExpInfo.loc_pixel(i);
-Resp.enclosed = abs(Resp.loc_cm - Resp.response_cm) <= Resp.conf_radius_cm;
+Resp.target_idx = ExpInfo.randAudLoc(i); % visual location that corresponds to speaker index
+Resp.target_cm = ExpInfo.speakerLocCM(Resp.target_idx);
+Resp.target_deg = rad2deg(atan(Resp.target_cm/ExpInfo.sittingDistance));
+Resp.enclosed = abs(Resp.target_cm - Resp.response_cm) <= Resp.conf_radius_cm;
 if Resp.enclosed
     Resp.point = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * Resp.conf_radius_cm, ExpInfo.minPoint);
 else

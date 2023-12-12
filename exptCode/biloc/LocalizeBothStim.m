@@ -3,7 +3,7 @@ function Resp = LocalizeBothStim(i, ExpInfo,...
 
 %% randomly draw VSinfo.num_randomDots [x;y] coordinates based on the centroid
 % first compute the location of the visual stimulus in pixels
-loc_pixel = round(ExpInfo.loc_pixel(i));
+loc_pixel = round(ExpInfo.randVisPixel(i));
 targetLoc = ScreenInfo.xmid + loc_pixel;
 RNcoordinates = randn(2,1);
 dots_targetLoc_coordinates = [targetLoc+(...
@@ -61,7 +61,7 @@ WaitSecs(ExpInfo.tBlank1);
 
 % present auditory stimulus
 Resp.visFrameTime = NaN(1,VSinfo.numFrames);
-input_on = ['<',num2str(1),':',num2str(ExpInfo.randAudLoc(i)),'>']; %arduino takes input in this format
+input_on = ['<',num2str(1),':',num2str(ExpInfo.randAudIdx(i)),'>']; %arduino takes input in this format
 fprintf(Arduino,input_on);
 PsychPortAudio('FillBuffer',pahandle, AudInfo.GaussianWhiteNoise);
 Resp.audStartTime = PsychPortAudio('Start',pahandle,0,0,1,GetSecs+AudInfo.stimDura);
@@ -71,7 +71,7 @@ for j = 1:VSinfo.numFrames %100 ms, 6 frames
         [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
     Resp.visFrameTime(j) = Screen('Flip',windowPtr);
 end
-input_off = ['<',num2str(0),':',num2str(ExpInfo.randAudLoc(i)),'>'];
+input_off = ['<',num2str(0),':',num2str(ExpInfo.randAudIdx(i)),'>'];
 fprintf(Arduino,input_off);
 PsychPortAudio('Stop',pahandle);
 
@@ -86,9 +86,11 @@ tic;
 while sum(buttons)==0
     [x,~,buttons] = GetMouse(windowPtr); 
     x = min(x, ScreenInfo.xmid*2); x = max(0,x);
+
     Screen('DrawTexture',windowPtr, VSinfo.grey_texture,[],...
         [0,0,ScreenInfo.xaxis, ScreenInfo.yaxis]);
     Screen('DrawLine', windowPtr, [255 255 255],x, yLoc-3, x, yLoc+3, 1);
+    Screen('DrawText', windowPtr, ExpInfo.cue{ExpInfo.randAVIdx(3,i)},x,yLoc+6,[255 255 255]);
     Screen('Flip',windowPtr);
     [~, ~, keyCode] = KbCheck(-1);
     if keyCode(KbName('ESCAPE'))
@@ -170,10 +172,14 @@ Screen('Flip',windowPtr);
 WaitSecs(ExpInfo.ITI);
 
 %calculate points
-Resp.loc_idx = ExpInfo.randAudLoc(i);
-Resp.loc_cm  = ExpInfo.loc_cm(i);
-Resp.loc_deg = rad2deg(atan(Resp.loc_cm/ExpInfo.sittingDistance));
-Resp.enclosed = abs(Resp.loc_cm - Resp.response_cm) <= Resp.conf_radius_cm;
+if ExpInfo.randAVIdx(3,i) == 1 % A
+    Resp.target_idx = ExpInfo.randAVIdx(1,i);
+else % V
+    Resp.target_idx = ExpInfo.randAVIdx(2,i);
+end
+Resp.target_cm = ExpInfo.speakerLocCM(Resp.target_idx);
+Resp.target_deg = rad2deg(atan(Resp.target_cm/ExpInfo.sittingDistance));
+Resp.enclosed = abs(Resp.target_cm - Resp.response_cm) <= Resp.conf_radius_cm;
 if Resp.enclosed
     Resp.point = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * Resp.conf_radius_cm, ExpInfo.minPoint);
 else

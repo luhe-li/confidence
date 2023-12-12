@@ -163,13 +163,13 @@ VSinfo.Cloud                         = reshape(cloud_temp,length(x),length(y)) .
 %% Experiment set up
 
 % choose auditory locations out of 16 speakers, in index
-ExpInfo.audLevel = [2,4,6,8,9,11,13,15];
-ExpInfo.nLevel = numel(ExpInfo.audLevel);
+ExpInfo.audIdx = [2,4,6,8,9,11,13,15];
+ExpInfo.nLevel = numel(ExpInfo.audIdx);
 for tt = 1:ExpInfo.nRep
     ExpInfo.randIdx(:,tt) = randperm(ExpInfo.nLevel)';
 end
 ExpInfo.randIdx = reshape(ExpInfo.randIdx, [], 1)';
-ExpInfo.randAudLoc = ExpInfo.audLevel(ExpInfo.randIdx);
+ExpInfo.randAudIdx = ExpInfo.audLevel(ExpInfo.randIdx);
 
 % location of speakers in CM, visual angle, and pixel
 ExpInfo.sittingDistance              = 113.0; %cm
@@ -181,11 +181,13 @@ ExpInfo.speakerLocCM = linspace(-ExpInfo.LRmostSpeakers2center, ExpInfo.LRmostSp
 ExpInfo.speakerLocVA = linspace(-ExpInfo.LRmostVisualAngle, ExpInfo.LRmostVisualAngle, ExpInfo.numSpeaker);
 ExpInfo.speakerLocPixel = round(ExpInfo.speakerLocCM * ScreenInfo.numPixels_perCM);
 
-% convert target speaker locations in to other units
-ExpInfo.loc_idx = ExpInfo.randAudLoc;
+% convert randonmised trial-wise target speaker locations in to other units for G.T. visual reference
 ExpInfo.loc_cm  = ExpInfo.speakerLocCM(ExpInfo.randAudLoc);
 ExpInfo.loc_deg = rad2deg(atan(ExpInfo.loc_cm/ExpInfo.sittingDistance));
 ExpInfo.loc_pixel = ExpInfo.loc_cm .* ScreenInfo.numPixels_perCM;
+
+% visual locations in pixel
+ExpInfo.randVisPixel = ExpInfo.loc_pixel;
 
 % split all the trials into blocks
 ExpInfo.nTrials = ExpInfo.nLevel * ExpInfo.nRep;
