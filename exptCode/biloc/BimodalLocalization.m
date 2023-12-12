@@ -124,7 +124,7 @@ duration_gwn                = length(audioSamples)*AudInfo.stimDura;
 timeline_gwn                = linspace(1,duration_gwn,duration_gwn);
 sineWindow_gwn              = sin(standardFrequency_gwn/2*2*pi*timeline_gwn/AudInfo.fs);
 carrierSound_gwn            = randn(1, max(timeline_gwn));
-AudInfo.intensity_GWN       = 15;
+AudInfo.intensity_GWN       = 5; % too loud for debugging, orginally 15
 AudInfo.GaussianWhiteNoise  = [AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn;...
     AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn];
 AudInfo.inBetweenGWN        = AudInfo.intensity*AudInfo.GaussianWhiteNoise;
@@ -171,7 +171,7 @@ ExpInfo.audIdx = [4,7,10,13];
 ExpInfo.visIdx = [4,7,10,13];
 ExpInfo.cueIdx = [1,2]; % 1 = A, 2 = V
 ExpInfo.cue = {'A','V'};
-ExpInfo.avIdx = combvec(ExpInfo.audIdx, ExpInfo.visIdx,ExpInfo.cueIdx);
+ExpInfo.avIdx = combvec(ExpInfo.audIdx, ExpInfo.visIdx, ExpInfo.cueIdx);
 ExpInfo.nLevel = size(ExpInfo.avIdx, 2);
 for tt = 1:ExpInfo.nRep
     ExpInfo.randIdx(:,tt) = randperm(ExpInfo.nLevel)';
@@ -226,10 +226,10 @@ ExpInfo.start       = sprintf('%04d/%02d/%02d_%02d:%02d:%02d',c(1),c(2),c(3),c(4
 
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
     [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
-DrawFormattedText(windowPtr, 'Press any button to start the unimodal localization task.',...
+DrawFormattedText(windowPtr, 'Press any button to start the bimodal localization task.',...
     'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis,[255 255 255]);
 Screen('Flip',windowPtr);
-% KbWait(-3);
+KbWait(-3);
 WaitSecs(1);
 
 for i = 1:ExpInfo.nTrials

@@ -74,7 +74,7 @@ WaitSecs(ExpInfo.tBlank2);
 
 % perceptual response
 yLoc = ScreenInfo.yaxis-ScreenInfo.liftingYaxis;
-SetMouse(randi(ScreenInfo.xaxis,1), yLoc, ScreenInfo.screenNumber);
+SetMouse(randi(ScreenInfo.xaxis*4,1), yLoc*2, windowPtr);
 buttons = 0;
 tic;
 while sum(buttons)==0
@@ -87,7 +87,8 @@ while sum(buttons)==0
     [~, ~, keyCode] = KbCheck(-1);
     if keyCode(KbName('ESCAPE'))
         sca;
-        ShowCursor
+        ShowCursor;
+        Screen('CloseAll');
         error('Escape');
     end
 end
@@ -97,14 +98,13 @@ Resp.response_cm    = (Resp.response_pixel -  ScreenInfo.xmid)/ScreenInfo.numPix
 Resp.response_deg   = rad2deg(atan(Resp.response_cm/ExpInfo.sittingDistance));
 
 % confidence response
-SetMouse(x, yLoc, ScreenInfo.screenNumber);
+SetMouse(x*2, yLoc*2, windowPtr);
 buttons = 0;
 WaitSecs(0.2);
 tic;
 while sum(buttons)==0
     [conf_x,~,buttons] = GetMouse(windowPtr);
     conf_radius = abs(conf_x - x);
-
     Screen('DrawTexture',windowPtr, VSinfo.grey_texture,[],...
         [0,0,ScreenInfo.xaxis, ScreenInfo.yaxis]);
     Screen('DrawLine', windowPtr, [255 255 255],x, yLoc+3, x, yLoc-3, 1);
@@ -114,6 +114,7 @@ while sum(buttons)==0
     if keyCode(KbName('ESCAPE'))
         sca;
         ShowCursor;
+        Screen('CloseAll');
         error('Escape');
     end
 end
@@ -128,7 +129,7 @@ Screen('Flip',windowPtr);
 WaitSecs(ExpInfo.ITI);
 
 % calculate points
-Resp.target_idx = ExpInfo.randAudLoc(i); % visual location that corresponds to speaker index
+Resp.target_idx = ExpInfo.randAudIdx(i); % visual location that corresponds to speaker index
 Resp.target_cm = ExpInfo.speakerLocCM(Resp.target_idx);
 Resp.target_deg = rad2deg(atan(Resp.target_cm/ExpInfo.sittingDistance));
 Resp.enclosed = abs(Resp.target_cm - Resp.response_cm) <= Resp.conf_radius_cm;

@@ -61,7 +61,7 @@ Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
 Screen('Flip',windowPtr);
 WaitSecs(ExpInfo.tBlank1);
 
-% present auditory stimulus
+% present both stimulus
 input_on = ['<',num2str(1),':',num2str(ExpInfo.randAudIdx(i)),'>']; %arduino takes input in this format
 fprintf(Arduino,input_on);
 PsychPortAudio('FillBuffer',pahandle, AudInfo.GaussianWhiteNoise);
@@ -83,7 +83,7 @@ WaitSecs(ExpInfo.tBlank2);
 
 % perception response
 yLoc = ScreenInfo.yaxis-ScreenInfo.liftingYaxis;
-Screen('TextSize',windowPtr,12);
+Screen('TextSize',windowPtr,14);
 SetMouse(randi(ScreenInfo.xmid*4,1), yLoc*2, windowPtr);
 buttons = 0;
 tic;
@@ -102,6 +102,7 @@ while sum(buttons)==0
     if keyCode(KbName('ESCAPE'))
         sca;
         ShowCursor;
+        Screen('CloseAll');
         error('Escape');
     end
 end
@@ -130,6 +131,7 @@ while sum(buttons)==0
     if keyCode(KbName('ESCAPE'))
         sca;
         ShowCursor;
+        Screen('CloseAll');
         error('Escape');
     end
 end
@@ -167,6 +169,7 @@ while sum(buttons)==0
     if keyCode(KbName('ESCAPE'))
         sca;
         ShowCursor;
+        Screen('CloseAll');
         error('Escape');
     end
 end

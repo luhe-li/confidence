@@ -77,7 +77,10 @@ AssertOpenGL();
 GetSecs();
 WaitSecs(0.1);
 KbCheck();
-ListenChar(2); % silence the keyboard
+% ListenChar(2); % silence the keyboard 
+% if you silence it at least leave one key on the other keyboard able to 
+% stop the script. Otherwise you can't even stop the program when
+% debugging since you SetMouse after every click.
 
 Screen('Preference', 'VisualDebugLevel', 1);
 Screen('Preference', 'SkipSyncTests', 1);
@@ -115,25 +118,34 @@ PsychDefaultSetup(2);
 % get correct sound card
 InitializePsychSound
 devices = PsychPortAudio('GetDevices');
-our_device=devices(2).DeviceIndex;
+our_device=devices(end).DeviceIndex;
 
 % Gaussian white noise
 AudInfo.fs                  = 44100;
 audioSamples                = linspace(1,AudInfo.fs,AudInfo.fs);
 standardFrequency_gwn       = 10;
-AudInfo.stimDura            = 1;
+AudInfo.stimDura            = 1; % sec
 AudInfo.tf                  = 400;
-AudInfo.intensity           = 0.4;
+AudInfo.intensity           = 0.4;  
 duration_gwn                = length(audioSamples)*AudInfo.stimDura;
 timeline_gwn                = linspace(1,duration_gwn,duration_gwn);
 sineWindow_gwn              = sin(standardFrequency_gwn/2*2*pi*timeline_gwn/AudInfo.fs);
 carrierSound_gwn            = randn(1, max(timeline_gwn));
-AudInfo.intensity_GWN       = 15;
+AudInfo.intensity_GWN       = 5; % too loud for debugging, originally 15
 AudInfo.GaussianWhiteNoise  = [AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn;...
     AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn];
 AudInfo.inBetweenGWN        = AudInfo.intensity*AudInfo.GaussianWhiteNoise;
 pahandle                    = PsychPortAudio('Open', our_device, [], [], [], 2);%open device
 
+%% audio test
+if strcmp(ExpInfo.session, 'A')
+    PsychPortAudio('FillBuffer',pahandle, AudInfo.GaussianWhiteNoise);
+    PsychPortAudio('Start',pahandle,0,0,0);
+    WaitSecs(0.1);
+    input_off = ['<',num2str(0),':',num2str(8),'>'];
+    fprintf(Arduino,input_off);
+    PsychPortAudio('Stop',pahandle);
+end
 %% make visual stimuli
 
 if strcmp(ExpInfo.session, 'V1')
@@ -182,7 +194,7 @@ ExpInfo.speakerLocVA = linspace(-ExpInfo.LRmostVisualAngle, ExpInfo.LRmostVisual
 ExpInfo.speakerLocPixel = round(ExpInfo.speakerLocCM * ScreenInfo.numPixels_perCM);
 
 % convert randonmised trial-wise target speaker locations in to other units for G.T. visual reference
-ExpInfo.loc_cm  = ExpInfo.speakerLocCM(ExpInfo.randAudLoc);
+ExpInfo.loc_cm  = ExpInfo.speakerLocCM(ExpInfo.randAudIdx);
 ExpInfo.loc_deg = rad2deg(atan(ExpInfo.loc_cm/ExpInfo.sittingDistance));
 ExpInfo.loc_pixel = ExpInfo.loc_cm .* ScreenInfo.numPixels_perCM;
 
@@ -202,7 +214,7 @@ ExpInfo.numTrialsPerBlock = ExpInfo.breakTrials(1);
 ExpInfo.maxPoint = 100;
 ExpInfo.minPoint = 1; % if enclosed
 % maxPoint - droprate * 2 * confidence_radius = minPoint
-% we define max 2 * confidence_radius as half of the screen size
+% % we define max 2 * confidence_radius as half of the screen size
 ExpInfo.dropRate = (ExpInfo.maxPoint - ExpInfo.minPoint)/ScreenInfo.halfScreenSize;
 
 % define durations
@@ -230,13 +242,15 @@ for i = 1:ExpInfo.nTrials
     %% present stimuli
     
     if strcmp(ExpInfo.session, 'A')
-     
-            Resp(i) = LocalizeAuditoryStim(i, ExpInfo,...
-                ScreenInfo,AudInfo,VSinfo,Arduino,pahandle,windowPtr);
-
+        SetMouse(ScreenInfo.xaxis*2, ScreenInfo.yaxis*2, windowPtr);
+        HideCursor;
+        Resp(i) = LocalizeAuditoryStim(i, ExpInfo,...
+            ScreenInfo,AudInfo,VSinfo,Arduino,pahandle,windowPtr);
+        
     else
-
-            Resp(i)= LocalizeVisualStim(i, ExpInfo,...
+        SetMouse(ScreenInfo.xaxis*2, ScreenInfo.yaxis*2, windowPtr);
+        HideCursor;
+        Resp(i)= LocalizeVisualStim(i, ExpInfo,...
                 ScreenInfo,VSinfo,windowPtr);
 
     end
