@@ -1,7 +1,8 @@
 clear;
 close all;
 
-sA = linspace(-30, 30, 5);
+numA = 31;
+sA = linspace(-30, 30, numA);
 sV = sA;
 sAV = combvec(sA, sV);
 num_s = size(sAV,2);
@@ -16,7 +17,7 @@ sigma_V = 2.5;
 mu_P = 0;
 sigma_P = 33;
 
-p_common = 0.5;
+p_common = 0.57;
 
 ds        = {'model averaging', 'model selection', 'probability matching'};
 nDS       = length(ds);
@@ -38,3 +39,30 @@ end
 
 d = 1;
 m = 1;
+
+mean_a_resp = mean(squeeze(bimResp(:, d, m, :)),2);
+aResp = reshape(mean_a_resp, numA, numA);
+
+figure; hold on
+imagesc(aResp)
+colorbar
+
+xlabel('sV')
+ylabel('sA')
+
+slc = round(linspace(1,numA, 5));
+xticks(slc); % Set x-ticks at each column
+xticklabels(round(sA(slc),1)); % Set x-tick labels from sA vector
+
+
+slc = round(linspace(1,numA, 5));
+yticks(slc); % Set x-ticks at each column
+yticklabels(round(sV(slc),1)); % Set x-tick labels from sA vector
+
+% xticklabels(sV)
+% yticklabels(sA)
+
+cb = colorbar; % Adds a colorbar
+ylabel(cb, 'Auditory localization Response'); % Labels the colorbar
+
+%% find congruent vs incongruent trials

@@ -1,7 +1,7 @@
 clear;
 close all;
 
-numA = 30;
+numA = 31;
 sA = linspace(-30, 30, numA);
 sV = sA;
 sAV = combvec(sA, sV);
@@ -17,7 +17,7 @@ sigma_V = 2.5;
 mu_P = 0;
 sigma_P = 33;
 
-p_common = 0.8;
+p_common = 0.57;
 
 ds        = {'model averaging', 'model selection', 'probability matching'};
 nDS       = length(ds);
@@ -49,6 +49,20 @@ colorbar
 
 xlabel('sV')
 ylabel('sA')
-% xticks(sV)
+
+slc = round(linspace(1,numA, 5));
+xticks(slc); % Set x-ticks at each column
+xticklabels(round(sA(slc),1)); % Set x-tick labels from sA vector
+
+
+slc = round(linspace(1,numA, 5));
+yticks(slc); % Set x-ticks at each column
+yticklabels(round(sV(slc),1)); % Set x-tick labels from sA vector
+
 % xticklabels(sV)
 % yticklabels(sA)
+
+cb = colorbar; % Adds a colorbar
+ylabel(cb, 'Auditory localization Response'); % Labels the colorbar
+
+%% plot shat_v
