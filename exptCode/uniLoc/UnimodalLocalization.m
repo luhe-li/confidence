@@ -124,28 +124,29 @@ our_device=devices(end).DeviceIndex;
 AudInfo.fs                  = 44100;
 audioSamples                = linspace(1,AudInfo.fs,AudInfo.fs);
 standardFrequency_gwn       = 10;
-AudInfo.stimDura            = 1; % sec
-AudInfo.tf                  = 400;
-AudInfo.intensity           = 0.4;  
+AudInfo.stimDura            = 0.033; % sec
 duration_gwn                = length(audioSamples)*AudInfo.stimDura;
 timeline_gwn                = linspace(1,duration_gwn,duration_gwn);
 sineWindow_gwn              = sin(standardFrequency_gwn/2*2*pi*timeline_gwn/AudInfo.fs);
-carrierSound_gwn            = randn(1, max(timeline_gwn));
+carrierSound_gwn            = randn(1, numel(timeline_gwn));
 AudInfo.intensity_GWN       = 5; % too loud for debugging, originally 15
 AudInfo.GaussianWhiteNoise  = [AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn;...
     AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn];
-AudInfo.inBetweenGWN        = AudInfo.intensity*AudInfo.GaussianWhiteNoise;
 pahandle                    = PsychPortAudio('Open', our_device, [], [], [], 2);%open device
 
 %% audio test
 if strcmp(ExpInfo.session, 'A')
+    testSpeaker = 8;
+    input_on = ['<',num2str(1),':',num2str(testSpeaker),'>']; %arduino takes input in this format
+    fprintf(Arduino,input_on);
     PsychPortAudio('FillBuffer',pahandle, AudInfo.GaussianWhiteNoise);
-    PsychPortAudio('Start',pahandle,0,0,0);
+    PsychPortAudio('Start',pahandle,1,0,0);
     WaitSecs(0.1);
-    input_off = ['<',num2str(0),':',num2str(8),'>'];
+    input_off = ['<',num2str(0),':',num2str(testSpeaker),'>'];
     fprintf(Arduino,input_off);
     PsychPortAudio('Stop',pahandle);
 end
+
 %% make visual stimuli
 
 if strcmp(ExpInfo.session, 'V1')
@@ -155,7 +156,7 @@ elseif strcmp(ExpInfo.session, 'V2')
 end
 VSinfo.SD_yaxis            = 2; %SD of the blob in cm (vertical)
 VSinfo.num_randomDots      = 10; %number of blobs
-VSinfo.numFrames           = 2; %for visual stimuli (100 ms)
+VSinfo.numFrames           = 2; %for visual stimuli (33 ms)
 
 % create background
 VSinfo.pblack                     = 1/8; % set contrast to 1*1/8 for the "black" background, so it's not too dark and the projector doesn't complain

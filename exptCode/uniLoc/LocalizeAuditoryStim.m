@@ -22,7 +22,7 @@ function Resp = LocalizeAuditoryStim(i, ExpInfo,...
     fprintf(Arduino,input_on);
     PsychPortAudio('FillBuffer',pahandle, AudInfo.GaussianWhiteNoise);
     PsychPortAudio('Start',pahandle,1,0,0);
-    WaitSecs(ExpInfo.tStim);
+    WaitSecs(0.1);
     input_off = ['<',num2str(0),':',num2str(ExpInfo.randAudIdx(i)),'>'];
     fprintf(Arduino,input_off);
     PsychPortAudio('Stop',pahandle);
