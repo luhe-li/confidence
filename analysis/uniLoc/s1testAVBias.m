@@ -2,7 +2,7 @@ clear; clc; close all;
 
 %% set up
 
-sub = 1;
+sub = 4;
 sess = {'-A','-V1','-V2'};
 save_fig = 1;
 
@@ -16,7 +16,9 @@ if ~exist(out_dir,'dir') mkdir(out_dir); end
 
 %% clean
 
-for s = [1,3]
+[estMu, sdMu, sd] = deal(NaN(15, 3, 8));
+
+for s = 1%[1,3]
 
     ses = sess{s};
     load(sprintf('uniLoc_sub%i_ses%s', sub, ses))
@@ -28,12 +30,20 @@ for s = [1,3]
     % sort by level
     locRep = reshape([sortedResp(1:end).target_deg],[nRep,nLevel]);
     loc = locRep(1,:);
-    est = reshape([sortedResp(1:end).response_deg],[nRep,nLevel]);
+    temp_est = reshape([sortedResp(1:end).response_deg],[nRep,nLevel]);
 
-    estMu(sub, ses, :) = mean(est, 1);
-    sdMu(sub, ses, :) = std(est, [], 1);
+    est(sub, s, :, :) = temp_est; % subject, session(aud, v1, v2), location, rep
+
+    % estimate bias and variance
+    estMu(sub, s, :) = mean(temp_est, 1);
+    sdMu(sub, s, :) = std(temp_est, [], 1);
+
+    % overall variance
+%     sd(sub, s, :)= std(temp_est - locRep, [],"all");
 
 end
+
+
 
 %% plot
 
@@ -49,7 +59,7 @@ set(gcf, 'Position',[10 10 500 400])
 axis equal
 
 plot(loc, loc,'k--','LineWidth',lw)
-e = errorbar(loc, estMu, sdMu,'LineWidth',lw);
+e = errorbar(loc, squeeze(estMu(sub, s, :)),squeeze(sdMu(sub, s, :)),'LineWidth',lw);
 e.CapSize = 0; e.Color = clt(2,:);
 xlim([min(loc)-5, max(loc)+5])
 ylim([min(loc)-5, max(loc)+5])
