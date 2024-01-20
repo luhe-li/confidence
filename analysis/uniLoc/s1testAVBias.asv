@@ -18,20 +18,20 @@ if ~exist(out_dir,'dir') mkdir(out_dir); end
 
 for s = [1,3]
 
-    ses = sess{s};
-    load(sprintf('uniLoc_sub%i_ses%s', sub, ses))
+ses = sess{s};
+load(sprintf('uniLoc_sub%i_ses%s', sub, ses))
 
-    % basic info
-    nRep = ExpInfo.nRep;
-    nLevel = ExpInfo.nLevel;
+% basic info
+nRep = ExpInfo.nRep;
+nLevel = ExpInfo.nLevel;
 
-    % sort by level
-    locRep = reshape([sortedResp(1:end).target_deg],[nRep,nLevel]);
-    loc = locRep(1,:);
-    est = reshape([sortedResp(1:end).response_deg],[nRep,nLevel]);
+% sort by level
+locRep = reshape([sortedResp(1:end).target_deg],[nRep,nLevel]);
+loc = locRep(1,:);
+est = reshape([sortedResp(1:end).response_deg],[nRep,nLevel]);
 
-    estMu(sub, ses, :) = mean(est, 1);
-    sdMu(sub, ses, :) = std(est, [], 1);
+estMu = mean(est, 1);
+sdMu = std(est, [], 1);
 
 end
 
