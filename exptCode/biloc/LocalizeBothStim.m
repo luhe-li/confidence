@@ -19,7 +19,7 @@ while 1
         ScreenInfo.numPixels_perCM.*VSinfo.SD_blob.*RNcoordinates(1,:));...
         ScreenInfo.liftingYaxis+(ScreenInfo.numPixels_perCM.*...
         VSinfo.SD_yaxis.*RNcoordinates(2,:))];
-    
+    dots_targetLoc_coordinates = [dots_targetLoc_coordinates,new_dot_targetLoc_coordinates];
     %make sure the center of the 10 blobs are aligned with the
     %predetermined location of the test stimulus
     dots_targetLoc_coordinates_shifted = shiftDotClouds(...
@@ -37,9 +37,9 @@ while 1
             dotClouds_targetLoc = generateDotClouds(windowPtr,...
                 dots_targetLoc_coordinates_shifted,VSinfo,ScreenInfo);
             break;
-        else
-            dots_targetLoc_coordinates = [dots_targetLoc_coordinates,new_dot_targetLoc_coordinates];
         end
+    else
+        dots_targetLoc_coordinates = dots_targetLoc_coordinates(:,1:end-1);
     end
 end
 
@@ -87,10 +87,11 @@ Screen('TextSize',windowPtr,14);
 SetMouse(randi(ScreenInfo.xmid*4,1), yLoc*2, windowPtr);
 buttons = 0;
 tic;
+HideCursor;
 while sum(buttons)==0
     [x,~,buttons] = GetMouse(windowPtr); 
     x = min(x, ScreenInfo.xmid*2); x = max(0,x);
-
+    HideCursor;
     Screen('DrawTexture',windowPtr, VSinfo.grey_texture,[],...
         [0,0,ScreenInfo.xaxis, ScreenInfo.yaxis]);
     Screen('DrawLine', windowPtr, [255 255 255],x, yLoc-3, x, yLoc+3, 1);

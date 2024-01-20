@@ -5,7 +5,7 @@
 % screen. Then, either an auditory or a visual 100 ms-long stimulus was
 % presented, followed by 200 ms of blank screen. Next, the response cursor
 % appeared, and participants adjusted the horizontal location of the cursor
-% to match that of the stimulus. There was no time constraint for the
+% to match that of the stimulus. There was no tCCime constraint for the
 % response. Visual feedback of the cursor location was provided during its
 % adjustment, but error feedback was not provided. After the response, the
 % loudspeaker moved to its new location. The inter-trial interval was
@@ -29,7 +29,7 @@ end
 
 switch ExpInfo.practice
     case 1
-        outFileName = sprintf('uniLoc_sub%i_ses-%i', ExpInfo.subjID, ExpInfo.session);
+        outFileName = sprintf('uniLoc_sub%i_ses-%s', ExpInfo.subjID, ExpInfo.session);
         ExpInfo.nRep = 20; % number of trial per condition level
         ExpInfo.numBlocks = 8;
     case 2
@@ -155,7 +155,7 @@ elseif strcmp(ExpInfo.session, 'V2')
 end
 VSinfo.SD_yaxis            = 2; %SD of the blob in cm (vertical)
 VSinfo.num_randomDots      = 10; %number of blobs
-VSinfo.numFrames           = 6; %for visual stimuli (100 ms)
+VSinfo.numFrames           = 2; %for visual stimuli (100 ms)
 
 % create background
 VSinfo.pblack                     = 1/8; % set contrast to 1*1/8 for the "black" background, so it's not too dark and the projector doesn't complain
@@ -285,7 +285,7 @@ c  = clock;
 ExpInfo.finish  = sprintf('%04d/%02d/%02d_%02d:%02d:%02d',c(1),c(2),c(3),c(4),c(5),ceil(c(6)));
 
 % sort trials by location level
-[~, temp] = sort([Resp(1:end).loc_idx]);
+[~, temp] = sort([Resp(1:end).target_idx]);
 sortedResp = Resp(temp);
 save(fullfile(outDir,outFileName),'Resp','sortedResp','ExpInfo','ScreenInfo','VSinfo','AudInfo');
 Screen('CloseAll');

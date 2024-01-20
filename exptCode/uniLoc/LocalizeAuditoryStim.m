@@ -29,16 +29,18 @@ function Resp = LocalizeAuditoryStim(i, ExpInfo,...
 
     % blank screen 2
     WaitSecs(ExpInfo.tBlank2);
-
+    HideCursor;
     % perception response
     yLoc = ScreenInfo.yaxis-ScreenInfo.liftingYaxis;
     SetMouse(randi(ScreenInfo.xmid*4,1), yLoc*2, windowPtr);
     buttons = 0;
     tic
+    HideCursor;
     while sum(buttons)==0
         [x,~,buttons] = GetMouse(windowPtr); 
         HideCursor;
-        x = min(x, ScreenInfo.xmid*2); x = max(0,x);
+        x = min(x, ScreenInfo.xmid*2); 
+        x = max(0,x);
         Screen('DrawTexture',windowPtr, VSinfo.grey_texture,[],...
                 [0,0,ScreenInfo.xaxis, ScreenInfo.yaxis]);
         Screen('DrawLine', windowPtr, [255 255 255],x, yLoc-3, x, yLoc+3, 1);
@@ -61,10 +63,11 @@ function Resp = LocalizeAuditoryStim(i, ExpInfo,...
     % confidence response
     SetMouse(x*2, yLoc*2, windowPtr);
     buttons = 0;
-    WaitSecs(0.2)
+    WaitSecs(0.2);
     tic
     while sum(buttons)==0
-        [conf_x,~,buttons] = GetMouse(windowPtr); HideCursor;
+        [conf_x,~,buttons] = GetMouse(windowPtr); 
+        HideCursor;
         conf_radius = abs(conf_x - x);
         Screen('DrawTexture',windowPtr, VSinfo.grey_texture,[],...
             [0,0,ScreenInfo.xaxis, ScreenInfo.yaxis]);
