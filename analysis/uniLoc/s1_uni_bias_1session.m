@@ -2,8 +2,8 @@ clear; clc; close all;
 
 %% set up
 
-sub = 3;
-sess = {'-A','-V1','-V2'};
+sub = 4;
+ses = 1;
 save_fig = 1;
 
 %% manage path
@@ -16,24 +16,24 @@ if ~exist(out_dir,'dir') mkdir(out_dir); end
 
 %% clean
 
-for s = 1%[1,3]
+load(sprintf('uniLoc_sub%i_ses%s', sub, ses))
 
-    ses = sess{s};
-    load(sprintf('uniLoc_sub%i_ses%s', sub, ses))
+% basic info
+nRep = ExpInfo.nRep;
+nLevel = ExpInfo.nLevel;
 
-    % basic info
-    nRep = ExpInfo.nRep;
-    nLevel = ExpInfo.nLevel;
+% sort by level
+locRep = reshape([sortedResp(1:end).target_deg],[nRep,nLevel]);
+loc = locRep(1,:);
+est = reshape([sortedResp(1:end).response_deg],[nRep,nLevel]);
 
-    % sort by level
-    locRep = reshape([sortedResp(1:end).target_deg],[nRep,nLevel]);
-    loc = locRep(1,:);
-    est = reshape([sortedResp(1:end).response_deg],[nRep,nLevel]);
+% estimate bias and variance
+estMu = mean(est, 1);
+sdMu = std(est, [], 1);
 
-    estMu(sub, ses, :) = mean(est, 1);
-    sdMu(sub, ses, :) = std(est, [], 1);
+% overall variance
+sd = std(est - locRep, [],"all");
 
-end
 
 %% plot
 
