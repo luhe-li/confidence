@@ -168,13 +168,14 @@ VSinfo.grey_texture                = Screen('MakeTexture', windowPtr, VSinfo.gre
 VSinfo.blankScreen                 = zeros(ScreenInfo.xaxis,ScreenInfo.yaxis);
 
 % draw one blob
-VSinfo.width                         = 3; %(pixel) Increasing this value will make the cloud more blurry (arbituary value)
-VSinfo.boxSize                       = 11; %This is the box size for each cloud (arbituary value)
+VSinfo.width                         = 8; %(pixel) Increasing this value will make the cloud more blurry (arbituary value)
+VSinfo.boxSize                       = 15; %This is the box size for each cloud (arbituary value)
+VSinfo.maxBrightness                 = 100; %indirectly control contrast
 x = 1:1:VSinfo.boxSize; y = x;
 [X,Y]                                = meshgrid(x,y);
 cloud_temp                           = mvnpdf([X(:) Y(:)],[median(x) median(y)],...
     [VSinfo.width 0; 0 VSinfo.width]);
-VSinfo.Cloud                         = reshape(cloud_temp,length(x),length(y)) .* (255/max(cloud_temp));
+VSinfo.Cloud                         = reshape(cloud_temp,length(x),length(y)) .* (VSinfo.maxBrightness/max(cloud_temp));
 
 %% Experiment set up
 
@@ -245,7 +246,7 @@ Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
 DrawFormattedText(windowPtr, 'Press any button to start the unimodal localization task.',...
     'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis,[255 255 255]);
 Screen('Flip',windowPtr);
-% KbWait(-3); 
+KbWait(-3); 
 WaitSecs(1);
 
 for i = 1:ExpInfo.nTrials
