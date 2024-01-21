@@ -2,9 +2,17 @@ clear; clc; close all;
 
 %% set up
 
-sub = 4;
-sess = {'-A','-V1','-V2'};
+sub_slc = 1;
+ses_slc = [1,3];
+
+num_sub = 1;
+ses_labels = {'-A','-V1','-V2'};
+num_ses = 3;
+
 save_fig = 1;
+
+num_rep = 20;
+num_loc = 8;
 
 %% manage path
 
@@ -16,30 +24,35 @@ if ~exist(out_dir,'dir') mkdir(out_dir); end
 
 %% clean
 
-[estMu, sdMu, sd] = deal(NaN(15, 3, 8));
 
-for s = 1%[1,3]
+[estMu, respSD, sd] = deal(NaN(num_sub, num_ses, 8));
 
-    ses = sess{s};
-    load(sprintf('uniLoc_sub%i_ses%s', sub, ses))
+for i = 1:numel(sub_slc)
 
-    % basic info
-    nRep = ExpInfo.nRep;
-    nLevel = ExpInfo.nLevel;
+    sub = sub_slc(i);
 
-    % sort by level
-    locRep = reshape([sortedResp(1:end).target_deg],[nRep,nLevel]);
-    loc = locRep(1,:);
-    temp_est = reshape([sortedResp(1:end).response_deg],[nRep,nLevel]);
+    for j = 1:numel(ses_slc)
 
-    est(sub, s, :, :) = temp_est; % subject, session(aud, v1, v2), location, rep
+        ses = ses_slc(j);
+        ses_label = ses_labels{ses};
+     
+        load(sprintf('uniLoc_sub%i_ses%s', sub, ses_label))
 
-    % estimate bias and variance
-    estMu(sub, s, :) = mean(temp_est, 1);
-    sdMu(sub, s, :) = std(temp_est, [], 1);
+        % sort by level
+        locRep = reshape([sortedResp(1:end).target_deg],[num_rep,num_loc]);
+        loc = locRep(1,:);
+        temp_resp = reshape([sortedResp(1:end).response_deg],[num_rep,num_loc]);
 
-    % overall variance
-%     sd(sub, s, :)= std(temp_est - locRep, [],"all");
+        resp(i, j, :, :) = temp_resp; % subject, session(aud, v1, v2), location, rep
+
+        % estimate bias and variance
+        respMu(i, j, :) = mean(temp_resp, 1);
+        respSD(i, j, :) = std(temp_resp, [], 1);
+
+        % overall variance
+        respVar(i, j) = mean(respSD);
+
+    end
 
 end
 
@@ -59,7 +72,7 @@ set(gcf, 'Position',[10 10 500 400])
 axis equal
 
 plot(loc, loc,'k--','LineWidth',lw)
-e = errorbar(loc, squeeze(estMu(sub, s, :)),squeeze(sdMu(sub, s, :)),'LineWidth',lw);
+e = errorbar(loc, squeeze(estMu(sub, s, :)),squeeze(respSD(sub, s, :)),'LineWidth',lw);
 e.CapSize = 0; e.Color = clt(2,:);
 xlim([min(loc)-5, max(loc)+5])
 ylim([min(loc)-5, max(loc)+5])
@@ -77,5 +90,7 @@ if save_fig
     flnm = sprintf('sub%i_loc%s',sub, ses);
     saveas(gca, fullfile(out_dir, flnm),'png')
 end
+
+%% plot variance
 
 %% plot variance
