@@ -168,7 +168,7 @@ VSinfo.grey_texture                = Screen('MakeTexture', windowPtr, VSinfo.gre
 VSinfo.blankScreen                 = zeros(ScreenInfo.xaxis,ScreenInfo.yaxis);
 
 % draw one blob
-VSinfo.width                         = 20; %(pixel) Increasing this value will make the cloud more blurry (arbituary value)
+VSinfo.width                         = 3; %(pixel) Increasing this value will make the cloud more blurry (arbituary value)
 VSinfo.boxSize                       = 11; %This is the box size for each cloud (arbituary value)
 x = 1:1:VSinfo.boxSize; y = x;
 [X,Y]                                = meshgrid(x,y);
