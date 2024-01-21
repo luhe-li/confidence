@@ -21,16 +21,24 @@ clear; close all;  rng('Shuffle');
 ExpInfo.subjID = [];
 while isempty(ExpInfo.subjID) == 1
     try ExpInfo.subjID = input('Participant ID#: ') ;
-        ExpInfo.session = input('Session: A/V1/V2#: ','s');
+        ExpInfo.session = input('Session: A/V#: ','s');
         ExpInfo.practice  = input('Main expt: 1; Practice: 2#: ');
     catch
     end
 end
 
+switch ExpInfo.session
+    case 'A'
+        ExpInfo.nReliability = 1;
+    case 'V'
+        ExpInfo.nReliability = 2;
+end 
+        
+
 switch ExpInfo.practice
     case 1
         outFileName = sprintf('uniLoc_sub%i_ses-%s', ExpInfo.subjID, ExpInfo.session);
-        ExpInfo.nRep = 10; % number of trial per condition level
+        ExpInfo.nRep = 20; % number of trial per condition level
         ExpInfo.numBlocks = 8;
     case 2
         outFileName = sprintf('uniLoc_practice_sub%i_ses-%i', ExpInfo.subjID, ExpInfo.session);
@@ -149,11 +157,6 @@ end
 
 %% make visual stimuli
 
-if strcmp(ExpInfo.session, 'V1')
-    VSinfo.SD_blob = 2;
-elseif strcmp(ExpInfo.session, 'V2')
-    VSinfo.SD_blob = 8;
-end
 VSinfo.SD_yaxis            = 2; %SD of the blob in cm (vertical)
 VSinfo.num_randomDots      = 10; %number of blobs
 VSinfo.numFrames           = 2; %for visual stimuli (33 ms)
@@ -176,14 +179,18 @@ VSinfo.Cloud                         = reshape(cloud_temp,length(x),length(y)) .
 %% Experiment set up
 
 % choose auditory locations out of 16 speakers, in index
-ExpInfo.audLevel = [2,4,6,8,9,11,13,15];
+ExpInfo.audLevel = 5:12;
 ExpInfo.nLevel = numel(ExpInfo.audLevel);
 for tt = 1:ExpInfo.nRep
     ExpInfo.randIdx(:,tt) = randperm(ExpInfo.nLevel)';
+    ExpInfo.randVisReliabIdx(:,tt) = randperm(ExpInfo.nLevel * ExpInfo.nReliability)';
 end
 ExpInfo.randIdx = reshape(ExpInfo.randIdx, [], 1)';
+ExpInfo.randVisReliabIdx = reshape(ExpInfo.randVisReliabIdx, [], 1)';
+VSinfo.SD_blob(~~rem(ExpInfo.randVisReliabIdx,2)) = 2;
+VSinfo.SD_blob(~rem(ExpInfo.randVisReliabIdx,2)) = 8; % visual reliability is mixed here
 ExpInfo.randAudIdx = ExpInfo.audLevel(ExpInfo.randIdx);
-
+ExpInfo.randVisIdx = ExpInfo.audLevel(ceil(ExpInfo.randVisReliabIdx/2));
 % location of speakers in CM, visual angle, and pixel
 ExpInfo.sittingDistance              = 113.0; %cm
 ExpInfo.numSpeaker                   = 16;
@@ -200,10 +207,12 @@ ExpInfo.loc_deg = rad2deg(atan(ExpInfo.loc_cm/ExpInfo.sittingDistance));
 ExpInfo.loc_pixel = ExpInfo.loc_cm .* ScreenInfo.numPixels_perCM;
 
 % visual locations in pixel
-ExpInfo.randVisPixel = ExpInfo.loc_pixel;
+ExpInfo.Visloc_cm  = ExpInfo.speakerLocCM(ExpInfo.randVisIdx);
+ExpInfo.VisLoc_pixel = ExpInfo.Visloc_cm .* ScreenInfo.numPixels_perCM;
+ExpInfo.randVisPixel = ExpInfo.VisLoc_pixel;
 
 % split all the trials into blocks
-ExpInfo.nTrials = ExpInfo.nLevel * ExpInfo.nRep;
+ExpInfo.nTrials = ExpInfo.nLevel * ExpInfo.nRep * ExpInfo.nReliability;
 blocks = linspace(0,ExpInfo.nTrials,...
     ExpInfo.numBlocks+1);
 ExpInfo.breakTrials       = floor(blocks(2:(end-1)));
@@ -285,8 +294,17 @@ end
 c  = clock;
 ExpInfo.finish  = sprintf('%04d/%02d/%02d_%02d:%02d:%02d',c(1),c(2),c(3),c(4),c(5),ceil(c(6)));
 
-% sort trials by location level
-[~, temp] = sort([Resp(1:end).target_idx]);
-sortedResp = Resp(temp);
-save(fullfile(outDir,outFileName),'Resp','sortedResp','ExpInfo','ScreenInfo','VSinfo','AudInfo');
+if ExpInfo.session == 'V'
+    [~, temp1] = sort(VSinfo.SD_blob);
+    reliSortResp = Resp(temp1);
+    [~, temp2] = sort([reliSortResp(1:end).target_idx]);
+    sortedResp = reliSortResp(temp2);
+    save(fullfile(outDir,outFileName),'Resp','reliSortResp','sortedResp','ExpInfo','ScreenInfo','VSinfo','AudInfo');
+else
+    % sort trials by location level
+    [~, temp2] = sort([Resp(1:end).target_idx]);
+    sortedResp = Resp(temp2);
+    save(fullfile(outDir,outFileName),'Resp','sortedResp','ExpInfo','ScreenInfo','VSinfo','AudInfo');
+end
+
 Screen('CloseAll');
