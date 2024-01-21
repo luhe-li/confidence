@@ -61,6 +61,7 @@ function Resp = LocalizeAuditoryStim(i, ExpInfo,...
     
 %     disp(x)
     % confidence response
+    Screen('TextSize',windowPtr,20);
     SetMouse(x*2, yLoc*2, windowPtr);
     buttons = 0;
     WaitSecs(0.2);

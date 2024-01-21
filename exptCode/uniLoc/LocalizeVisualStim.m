@@ -100,6 +100,7 @@ Resp.response_cm    = (Resp.response_pixel -  ScreenInfo.xmid)/ScreenInfo.numPix
 Resp.response_deg   = rad2deg(atan(Resp.response_cm/ExpInfo.sittingDistance));
 HideCursor;
 % confidence response
+Screen('TextSize',windowPtr,20);
 SetMouse(x*2, yLoc*2, windowPtr);
 buttons = 0;
 WaitSecs(0.2);

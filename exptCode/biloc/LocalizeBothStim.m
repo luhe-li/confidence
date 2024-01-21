@@ -83,7 +83,7 @@ WaitSecs(ExpInfo.tBlank2);
 
 % perception response
 yLoc = ScreenInfo.yaxis-ScreenInfo.liftingYaxis;
-Screen('TextSize',windowPtr,14);
+Screen('TextSize',windowPtr,20);
 SetMouse(randi(ScreenInfo.xmid*4,1), yLoc*2, windowPtr);
 buttons = 0;
 tic;
