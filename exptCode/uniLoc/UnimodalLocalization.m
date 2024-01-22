@@ -305,11 +305,19 @@ c  = clock;
 ExpInfo.finish  = sprintf('%04d/%02d/%02d_%02d:%02d:%02d',c(1),c(2),c(3),c(4),c(5),ceil(c(6)));
 
 if ExpInfo.session == 'V'
+
     [~, temp1] = sort(VSinfo.SD_blob);
     reliSortResp = Resp(temp1);
-    [~, temp2] = sort([reliSortResp(1:end).target_idx]);
-    sortedResp = reliSortResp(temp2);
-    save(fullfile(outDir,outFileName),'Resp','reliSortResp','sortedResp','ExpInfo','ScreenInfo','VSinfo','AudInfo');
+    reli1resp = reliSortResp(1:ExpInfo.nRep * ExpInfo.nLevel);
+    reli2resp = reliSortResp((ExpInfo.nRep * ExpInfo.nLevel+1):end);
+
+    [~, temp2] = sort([reli1resp.target_idx]);
+    sortedReli1Resp = reli1resp(temp2);
+    [~, temp3] = sort([reli2resp.target_idx]);
+    sortedReli2Resp = reli2resp(temp3);
+
+    save('uniLoc_sub1_ses-V2.mat','Resp','reliSortResp','sortedResp','ExpInfo','ScreenInfo','VSinfo','AudInfo','sortedReli1Resp','sortedReli2Resp')
+    
 else
     % sort trials by location level
     [~, temp2] = sort([Resp(1:end).target_idx]);
