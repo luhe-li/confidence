@@ -38,7 +38,7 @@ for i = 1:numel(sub_slc)
 
         if strcmp(ses_labels,'-V')
 
-            rel1resp = sortedResp(1:num_rep*num_loc);
+            rel1resp = sortedResp(1:)
 
         end
         % sort by level
