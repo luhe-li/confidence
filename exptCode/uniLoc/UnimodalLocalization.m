@@ -38,7 +38,7 @@ end
 switch ExpInfo.practice
     case 1
         outFileName = sprintf('uniLoc_sub%i_ses-%s', ExpInfo.subjID, ExpInfo.session);
-        ExpInfo.nRep = 20; % number of trial per condition level
+        ExpInfo.nRep = 0; % number of trial per condition level
         ExpInfo.numBlocks = 8;
     case 2
         outFileName = sprintf('uniLoc_practice_sub%i_ses-%i', ExpInfo.subjID, ExpInfo.session);
@@ -192,6 +192,7 @@ VSinfo.SD_blob(~~rem(ExpInfo.randVisReliabIdx,2)) = 2;
 VSinfo.SD_blob(~rem(ExpInfo.randVisReliabIdx,2)) = 8; % visual reliability is mixed here
 ExpInfo.randAudIdx = ExpInfo.audLevel(ExpInfo.randIdx);
 ExpInfo.randVisIdx = ExpInfo.audLevel(ceil(ExpInfo.randVisReliabIdx/2));
+
 % location of speakers in CM, visual angle, and pixel
 ExpInfo.sittingDistance              = 113.0; %cm
 ExpInfo.numSpeaker                   = 16;
@@ -225,8 +226,8 @@ ExpInfo.numTrialsPerBlock = ExpInfo.breakTrials(1);
 ExpInfo.maxPoint = 100;
 ExpInfo.minPoint = 1; % if enclosed
 % maxPoint - droprate * 2 * confidence_radius = minPoint
-% % we define max 2 * confidence_radius as half of the screen size
-ExpInfo.dropRate = (ExpInfo.maxPoint - ExpInfo.minPoint)/ScreenInfo.halfScreenSize;
+% % we define max 2 * confidence_radius as 1/4 of the screen size
+ExpInfo.dropRate = (ExpInfo.maxPoint - ExpInfo.minPoint)/(0.5*ScreenInfo.halfScreenSize);
 
 % define durations
 ExpInfo.tFixation = 0.5;
@@ -272,6 +273,8 @@ for i = 1:ExpInfo.nTrials
 
     %% add breaks
     if ismember(i,ExpInfo.breakTrials)
+        
+        Screen('TextSize',windowPtr,30);
         idxBlock = find(ExpInfo.breakTrials==i);
         firstTrial = ExpInfo.firstTrial(idxBlock);
         lastTrial = ExpInfo.lastTrial(idxBlock);

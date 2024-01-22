@@ -68,13 +68,15 @@ for j = 1:VSinfo.numFrames %100 ms
 end
 
 % blank screen 2
-WaitSecs(ExpInfo.tBlank2);
 HideCursor;
+WaitSecs(ExpInfo.tBlank2);
+
 %% response
 
 % perceptual response
 yLoc = ScreenInfo.yaxis-ScreenInfo.liftingYaxis;
 SetMouse(randi(ScreenInfo.xaxis*2,1), yLoc*2, windowPtr);
+HideCursor;
 buttons = 0;
 tic;
 while sum(buttons)==0
@@ -100,8 +102,9 @@ Resp.response_cm    = (Resp.response_pixel -  ScreenInfo.xmid)/ScreenInfo.numPix
 Resp.response_deg   = rad2deg(atan(Resp.response_cm/ExpInfo.sittingDistance));
 HideCursor;
 % confidence response
-Screen('TextSize',windowPtr,20);
+Screen('TextSize',windowPtr,15);
 SetMouse(x*2, yLoc*2, windowPtr);
+HideCursor;
 buttons = 0;
 WaitSecs(0.2);
 tic;
@@ -137,7 +140,7 @@ Screen('Flip',windowPtr);
 WaitSecs(ExpInfo.ITI);
 
 % calculate points
-Resp.target_idx = ExpInfo.randAudIdx(i); % visual location that corresponds to speaker index
+Resp.target_idx = ExpInfo.randVisIdx(i); % visual location that corresponds to speaker index
 Resp.target_cm = ExpInfo.speakerLocCM(Resp.target_idx);
 Resp.target_deg = rad2deg(atan(Resp.target_cm/ExpInfo.sittingDistance));
 Resp.enclosed = abs(Resp.target_cm - Resp.response_cm) <= Resp.conf_radius_cm;

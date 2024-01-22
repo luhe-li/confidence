@@ -2,8 +2,8 @@ clear; clc; close all;
 
 %% set up
 
-sub = 4;
-ses = 1;
+sub = 1;
+ses = '-A';
 save_fig = 1;
 
 %% manage path
@@ -34,7 +34,6 @@ sdMu = std(est, [], 1);
 % overall variance
 sd = std(est - locRep, [],"all");
 
-
 %% plot
 
 % figure set up
@@ -59,11 +58,11 @@ switch ses
 
     case '-A'
         xlabel('Auditory stimulus location (dva)')
-        ylabel('Visual estimate location (dva)')
+        ylabel('Estimate location (dva)')
 
 end
 
 if save_fig
-    flnm = sprintf('sub%i_loc%s',sub, ses);
+    flnm = sprintf('sub%i_cond%s',sub, ses);
     saveas(gca, fullfile(out_dir, flnm),'png')
 end
