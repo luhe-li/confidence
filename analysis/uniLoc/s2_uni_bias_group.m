@@ -3,11 +3,10 @@ clear; clc; close all;
 %% set up
 
 sub_slc = 1;
-ses_slc = [1,3];
-
 num_sub = 1;
-ses_labels = {'-A','-V1','-V2'};
-num_ses = 3;
+
+ses_labels = {'-A','-V'};
+num_ses = 2;
 
 save_fig = 1;
 
