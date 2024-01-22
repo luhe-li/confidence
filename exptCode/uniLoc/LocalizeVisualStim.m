@@ -120,15 +120,20 @@ while sum(buttons)==0
         [0,0,ScreenInfo.xaxis, ScreenInfo.yaxis]);
     Screen('DrawLine', windowPtr, [255 255 255],x, yLoc+3, x, yLoc-3, 1);
     Screen('DrawLine', windowPtr, [255 255 255],x-conf_radius, yLoc, x+conf_radius, yLoc, 1);
+    
     if ExpInfo.practice == 2
     DrawFormattedText(windowPtr, ['Actual score: ' num2str(round(potentialPoint * potentialEnclosed,2))], 'center', 'center', ...
         [255 255 255],[], [], [], [], [], ...
         [x-20,yLoc-25,x+20,yLoc-19]);
-    end
     DrawFormattedText(windowPtr, ['Potential score: ' num2str(round(potentialPoint,2))], 'center', 'center', ...
         [255 255 255],[], [], [], [], [], ...
         [x-20,yLoc-12,x+20,yLoc-6]);
-
+    else
+    DrawFormattedText(windowPtr, num2str(round(potentialPoint,2)), 'center', 'center', ...
+        [255 255 255],[], [], [], [], [], ...
+        [x-20,yLoc-12,x+20,yLoc-6]);
+    end
+    
     Screen('Flip',windowPtr);
     [~, ~, keyCode] = KbCheck(-1);
     if keyCode(KbName('ESCAPE'))
@@ -153,6 +158,8 @@ Resp.target_idx = ExpInfo.randVisIdx(i); % visual location that corresponds to s
 Resp.target_cm = ExpInfo.speakerLocCM(Resp.target_idx);
 Resp.target_deg = rad2deg(atan(Resp.target_cm/ExpInfo.sittingDistance));
 Resp.enclosed = abs(Resp.target_cm - Resp.response_cm) <= Resp.conf_radius_cm;
+bestRadius_cm = abs(Resp.target_cm - Resp.response_cm);
+Resp.maxPtPossible = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * bestRadius_cm, ExpInfo.minPoint);
 if Resp.enclosed
     Resp.point = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * Resp.conf_radius_cm, ExpInfo.minPoint);
 else

@@ -163,7 +163,7 @@ end
 %% make visual stimuli
 
 VSinfo.SD_yaxis            = 2; %SD of the blob in cm (vertical)
-VSinfo.num_randomDots      = 10; %number of blobs
+VSinfo.num_randomDots      = 5; %number of blobs
 VSinfo.numFrames           = 2; %for visual stimuli (33 ms)
 
 % create background
@@ -284,7 +284,8 @@ for i = 1:ExpInfo.nTrials
         firstTrial = ExpInfo.firstTrial(idxBlock);
         lastTrial = ExpInfo.lastTrial(idxBlock);
         blockPt = sum([Resp(firstTrial:lastTrial).point]);
-        maxPtPossible = lastTrial - firstTrial + 1;
+        maxPtPossible = sum([Resp(firstTrial:lastTrial).maxPtPossible]);
+        
         blockInfo = sprintf('You''ve finished block %i/%i. Please take a break.',idxBlock,ExpInfo.numBlocks);
         pointInfo = sprintf('Your total points of the last block is %.2f (max points possible: %i)',blockPt, maxPtPossible);
         
