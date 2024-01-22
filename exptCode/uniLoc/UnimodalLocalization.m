@@ -38,11 +38,16 @@ end
 switch ExpInfo.practice
     case 1
         outFileName = sprintf('uniLoc_sub%i_ses-%s', ExpInfo.subjID, ExpInfo.session);
-        ExpInfo.nRep = 0; % number of trial per condition level
+        ExpInfo.nRep = 20; % number of trial per condition level
         ExpInfo.numBlocks = 8;
     case 2
         outFileName = sprintf('uniLoc_practice_sub%i_ses-%i', ExpInfo.subjID, ExpInfo.session);
-        ExpInfo.nRep = 1; % number of trial per condition level
+        switch ExpInfo.session
+            case 'A'
+                ExpInfo.nRep = 2; 
+            case 'V'
+                ExpInfo.nRep = 1; 
+        end
         ExpInfo.numBlocks = 2;
 end
 

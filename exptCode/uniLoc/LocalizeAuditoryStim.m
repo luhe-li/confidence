@@ -67,19 +67,26 @@ function Resp = LocalizeAuditoryStim(i, ExpInfo,...
     WaitSecs(0.2);
     tic
     while sum(buttons)==0
-        [conf_x,~,buttons] = GetMouse(windowPtr); 
-        HideCursor;
-        conf_radius = abs(conf_x - x);
-        potentialconfRcm = conf_radius/ScreenInfo.numPixels_perCM;
-        potentialPoint = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * potentialconfRcm, ExpInfo.minPoint);
-        Screen('DrawTexture',windowPtr, VSinfo.grey_texture,[],...
-            [0,0,ScreenInfo.xaxis, ScreenInfo.yaxis]);
-        Screen('DrawLine', windowPtr, [255 255 255],x, yLoc+3, x, yLoc-3, 1);
-        Screen('DrawLine', windowPtr, [255 255 255],x-conf_radius, yLoc, x+conf_radius, yLoc, 1);
-        DrawFormattedText(windowPtr, num2str(round(potentialPoint,2)), 'center', 'center', ...
+    [conf_x,~,buttons] = GetMouse(windowPtr);
+    conf_radius = abs(conf_x - x);
+    potentialconfRcm = conf_radius/ScreenInfo.numPixels_perCM;
+    potentialPoint = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * potentialconfRcm, ExpInfo.minPoint);
+    
+    potentialEnclosed = abs(ExpInfo.speakerLocCM(ExpInfo.randAudIdx(i)) - Resp.response_cm) <= potentialconfRcm;
+    
+    Screen('DrawTexture',windowPtr, VSinfo.grey_texture,[],...
+        [0,0,ScreenInfo.xaxis, ScreenInfo.yaxis]);
+    Screen('DrawLine', windowPtr, [255 255 255],x, yLoc+3, x, yLoc-3, 1);
+    Screen('DrawLine', windowPtr, [255 255 255],x-conf_radius, yLoc, x+conf_radius, yLoc, 1);
+    if ExpInfo.practice == 2
+    DrawFormattedText(windowPtr, ['Actual score: ' num2str(round(potentialPoint * potentialEnclosed,2))], 'center', 'center', ...
+        [255 255 255],[], [], [], [], [], ...
+        [x-20,yLoc-25,x+20,yLoc-19]);
+    end
+    DrawFormattedText(windowPtr, ['Potential score: ' num2str(round(potentialPoint,2))], 'center', 'center', ...
         [255 255 255],[], [], [], [], [], ...
         [x-20,yLoc-12,x+20,yLoc-6]);
-        Screen('Flip',windowPtr);
+    Screen('Flip',windowPtr);
         [~, ~, keyCode] = KbCheck(-1);
         if keyCode(KbName('ESCAPE'))
             sca;
