@@ -70,12 +70,14 @@ for j = 1:VSinfo.numFrames
     Screen('Flip',windowPtr);
 end
 
-% display post-stimulus mask
-for jj = 1:VSinfo.numFramesMasker
-    Screen('DrawTexture', windowPtr, gwn_texture(rem(jj,10)+1),[],...
-        [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
-    Screen('Flip',windowPtr);
-end
+% % display post-stimulus mask
+% for jj = 1:VSinfo.numFramesMasker
+%     Screen('DrawTexture', windowPtr, gwn_texture(jj),[],...
+%         [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
+%     Screen('Flip',windowPtr);
+% end
+Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
+    [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
 Screen('Flip',windowPtr);
 
 % blank screen 2

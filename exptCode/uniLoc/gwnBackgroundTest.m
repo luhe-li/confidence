@@ -1,0 +1,1 @@
+a = generateNoisyBackground(VSinfo,ScreenInfo,windowPtr);

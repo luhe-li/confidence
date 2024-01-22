@@ -163,8 +163,8 @@ end
 %% make visual stimuli
 
 VSinfo.SD_yaxis            = 2; %SD of the blob in cm (vertical)
-VSinfo.num_randomDots      = 5; %number of blobs
-VSinfo.numFrames           = 2; %for visual stimuli (33 ms)
+VSinfo.num_randomDots      = 10; %number of blobs
+VSinfo.numFrames           = 3; %for visual stimuli (33 ms)
 VSinfo.numFramesMasker     = 6; %100 ms
 
 % create background
@@ -180,7 +180,7 @@ VSinfo.GWNnumFrames        = 10; %generate 10 frames
 % draw one blob
 VSinfo.width                         = 8; %(pixel) Increasing this value will make the cloud more blurry (arbituary value)
 VSinfo.boxSize                       = 15; %This is the box size for each cloud (arbituary value)
-VSinfo.maxBrightness                 = 100; %indirectly control contrast
+VSinfo.maxBrightness                 = 255; %indirectly control contrast
 x = 1:1:VSinfo.boxSize; y = x;
 [X,Y]                                = meshgrid(x,y);
 cloud_temp                           = mvnpdf([X(:) Y(:)],[median(x) median(y)],...
@@ -198,8 +198,8 @@ for tt = 1:ExpInfo.nRep
 end
 ExpInfo.randIdx = reshape(ExpInfo.randIdx, [], 1)';
 ExpInfo.randVisReliabIdx = reshape(ExpInfo.randVisReliabIdx, [], 1)';
-VSinfo.SD_blob(~~rem(ExpInfo.randVisReliabIdx,2)) = 8;
-VSinfo.SD_blob(~rem(ExpInfo.randVisReliabIdx,2)) = 16; % visual reliability is mixed here
+VSinfo.SD_blob(~~rem(ExpInfo.randVisReliabIdx,2)) = 2;
+VSinfo.SD_blob(~rem(ExpInfo.randVisReliabIdx,2)) = 8; % visual reliability is mixed here
 ExpInfo.randAudIdx = ExpInfo.audLevel(ExpInfo.randIdx);
 ExpInfo.randVisIdx = ExpInfo.audLevel(ceil(ExpInfo.randVisReliabIdx/2));
 
