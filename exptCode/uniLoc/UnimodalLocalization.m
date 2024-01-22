@@ -165,12 +165,17 @@ end
 VSinfo.SD_yaxis            = 2; %SD of the blob in cm (vertical)
 VSinfo.num_randomDots      = 5; %number of blobs
 VSinfo.numFrames           = 2; %for visual stimuli (33 ms)
+VSinfo.numFramesMasker     = 6; %100 ms
 
 % create background
 VSinfo.pblack                     = 1/8; % set contrast to 1*1/8 for the "black" background, so it's not too dark and the projector doesn't complain
 VSinfo.greyScreen                  = VSinfo.pblack * ones(ScreenInfo.xaxis,ScreenInfo.yaxis)*255;
 VSinfo.grey_texture                = Screen('MakeTexture', windowPtr, VSinfo.greyScreen,[],[],[],2);
 VSinfo.blankScreen                 = zeros(ScreenInfo.xaxis,ScreenInfo.yaxis);
+
+% white noise background
+VSinfo.GWNnumPixel         = 4; % 4 pixels will have the same color
+VSinfo.GWNnumFrames        = 10; %generate 10 frames
 
 % draw one blob
 VSinfo.width                         = 8; %(pixel) Increasing this value will make the cloud more blurry (arbituary value)

@@ -3,6 +3,9 @@ function Resp = LocalizeVisualStim(i, ExpInfo,...
 
 %% precompute visual stimuli
 
+% generate noisy background
+gwn_texture = generateNoisyBackground(VSinfo,ScreenInfo,windowPtr);
+
 %first compute the location of the visual stimulus in pixels
 loc_pixel = round(ExpInfo.randVisPixel(i));
 targetLoc = ScreenInfo.xmid + loc_pixel;
@@ -61,15 +64,22 @@ Screen('Flip',windowPtr);
 WaitSecs(ExpInfo.tBlank1);
 
 % display visual stimulus
-for j = 1:VSinfo.numFrames %100 ms
+for j = 1:VSinfo.numFrames 
     Screen('DrawTexture',windowPtr,dotClouds_targetLoc,[],...
         [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
     Screen('Flip',windowPtr);
 end
 
+% display post-stimulus mask
+for jj = 1:VSinfo.numFramesMasker
+    Screen('DrawTexture', windowPtr, gwn_texture(rem(jj,10)+1),[],...
+        [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
+    Screen('Flip',windowPtr);
+end
+Screen('Flip',windowPtr);
+
 % blank screen 2
-HideCursor;
-WaitSecs(ExpInfo.tBlank2);
+% WaitSecs(ExpInfo.tBlank2);
 
 %% response
 
