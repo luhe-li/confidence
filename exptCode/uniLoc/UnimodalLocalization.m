@@ -193,8 +193,8 @@ for tt = 1:ExpInfo.nRep
 end
 ExpInfo.randIdx = reshape(ExpInfo.randIdx, [], 1)';
 ExpInfo.randVisReliabIdx = reshape(ExpInfo.randVisReliabIdx, [], 1)';
-VSinfo.SD_blob(~~rem(ExpInfo.randVisReliabIdx,2)) = 2;
-VSinfo.SD_blob(~rem(ExpInfo.randVisReliabIdx,2)) = 8; % visual reliability is mixed here
+VSinfo.SD_blob(~~rem(ExpInfo.randVisReliabIdx,2)) = 8;
+VSinfo.SD_blob(~rem(ExpInfo.randVisReliabIdx,2)) = 16; % visual reliability is mixed here
 ExpInfo.randAudIdx = ExpInfo.audLevel(ExpInfo.randIdx);
 ExpInfo.randVisIdx = ExpInfo.audLevel(ceil(ExpInfo.randVisReliabIdx/2));
 
@@ -287,7 +287,7 @@ for i = 1:ExpInfo.nTrials
         maxPtPossible = sum([Resp(firstTrial:lastTrial).maxPtPossible]);
         
         blockInfo = sprintf('You''ve finished block %i/%i. Please take a break.',idxBlock,ExpInfo.numBlocks);
-        pointInfo = sprintf('Your total points of the last block is %.2f (max points possible: %i)',blockPt, maxPtPossible);
+        pointInfo = sprintf('Your total points of the last block is %.2f (max points possible: %.2f)',blockPt, maxPtPossible);
         
         Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
         [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
