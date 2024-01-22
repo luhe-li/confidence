@@ -2,7 +2,7 @@ clear; clc; close all;
 
 %% set up
 
-sub_slc = 1;
+sub_slc = 2;
 
 % session
 ses_labels = {'-A','-V'};

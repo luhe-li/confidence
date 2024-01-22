@@ -1,6 +1,6 @@
 clear;
 
-load('uniLoc_sub2_ses-V.mat');
+load('uniLoc_sub1_ses-V.mat');
 
 [~, temp1] = sort(VSinfo.SD_blob);
 reliSortResp = Resp(temp1);
@@ -12,4 +12,4 @@ sortedReli1Resp = reli1resp(temp2);
 [~, temp3] = sort([reli2resp.target_idx]);
 sortedReli2Resp = reli2resp(temp3);
 
-save('uniLoc_sub2_ses-V2.mat','Resp','reliSortResp','sortedResp','ExpInfo','ScreenInfo','VSinfo','AudInfo','sortedReli1Resp','sortedReli2Resp')
+save('uniLoc_sub1_ses-V2.mat','Resp','reliSortResp','sortedResp','ExpInfo','ScreenInfo','VSinfo','AudInfo','sortedReli1Resp','sortedReli2Resp')
