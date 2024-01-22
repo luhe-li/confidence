@@ -10,8 +10,6 @@ num_ses = 2;
 
 save_fig = 1;
 
-num_rep = 20;
-num_loc = 8;
 
 %% manage path
 
@@ -23,24 +21,26 @@ if ~exist(out_dir,'dir') mkdir(out_dir); end
 
 %% clean
 
-
 [estMu, respSD, sd] = deal(NaN(num_sub, num_ses, 8));
 
 for i = 1:numel(sub_slc)
 
     sub = sub_slc(i);
 
-    for j = 1:numel(ses_slc)
+    for j = 1:num_ses
 
-        ses = ses_slc(j);
-        ses_label = ses_labels{ses};
+        ses_label = ses_labels{j};
      
         load(sprintf('uniLoc_sub%i_ses%s', sub, ses_label))
 
+        % experimental info
+        num_rep(i,j) = ExpInfo.nRep;
+        num_loc(i,j) = ExpInfo.nLevel;
+
         % sort by level
-        locRep = reshape([sortedResp(1:end).target_deg],[num_rep,num_loc]);
+        locRep = reshape([sortedResp(1:end).target_deg],[num_rep(i,j),num_loc(i,j)]);
         loc = locRep(1,:);
-        temp_resp = reshape([sortedResp(1:end).response_deg],[num_rep,num_loc]);
+        temp_resp = reshape([sortedResp(1:end).response_deg],[num_rep(i,j),num_loc(i,j)]);
 
         resp(i, j, :, :) = temp_resp; % subject, session(aud, v1, v2), location, rep
 
