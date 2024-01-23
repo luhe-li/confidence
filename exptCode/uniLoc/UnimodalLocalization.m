@@ -164,7 +164,7 @@ end
 
 VSinfo.SD_yaxis            = 2; %SD of the blob in cm (vertical)
 VSinfo.num_randomDots      = 10; %number of blobs
-VSinfo.numFrames           = 4; %for visual stimuli
+VSinfo.numFrames           = 6; %for visual stimuli
 VSinfo.numFramesMasker     = 10; %for mask
 
 % create background
@@ -244,7 +244,7 @@ ExpInfo.dropRate = (ExpInfo.maxPoint - ExpInfo.minPoint)/(0.5*ScreenInfo.halfScr
 ExpInfo.tFixation = 0.5;
 ExpInfo.tBlank1 = 0.3;
 ExpInfo.tBlank2 = 0.2;
-ExpInfo.tStim = 0.033;
+ExpInfo.tStim = 0.1;
 ExpInfo.ITI = 0.3;
 
 %% Run the experiment
