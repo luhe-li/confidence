@@ -323,7 +323,7 @@ if ExpInfo.session == 'V'
     [~, temp3] = sort([reli2resp.target_idx]);
     sortedReli2Resp = reli2resp(temp3);
 
-    save('uniLoc_sub1_ses-V2.mat','Resp','reliSortResp','ExpInfo','ScreenInfo','VSinfo','AudInfo','sortedReli1Resp','sortedReli2Resp')
+    save(fullfile(outDir,outFileName),'Resp','reliSortResp','ExpInfo','ScreenInfo','VSinfo','AudInfo','sortedReli1Resp','sortedReli2Resp')
     
 else
     % sort trials by location level

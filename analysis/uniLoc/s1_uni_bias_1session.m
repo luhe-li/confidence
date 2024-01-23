@@ -2,7 +2,7 @@ clear; clc; close all;
 
 %% set up
 
-sub = 1;
+sub = 3;
 ses = '-A';
 save_fig = 1;
 
