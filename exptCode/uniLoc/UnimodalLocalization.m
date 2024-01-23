@@ -163,7 +163,7 @@ end
 %% make visual stimuli
 
 VSinfo.SD_yaxis            = 2; %SD of the blob in cm (vertical)
-VSinfo.num_randomDots      = 5; %number of blobs
+VSinfo.num_randomDots      = 10; %number of blobs
 VSinfo.numFrames           = 2; %for visual stimuli (33 ms)
 
 % create background
@@ -175,7 +175,7 @@ VSinfo.blankScreen                 = zeros(ScreenInfo.xaxis,ScreenInfo.yaxis);
 % draw one blob
 VSinfo.width                         = 8; %(pixel) Increasing this value will make the cloud more blurry (arbituary value)
 VSinfo.boxSize                       = 15; %This is the box size for each cloud (arbituary value)
-VSinfo.maxBrightness                 = 100; %indirectly control contrast
+VSinfo.maxBrightness                 = 200; %indirectly control contrast
 x = 1:1:VSinfo.boxSize; y = x;
 [X,Y]                                = meshgrid(x,y);
 cloud_temp                           = mvnpdf([X(:) Y(:)],[median(x) median(y)],...
@@ -252,7 +252,7 @@ Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
 DrawFormattedText(windowPtr, 'Press any button to start the unimodal localization task.',...
     'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis,[255 255 255]);
 Screen('Flip',windowPtr);
-KbWait(-3); 
+% KbWait(-3); 
 WaitSecs(1);
 
 for i = 1:ExpInfo.nTrials
@@ -287,8 +287,8 @@ for i = 1:ExpInfo.nTrials
         maxPtPossible = sum([Resp(firstTrial:lastTrial).maxPtPossible]);
         
         blockInfo = sprintf('You''ve finished block %i/%i. Please take a break.',idxBlock,ExpInfo.numBlocks);
-        pointInfo = sprintf('Your total points of the last block is %.2f (max points possible: %i)',blockPt, maxPtPossible);
-        
+        pointInfo = sprintf('Your total points of the last block is %.2f (max points possible: %.2f)',blockPt, maxPtPossible);
+
         Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
         [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
         DrawFormattedText(windowPtr, blockInfo,...
