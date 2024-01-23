@@ -164,23 +164,24 @@ end
 
 VSinfo.SD_yaxis            = 2; %SD of the blob in cm (vertical)
 VSinfo.num_randomDots      = 10; %number of blobs
-VSinfo.numFrames           = 3; %for visual stimuli (33 ms)
-VSinfo.numFramesMasker     = 6; %100 ms
+VSinfo.numFrames           = 4; %for visual stimuli
+VSinfo.numFramesMasker     = 10; %for mask
 
 % create background
-VSinfo.pblack                     = 1/8; % set contrast to 1*1/8 for the "black" background, so it's not too dark and the projector doesn't complain
-VSinfo.greyScreen                  = VSinfo.pblack * ones(ScreenInfo.xaxis,ScreenInfo.yaxis)*255;
-VSinfo.grey_texture                = Screen('MakeTexture', windowPtr, VSinfo.greyScreen,[],[],[],2);
-VSinfo.blankScreen                 = zeros(ScreenInfo.xaxis,ScreenInfo.yaxis);
+VSinfo.pblack              = 1/8; % set contrast to 1*1/8 for the "black" background, so it's not too dark and the projector doesn't complain
+VSinfo.greyScreen          = VSinfo.pblack * ones(ScreenInfo.xaxis,ScreenInfo.yaxis)*255;
+VSinfo.grey_texture        = Screen('MakeTexture', windowPtr, VSinfo.greyScreen,[],[],[],2);
+VSinfo.blankScreen         = zeros(ScreenInfo.xaxis,ScreenInfo.yaxis);
 
 % white noise background
 VSinfo.GWNnumPixel         = 4; % 4 pixels will have the same color
-VSinfo.GWNnumFrames        = 10; %generate 10 frames
+VSinfo.GWNnumFrames        = VSinfo.numFramesMasker; %generate 10 frames
+VSinfo.gwn_texture         = generateNoisyBackground(VSinfo,ScreenInfo,windowPtr);
 
 % draw one blob
 VSinfo.width                         = 8; %(pixel) Increasing this value will make the cloud more blurry (arbituary value)
 VSinfo.boxSize                       = 15; %This is the box size for each cloud (arbituary value)
-VSinfo.maxBrightness                 = 255; %indirectly control contrast
+VSinfo.maxBrightness                 = 100; %indirectly control contrast
 x = 1:1:VSinfo.boxSize; y = x;
 [X,Y]                                = meshgrid(x,y);
 cloud_temp                           = mvnpdf([X(:) Y(:)],[median(x) median(y)],...
@@ -198,8 +199,8 @@ for tt = 1:ExpInfo.nRep
 end
 ExpInfo.randIdx = reshape(ExpInfo.randIdx, [], 1)';
 ExpInfo.randVisReliabIdx = reshape(ExpInfo.randVisReliabIdx, [], 1)';
-VSinfo.SD_blob(~~rem(ExpInfo.randVisReliabIdx,2)) = 2;
-VSinfo.SD_blob(~rem(ExpInfo.randVisReliabIdx,2)) = 8; % visual reliability is mixed here
+VSinfo.SD_blob(~~rem(ExpInfo.randVisReliabIdx,2)) = 8;
+VSinfo.SD_blob(~rem(ExpInfo.randVisReliabIdx,2)) = 16; % visual reliability is mixed here
 ExpInfo.randAudIdx = ExpInfo.audLevel(ExpInfo.randIdx);
 ExpInfo.randVisIdx = ExpInfo.audLevel(ceil(ExpInfo.randVisReliabIdx/2));
 
@@ -322,7 +323,7 @@ if ExpInfo.session == 'V'
     [~, temp3] = sort([reli2resp.target_idx]);
     sortedReli2Resp = reli2resp(temp3);
 
-    save('uniLoc_sub1_ses-V2.mat','Resp','reliSortResp','sortedResp','ExpInfo','ScreenInfo','VSinfo','AudInfo','sortedReli1Resp','sortedReli2Resp')
+    save('uniLoc_sub1_ses-V2.mat','Resp','reliSortResp','ExpInfo','ScreenInfo','VSinfo','AudInfo','sortedReli1Resp','sortedReli2Resp')
     
 else
     % sort trials by location level

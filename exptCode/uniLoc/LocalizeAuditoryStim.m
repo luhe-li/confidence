@@ -115,6 +115,8 @@ function Resp = LocalizeAuditoryStim(i, ExpInfo,...
     Resp.target_cm = ExpInfo.speakerLocCM(Resp.target_idx);
     Resp.target_deg = rad2deg(atan(Resp.target_cm/ExpInfo.sittingDistance));
     Resp.enclosed = abs(Resp.target_cm - Resp.response_cm) <= Resp.conf_radius_cm;
+    bestRadius_cm = abs(Resp.target_cm - Resp.response_cm);
+    Resp.maxPtPossible = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * bestRadius_cm, ExpInfo.minPoint);
     if Resp.enclosed
         Resp.point = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * Resp.conf_radius_cm, ExpInfo.minPoint);
     else
