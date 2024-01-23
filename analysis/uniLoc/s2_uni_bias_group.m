@@ -2,7 +2,7 @@ clear; clc; close all;
 
 %% set up
 
-sub_slc = 4;
+sub_slc = 3;
 
 % session
 ses_labels = {'-A','-V'};
@@ -186,7 +186,7 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if save_fig
-    flnm = sprintf('sub%i_var',sub);
-    saveas(gca, fullfile(out_dir, flnm),'png')
-end
+% if save_fig
+%     flnm = sprintf('sub%i_var',sub);
+%     saveas(gca, fullfile(out_dir, flnm),'png')
+% end
