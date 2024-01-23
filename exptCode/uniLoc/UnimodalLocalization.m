@@ -181,7 +181,7 @@ VSinfo.gwn_texture         = generateNoisyBackground(VSinfo,ScreenInfo,windowPtr
 % draw one blob
 VSinfo.width                         = 8; %(pixel) Increasing this value will make the cloud more blurry (arbituary value)
 VSinfo.boxSize                       = 15; %This is the box size for each cloud (arbituary value)
-VSinfo.maxBrightness                 = 100; %indirectly control contrast
+VSinfo.maxBrightness                 = 80; %indirectly control contrast
 x = 1:1:VSinfo.boxSize; y = x;
 [X,Y]                                = meshgrid(x,y);
 cloud_temp                           = mvnpdf([X(:) Y(:)],[median(x) median(y)],...
@@ -244,7 +244,7 @@ ExpInfo.dropRate = (ExpInfo.maxPoint - ExpInfo.minPoint)/(0.5*ScreenInfo.halfScr
 ExpInfo.tFixation = 0.5;
 ExpInfo.tBlank1 = 0.3;
 ExpInfo.tBlank2 = 0.2;
-ExpInfo.tStim = 0.1;
+ExpInfo.tStim = VSinfo.numFrames * (1/60);
 ExpInfo.ITI = 0.3;
 
 %% Run the experiment
