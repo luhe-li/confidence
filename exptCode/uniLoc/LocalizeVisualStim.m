@@ -68,9 +68,13 @@ for j = 1:VSinfo.numFrames %100 ms
 end
 
 % blank screen 2
-HideCursor;
-WaitSecs(ExpInfo.tBlank2);
+% HideCursor;
+% 
 
+Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
+    [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
+Screen('Flip',windowPtr);
+WaitSecs(ExpInfo.tBlank2);
 %% response
 
 % perceptual response

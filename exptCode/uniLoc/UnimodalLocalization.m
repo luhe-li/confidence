@@ -164,7 +164,8 @@ end
 
 VSinfo.SD_yaxis            = 2; %SD of the blob in cm (vertical)
 VSinfo.num_randomDots      = 10; %number of blobs
-VSinfo.numFrames           = 2; %for visual stimuli (33 ms)
+VSinfo.numFrames           = 6; %for visual stimuli (33 ms)
+VSinfo.numFramesMask = 6;
 
 % create background
 VSinfo.pblack                     = 1/8; % set contrast to 1*1/8 for the "black" background, so it's not too dark and the projector doesn't complain

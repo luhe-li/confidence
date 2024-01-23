@@ -76,7 +76,7 @@ input_off = ['<',num2str(0),':',num2str(ExpInfo.randAudIdx(i)),'>'];
 fprintf(Arduino,input_off);
 PsychPortAudio('Stop',pahandle);
 
-% blank screen 2
+% blank screen 2%
 WaitSecs(ExpInfo.tBlank2);
 
 %% response
