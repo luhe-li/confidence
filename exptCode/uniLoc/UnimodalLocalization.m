@@ -106,6 +106,7 @@ ScreenInfo.screenNumber = screenNumber;
 Screen('TextSize', windowPtr, 30);
 Screen('TextFont', windowPtr,'Times');
 Screen('TextStyle', windowPtr,1);
+ScreenInfo.ifi = Screen('GetFlipInterval', windowPtr);
 
 [center(1), center(2)]     = RectCenter(rect);
 ScreenInfo.xmid            = center(1); % horizontal center
@@ -164,8 +165,8 @@ end
 
 VSinfo.SD_yaxis            = 2; %SD of the blob in cm (vertical)
 VSinfo.num_randomDots      = 10; %number of blobs
-VSinfo.numFrames           = 6; %for visual stimuli
-VSinfo.numFramesMasker     = 10; %for mask
+VSinfo.numFrames           = 3; %for visual stimuli
+VSinfo.numFramesMasker     = 40; %for mask
 
 % create background
 VSinfo.pblack              = 1/8; % set contrast to 1*1/8 for the "black" background, so it's not too dark and the projector doesn't complain
@@ -175,7 +176,7 @@ VSinfo.blankScreen         = zeros(ScreenInfo.xaxis,ScreenInfo.yaxis);
 
 % white noise background
 VSinfo.GWNnumPixel         = 4; % 4 pixels will have the same color
-VSinfo.GWNnumFrames        = VSinfo.numFramesMasker; %generate 10 frames
+VSinfo.GWNnumFrames        = 5; %generate 10 frames
 VSinfo.gwn_texture         = generateNoisyBackground(VSinfo,ScreenInfo,windowPtr);
 
 % draw one blob

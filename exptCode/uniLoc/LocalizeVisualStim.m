@@ -61,18 +61,31 @@ Screen('Flip',windowPtr);
 WaitSecs(ExpInfo.tBlank1);
 
 % display visual stimulus
-for j = 1:VSinfo.numFrames 
-    Screen('DrawTexture',windowPtr,dotClouds_targetLoc,[],...
+Screen('DrawTexture',windowPtr,dotClouds_targetLoc,[],...
         [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
-    Screen('Flip',windowPtr);
-end
+vbl = Screen('Flip',windowPtr);
+Screen('Flip',windowPtr, vbl + (VSinfo.numFrames - 0.5) * ScreenInfo.ifi);
 
-% display post-stimulus mask
-for jj = 1:VSinfo.numFramesMasker
-    Screen('DrawTexture', windowPtr, VSinfo.gwn_texture(jj),[],...
-        [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
-    Screen('Flip',windowPtr);
+% mask
+for jj = 1:VSinfo.numFramesMasker 
+Screen('DrawTexture', windowPtr, VSinfo.gwn_texture(rem(jj,VSinfo.GWNnumFrames)+1),[],...
+         [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
+Screen('Flip',windowPtr);
 end
+     
+% % display visual stimulus
+% for j = 1:VSinfo.numFrames 
+%     Screen('DrawTexture',windowPtr,dotClouds_targetLoc,[],...
+%         [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
+%     Screen('Flip',windowPtr);
+% end
+% 
+% % display post-stimulus mask
+% for jj = 1:VSinfo.numFramesMasker
+%     Screen('DrawTexture', windowPtr, VSinfo.gwn_texture(jj),[],...
+%         [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
+%     Screen('Flip',windowPtr);
+% end
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
     [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
 Screen('Flip',windowPtr);
