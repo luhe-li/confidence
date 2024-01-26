@@ -101,6 +101,7 @@ function Resp = LocalizeAuditoryStim(i, ExpInfo,...
     end
     Resp.RT2             = toc;
     HideCursor;
+    Resp.conf_x = conf_x;
     Resp.conf_radius_pixel= conf_radius;
     Resp.conf_radius_cm  = Resp.conf_radius_pixel/ScreenInfo.numPixels_perCM;
   

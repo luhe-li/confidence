@@ -32,13 +32,12 @@ switch ExpInfo.session
         ExpInfo.nReliability = 1;
     case 'V'
         ExpInfo.nReliability = 2;
-end 
+end
         
-
 switch ExpInfo.practice
     case 1
         outFileName = sprintf('uniLoc_sub%i_ses-%s', ExpInfo.subjID, ExpInfo.session);
-        ExpInfo.nRep = 20; % number of trial per condition level
+        ExpInfo.nRep = 10; % number of trial per condition level
         ExpInfo.numBlocks = 8;
     case 2
         switch ExpInfo.session
@@ -52,7 +51,7 @@ switch ExpInfo.practice
 end
 
 % path control
-curDir           = pwd;
+curDir = pwd;
 [projectDir, ~]  = fileparts(fileparts(curDir));
 outDir = fullfile(projectDir, 'data','uniLoc');
 if ~exist(outDir,'dir') mkdir(outDir); end
@@ -163,10 +162,10 @@ end
 
 %% make visual stimuli
 
-VSinfo.SD_yaxis            = 2; %SD of the blob in cm (vertical)
-VSinfo.num_randomDots      = 10; %number of blobs
+VSinfo.SD_yaxis            = 5; %SD of the blob in cm (vertical)
+VSinfo.num_randomDots      = 15; %number of blobs
 VSinfo.numFrames           = 3; %for visual stimuli
-VSinfo.numFramesMasker     = 40; %for mask
+VSinfo.numFramesMasker     = 30; %for mask
 
 % create background
 VSinfo.pblack              = 1/8; % set contrast to 1*1/8 for the "black" background, so it's not too dark and the projector doesn't complain
@@ -176,7 +175,7 @@ VSinfo.blankScreen         = zeros(ScreenInfo.xaxis,ScreenInfo.yaxis);
 
 % white noise background
 VSinfo.GWNnumPixel         = 4; % 4 pixels will have the same color
-VSinfo.GWNnumFrames        = 5; %generate 10 frames
+VSinfo.GWNnumFrames        = 10; 
 VSinfo.gwn_texture         = generateNoisyBackground(VSinfo,ScreenInfo,windowPtr);
 
 % draw one blob
@@ -192,7 +191,7 @@ VSinfo.Cloud                         = reshape(cloud_temp,length(x),length(y)) .
 %% Experiment set up
 
 % choose auditory locations out of 16 speakers, in index
-ExpInfo.audLevel = 5:12;
+ExpInfo.audLevel = [5,7,10,12];%5:12;
 ExpInfo.nLevel = numel(ExpInfo.audLevel);
 for tt = 1:ExpInfo.nRep
     ExpInfo.randIdx(:,tt) = randperm(ExpInfo.nLevel)';
@@ -200,8 +199,8 @@ for tt = 1:ExpInfo.nRep
 end
 ExpInfo.randIdx = reshape(ExpInfo.randIdx, [], 1)';
 ExpInfo.randVisReliabIdx = reshape(ExpInfo.randVisReliabIdx, [], 1)';
-VSinfo.SD_blob(~~rem(ExpInfo.randVisReliabIdx,2)) = 8;
-VSinfo.SD_blob(~rem(ExpInfo.randVisReliabIdx,2)) = 16; % visual reliability is mixed here
+VSinfo.SD_blob(~~rem(ExpInfo.randVisReliabIdx,2)) = 20; % the unit is already in centimeters
+VSinfo.SD_blob(~rem(ExpInfo.randVisReliabIdx,2)) = 28; % visual reliability is mixed here
 ExpInfo.randAudIdx = ExpInfo.audLevel(ExpInfo.randIdx);
 ExpInfo.randVisIdx = ExpInfo.audLevel(ceil(ExpInfo.randVisReliabIdx/2));
 

@@ -1,8 +1,8 @@
-clear; clc; close all;
+clear; clc; %close all;
 
 %% set up
 
-sub_slc = 3;
+sub_slc = 6;
 
 % session
 ses_labels = {'-A','-V'};
@@ -12,10 +12,10 @@ cond_label = {'A','V-high reliability','V-low reliability'};
 num_cond = numel(cond_label);
 
 % fixed parameters
-num_loc = 8;
-num_rep = 20;
+num_loc = 4;
+num_rep = 10;
 
-save_fig = 1;
+save_fig = 0;
 
 %% manage path
 
@@ -33,7 +33,7 @@ for i = 1:numel(sub_slc)
 
     sub = sub_slc(i);
 
-    for s = 1:2
+    for s = 2%1:2
 
         ses_label = ses_labels{s};
         load(sprintf('uniLoc_sub%i_ses%s', sub, ses_label))
@@ -41,15 +41,15 @@ for i = 1:numel(sub_slc)
         if strcmp(ses_label,'-A')
 
             j = 1; % condition A
-            orgResp{j} = sortedResp;
+            orgResp{i,j} = sortedResp;
 
         elseif strcmp(ses_label,'-V')
 
             j = 2; % condition V1
-            orgResp{j} = sortedReli1Resp;
+            orgResp{i,j} = sortedReli1Resp;
 
             j = 3; % condition V2
-            orgResp{j} = sortedReli2Resp;
+            orgResp{i,j} = sortedReli2Resp;
 
         end
     end
@@ -63,12 +63,12 @@ for i = 1:numel(sub_slc)
 
     sub = sub_slc(i);
 
-    for j = 1:num_cond
+    for j = 2:3%1:num_cond
 
         % reshape by stimulus level
-        locRep = reshape([orgResp{j}(1:end).target_deg],[num_rep,num_loc]);
+        locRep = reshape([orgResp{i,j}(1:end).target_deg],[num_rep,num_loc]);
         stim(i, j, :) = locRep(1,:);
-        temp_resp = reshape([orgResp{j}(1:end).response_deg],[num_rep,num_loc]);
+        temp_resp = reshape([orgResp{i,j}(1:end).response_deg],[num_rep,num_loc]);
 
         resp(i, j, :, :) = temp_resp'; % subject, session(aud, v1, v2), location, rep
 
@@ -97,7 +97,7 @@ clt = [30, 120, 180; % blue
 
 %% 1. plot raw responses
 
-stim_level = squeeze(stim(1,1,:));
+stim_level = squeeze(stim(1,2,:));
 
 for i = 1:numel(sub_slc)
 
@@ -112,7 +112,7 @@ for i = 1:numel(sub_slc)
     lim = max(squeeze(resp(i, :, :, :)),[],'all');
 
     % for each condition
-    for j = 1:num_cond
+    for j = 2:3%1:num_cond
 
         nexttile(j)
         set(gca, 'LineWidth', lw, 'FontSize', fontSZ, 'TickDir', 'out')
@@ -120,7 +120,7 @@ for i = 1:numel(sub_slc)
         hold on
        
         title(cond_label{j})       
-        plot([-lim, lim], [-lim, lim],'k--','LineWidth',lw)
+        plot([-lim, lim], [-lim*1.2, lim*1.2],'k--','LineWidth',lw)
 
         % plot responses for each stimulus location
         for k = 1:numel(stim_level)
@@ -179,6 +179,7 @@ end
 % 1. Make a bar plot of localization response variance for each condition.
 % Variance should be averaged across locations. Use the same color code for
 % each condition (use `clt`).
+
 % 2. Make a group-average bar plot of localization response variance for
 % each condition. Add error bars for across-subject variation.
 

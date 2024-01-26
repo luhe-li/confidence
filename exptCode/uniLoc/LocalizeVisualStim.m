@@ -166,6 +166,7 @@ while sum(buttons)==0
     end
 end
 Resp.RT2             = toc;
+Resp.conf_x = conf_x;
 Resp.conf_radius_pixel= conf_radius;
 Resp.conf_radius_cm  = Resp.conf_radius_pixel/ScreenInfo.numPixels_perCM;
 
