@@ -2,7 +2,7 @@ clear; clc; close all;
 
 %% set up
 
-sub_slc = 1:4;
+sub_slc = 5;
 
 % session
 ses_labels = {'-A','-V'};
@@ -13,7 +13,7 @@ num_cond = numel(cond_label);
 
 % fixed parameters
 num_loc = 8;
-num_rep = 20;
+num_rep = 10;
 
 save_fig = 1;
 
@@ -33,10 +33,10 @@ for i = 1:numel(sub_slc)
 
     sub = sub_slc(i);
 
-    for s = 1:2
+    for s = 2
 
         ses_label = ses_labels{s};
-        load(sprintf('uniLoc_sub%i_ses%s', sub, ses_label))
+        load(sprintf('uniLoc_sub%i_ses%s.mat', sub, ses_label))
 
         if strcmp(ses_label,'-A')
 
@@ -63,7 +63,7 @@ for i = 1:numel(sub_slc)
 
     sub = sub_slc(i);
 
-    for j = 1:num_cond
+    for j = 2:3%1:num_cond
 
         % reshape by stimulus level
         locRep = reshape([orgResp{i,j}(1:end).target_deg],[num_rep,num_loc]);
@@ -96,88 +96,88 @@ clt = [30, 120, 180; % blue
     251, 154, 153]./255; % light red
 
 %% 1. plot raw responses
-
-stim_level = squeeze(stim(1,2,:));
-
-for i = 1:numel(sub_slc)
-
-    sub = sub_slc(i);
-
-    figure;
-
-    set(gcf, 'Position',[0 0 1400 400])
-    t = tiledlayout(1,3);
-    xlabel(t,'Stimulus location', 'FontSize', titleSZ)
-    ylabel(t,'Estimate','FontSize', titleSZ)
-    title(t, sprintf('sub%i',sub),'FontSize', titleSZ)
-
-
-    lim = max(squeeze(resp(i, :, :, :)),[],'all');
-
-    % for each condition
-    for j = 1:num_cond
-
-        nexttile(j)
-        set(gca, 'LineWidth', lw, 'FontSize', fontSZ, 'TickDir', 'out')
-        axis equal
-        hold on
-
-        title(cond_label{j})
-        plot([-lim, lim], [-lim*1.2, lim*1.2],'k--','LineWidth',lw)
-
-        % plot responses for each stimulus location
-        for k = 1:numel(stim_level)
-
-            scatter(repmat(stim_level(k), 1, num_rep), squeeze(resp(i, j, k, :)),...
-                dotSZ,'MarkerFaceColor',clt(j,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.5)
-
-        end
-
-    end
-
-    if save_fig
-        flnm = sprintf('sub%i_raw',sub);
-        saveas(gca, fullfile(out_dir, flnm),'png')
-    end
-
-end
-
-
-%% 2. plot response mean to check audiovisual bias
-
-for i = 1:numel(sub_slc)
-
-    sub = sub_slc(i);
-
-    figure;
-    title(sprintf('sub%i',sub),'FontSize', titleSZ)
-    set(gcf, 'Position',[0 0 500 400])
-    set(gca, 'LineWidth', lw, 'FontSize', fontSZ, 'TickDir', 'out')
-    xlabel('Stimulus location', 'FontSize', titleSZ)
-    ylabel('Estimate','FontSize', titleSZ)
-    hold on
-
-    lim = max(stim_level,[],'all');
-
-    % for each condition
-    for j = 1:num_cond
-
-        %         plot([-lim, lim], [-lim, lim],'k--','LineWidth',lw)
-        e = errorbar(stim_level, squeeze(respMu(i, j, :)),squeeze(respSD(i, j, :)),'LineWidth',lw,'Color',clt(j,:));
-        e.CapSize = 0; %e.Color = clt(2,:);
-
-    end
-
-    legend(cond_label,'Location','northwest');
-    legend boxoff
-
-    if save_fig
-        flnm = sprintf('sub%i_bias',sub);
-        saveas(gca, fullfile(out_dir, flnm),'png')
-    end
-
-end
-
+% 
+% stim_level = squeeze(stim(1,2,:));
+% 
+% for i = 1:numel(sub_slc)
+% 
+%     sub = sub_slc(i);
+% 
+%     figure;
+% 
+%     set(gcf, 'Position',[0 0 1400 400])
+%     t = tiledlayout(1,3);
+%     xlabel(t,'Stimulus location', 'FontSize', titleSZ)
+%     ylabel(t,'Estimate','FontSize', titleSZ)
+%     title(t, sprintf('sub%i',sub),'FontSize', titleSZ)
+% 
+% 
+%     lim = max(squeeze(resp(i, :, :, :)),[],'all');
+% 
+%     % for each condition
+%     for j = 2:3
+% 
+%         nexttile(j)
+%         set(gca, 'LineWidth', lw, 'FontSize', fontSZ, 'TickDir', 'out')
+%         axis equal
+%         hold on
+% 
+%         title(cond_label{j})
+%         plot([-lim, lim], [-lim*1.2, lim*1.2],'k--','LineWidth',lw)
+% 
+%         % plot responses for each stimulus location
+%         for k = 1:numel(stim_level)
+% 
+%             scatter(repmat(stim_level(k), 1, num_rep), squeeze(resp(i, j, k, :)),...
+%                 dotSZ,'MarkerFaceColor',clt(j,:),'MarkerEdgeColor','none','MarkerFaceAlpha',0.5)
+% 
+%         end
+% 
+%     end
+% 
+%     if save_fig
+%         flnm = sprintf('sub%i_raw',sub);
+%         saveas(gca, fullfile(out_dir, flnm),'png')
+%     end
+% 
+% end
+% 
+% 
+% %% 2. plot response mean to check audiovisual bias
+% 
+% for i = 1:numel(sub_slc)
+% 
+%     sub = sub_slc(i);
+% 
+%     figure;
+%     title(sprintf('sub%i',sub),'FontSize', titleSZ)
+%     set(gcf, 'Position',[0 0 500 400])
+%     set(gca, 'LineWidth', lw, 'FontSize', fontSZ, 'TickDir', 'out')
+%     xlabel('Stimulus location', 'FontSize', titleSZ)
+%     ylabel('Estimate','FontSize', titleSZ)
+%     hold on
+% 
+%     lim = max(stim_level,[],'all');
+% 
+%     % for each condition
+%     for j = 2:3%1:num_cond
+% 
+%         %         plot([-lim, lim], [-lim, lim],'k--','LineWidth',lw)
+%         e = errorbar(stim_level, squeeze(respMu(i, j, :)),squeeze(respSD(i, j, :)),'LineWidth',lw,'Color',clt(j,:));
+%         e.CapSize = 0; %e.Color = clt(2,:);
+% 
+%     end
+% 
+%     legend(cond_label,'Location','northwest');
+%     legend boxoff
+% 
+%     if save_fig
+%         flnm = sprintf('sub%i_bias',sub);
+%         saveas(gca, fullfile(out_dir, flnm),'png')
+%     end
+% 
+% end
+% 
 
 %% 3. plot response variance to check reliability manipulation
 
@@ -209,13 +209,14 @@ for i = 1:numel(sub_slc)
         b.CData(jj,:) = clt(jj,:);
     end
     b.EdgeColor = 'none';
+    ylim([0,4])
     ylabel('Reponse S.D.')
     xticks(1:num_cond)
     xtickangle(30)
     xticklabels(cond_label)
 
     if save_fig
-        flnm = sprintf('sub%i_var',sub);
+        flnm = sprintf('sub%i_var_largeSD',sub);
         saveas(gca, fullfile(out_dir, flnm),'png')
     end
 end

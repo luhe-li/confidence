@@ -135,13 +135,12 @@ for i = 1:numel(sub_slc)
 
     end
 
-    if save_fig
-        flnm = sprintf('sub%i_raw',sub);
-        saveas(gca, fullfile(out_dir, flnm),'png')
-    end
-
 end
 
+if save_fig
+    flnm = sprintf('sub%i_raw',sub);
+    saveas(gca, fullfile(out_dir, flnm),'png')
+end
 
 %% 2. plot response mean to check audiovisual bias
 
@@ -171,13 +170,12 @@ for i = 1:numel(sub_slc)
     legend(cond_label,'Location','northwest');
     legend boxoff
 
-    if save_fig
-        flnm = sprintf('sub%i_bias',sub);
-        saveas(gca, fullfile(out_dir, flnm),'png')
-    end
-
 end
 
+if save_fig
+    flnm = sprintf('sub%i_bias',sub);
+    saveas(gca, fullfile(out_dir, flnm),'png')
+end
 
 %% 3. plot response variance to check reliability manipulation
 
@@ -198,24 +196,12 @@ for i = 1:numel(sub_slc)
     sub = sub_slc(i);
 
     figure;
-    title(sprintf('sub%i',sub),'FontSize', titleSZ)
-    set(gca, 'LineWidth', lw, 'FontSize', fontSZ, 'TickDir', 'out')
-    set(gcf, 'Position',[0 0 500 400])
-    hold on
+    colormap(clt)
+    bar([1:num_cond], respVar(i,:));
 
-    b = bar([1:num_cond], respVar(i,:));
-    for jj = 1:num_cond
-        b.FaceColor = 'flat';
-        b.CData(jj,:) = clt(jj,:);
-    end
-    b.EdgeColor = 'none';
-    ylabel('Reponse S.D.')
-    xticks(1:num_cond)
-    xtickangle(30)
-    xticklabels(cond_label)
+end
 
-    if save_fig
-        flnm = sprintf('sub%i_var',sub);
-        saveas(gca, fullfile(out_dir, flnm),'png')
-    end
+if save_fig
+    flnm = sprintf('sub%i_var',sub);
+    saveas(gca, fullfile(out_dir, flnm),'png')
 end
