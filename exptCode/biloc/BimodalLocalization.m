@@ -117,9 +117,7 @@ our_device=devices(end).DeviceIndex;
 AudInfo.fs                  = 44100;
 audioSamples                = linspace(1,AudInfo.fs,AudInfo.fs);
 standardFrequency_gwn       = 10;
-AudInfo.stimDura            = 5; %s
-AudInfo.tf                  = 400;
-AudInfo.intensity           = 0.4;
+AudInfo.stimDura            = 0.033; %s
 duration_gwn                = length(audioSamples)*AudInfo.stimDura;
 timeline_gwn                = linspace(1,duration_gwn,duration_gwn);
 sineWindow_gwn              = sin(standardFrequency_gwn/2*2*pi*timeline_gwn/AudInfo.fs);
@@ -127,7 +125,6 @@ carrierSound_gwn            = randn(1, max(timeline_gwn));
 AudInfo.intensity_GWN       = 5; % too loud for debugging, orginally 15
 AudInfo.GaussianWhiteNoise  = [AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn;...
     AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn];
-AudInfo.inBetweenGWN        = AudInfo.intensity*AudInfo.GaussianWhiteNoise;
 pahandle                    = PsychPortAudio('Open', our_device, [], [], [], 2);%open device
 
 %% audio test
@@ -140,14 +137,10 @@ PsychPortAudio('Stop',pahandle);
 
 %% make visual stimuli
 
-if strcmp(ExpInfo.session, 'V1')
-    VSinfo.SD_blob = 2;
-elseif strcmp(ExpInfo.session, 'V2')
-    VSinfo.SD_blob = 8;
-end
 VSinfo.SD_yaxis            = 2; %SD of the blob in cm (vertical)
 VSinfo.num_randomDots      = 10; %number of blobs
 VSinfo.numFrames           = 6; %for visual stimuli (100 ms)
+VSinfo.numFramesMasker     = 30; %for mask
 
 % create background
 VSinfo.pblack                      = 1/8; % set contrast to 1*1/8 for the "black" background, so it's not too dark and the projector doesn't complain
@@ -155,9 +148,15 @@ VSinfo.greyScreen                  = VSinfo.pblack * ones(ScreenInfo.xaxis,Scree
 VSinfo.grey_texture                = Screen('MakeTexture', windowPtr, VSinfo.greyScreen,[],[],[],2);
 VSinfo.blankScreen                 = zeros(ScreenInfo.xaxis,ScreenInfo.yaxis);
 
+% white noise background
+VSinfo.GWNnumPixel         = 4; % 4 pixels will have the same color
+VSinfo.GWNnumFrames        = 10; 
+VSinfo.gwn_texture         = generateNoisyBackground(VSinfo,ScreenInfo,windowPtr);
+
 % draw one blob
 VSinfo.width                         = 8; %(pixel) Increasing this value will make the cloud more blurry (arbituary value)
 VSinfo.boxSize                       = 11; %This is the box size for each cloud (arbituary value)
+VSinfo.maxBrightness                 = 80; %indirectly control contrast
 x = 1:1:VSinfo.boxSize; y = x;
 [X,Y]                                = meshgrid(x,y);
 cloud_temp                           = mvnpdf([X(:) Y(:)],[median(x) median(y)],...
@@ -216,6 +215,7 @@ ExpInfo.tFixation = 0.5;
 ExpInfo.tBlank1 = 0.3;
 ExpInfo.tBlank2 = 0.2;
 ExpInfo.frameStim = 2;
+ExpInfo.tStim = VSinfo.numFrames * (1/60);
 ExpInfo.ITI = 0.3;
 
 %% Run the experiment
