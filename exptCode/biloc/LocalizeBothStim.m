@@ -132,8 +132,9 @@ while sum(buttons)==0
     conf_radius = abs(conf_x - x);
     potentialconfRcm = conf_radius/ScreenInfo.numPixels_perCM;
     potentialPoint = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * potentialconfRcm, ExpInfo.minPoint);
-    
-    potentialEnclosed = abs(ExpInfo.speakerLocCM(ExpInfo.randVisIdx(i)) - Resp.response_cm) <= potentialconfRcm;
+    potentialEnclosed = abs(ExpInfo.speakerLocCM(ExpInfo.randAVIdx(ExpInfo.randAVIdx(3,i),i)) - Resp.response_cm) <= potentialconfRcm; 
+    % the recursive indexing above is selecting the relevant cue row and
+    % select trial column
     
     Screen('DrawTexture',windowPtr, VSinfo.grey_texture,[],...
         [0,0,ScreenInfo.xaxis, ScreenInfo.yaxis]);
@@ -208,7 +209,7 @@ Resp.RT3  = toc;
 Resp.unityConf = (caus_x - ccSliderRect(1) ) / ccSliderLength * 2 -1;
 Resp.unity = Resp.unityConf > 0;
 
-%ITI
+% ITI
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
     [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
 Screen('Flip',windowPtr);

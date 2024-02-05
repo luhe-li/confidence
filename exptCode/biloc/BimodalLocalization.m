@@ -121,7 +121,7 @@ AudInfo.stimDura            = 0.033; %s
 duration_gwn                = length(audioSamples)*AudInfo.stimDura;
 timeline_gwn                = linspace(1,duration_gwn,duration_gwn);
 sineWindow_gwn              = sin(standardFrequency_gwn/2*2*pi*timeline_gwn/AudInfo.fs);
-carrierSound_gwn            = randn(1, max(timeline_gwn));
+carrierSound_gwn            = randn(1, numel(timeline_gwn));
 AudInfo.intensity_GWN       = 5; % too loud for debugging, orginally 15
 AudInfo.GaussianWhiteNoise  = [AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn;...
     AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn];
@@ -139,7 +139,7 @@ PsychPortAudio('Stop',pahandle);
 
 VSinfo.SD_yaxis            = 2; %SD of the blob in cm (vertical)
 VSinfo.num_randomDots      = 10; %number of blobs
-VSinfo.numFrames           = 6; %for visual stimuli (100 ms)
+VSinfo.numFrames           = 2; %for visual stimuli (100 ms) % this is legacy now. replaced by ExpInfo.frameStim
 VSinfo.numFramesMasker     = 30; %for mask
 
 % create background
@@ -215,8 +215,8 @@ ExpInfo.dropRate = (ExpInfo.maxPoint - ExpInfo.minPoint)/ScreenInfo.halfScreenSi
 ExpInfo.tFixation = 0.5;
 ExpInfo.tBlank1 = 0.3;
 ExpInfo.tBlank2 = 0.2;
-ExpInfo.frameStim = 2;
-ExpInfo.tStim = VSinfo.numFrames * (1/60);
+ExpInfo.frameStim = round(AudInfo.stimDura * 60);
+ExpInfo.tStim = ExpInfo.frameStim * (1/60);
 ExpInfo.ITI = 0.3;
 
 %% Run the experiment
