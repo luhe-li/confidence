@@ -1,0 +1,43 @@
+speakerSpan = 65.5 * 2; % cm
+sittingDist = 113; % cm
+screenWidth = 170; % cm
+screenX = 1024; % pixel
+screenMid = mean(1:screenX);
+numSpeakerIntervals = 15; % 15 intervals between 16 speakers
+cmPerAudInd = speakerSpan / numSpeakerIntervals;
+pixelPerCm = screenX / screenWidth;
+
+ExpInfo.audLevel = [5,7,10,12];
+mostLRUsed = [min(ExpInfo.audLevel),max(ExpInfo.audLevel)];
+angleRange = rad2deg(atan((mostLRUsed(2) - mostLRUsed(1)) / 2 * cmPerAudInd / sittingDist));
+angleRange = [-angleRange, angleRange];
+
+sA = round((ExpInfo.audLevel - 8.5) .* cmPerAudInd .* pixelPerCm + screenMid); % in pixel 
+sV = sA;
+sAV = combvec(sA, sV);
+num_s = size(sAV,2);
+num_trial = 100;
+
+aA        = 1;
+bA        = 0;
+
+sigma_A  = 80;
+sigma_V = 20;
+
+mu_P = screenMid;
+sigma_P = 170; % arbitarily using screen width here
+
+p_common = 0.25;  
+
+ds        = {'model averaging', 'model selection', 'probability matching'};
+nDS       = length(ds);
+
+bimResp = NaN(num_s, length(ds), 2, num_trial);
+
+
+
+
+
+
+
+
