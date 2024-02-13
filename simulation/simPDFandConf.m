@@ -16,28 +16,41 @@ sA = round((ExpInfo.audLevel - 8.5) .* cmPerAudInd .* pixelPerCm + screenMid); %
 sV = sA;
 sAV = combvec(sA, sV);
 num_s = size(sAV,2);
-num_trial = 100;
+nT = 100;
 
 aA        = 1;
 bA        = 0;
 
-sigma_A  = 80;
-sigma_V = 20;
+sigA  = 80;
+sigV = 20;
 
-mu_P = screenMid;
-sigma_P = 170; % arbitarily using screen width here
+muP = screenMid;
+sigP = 170; % arbitarily using screen width here
 
-p_common = 0.25;  
+pCommon = 0.25; % only 1/4 of the trials are common cause so I assume this here
 
 ds        = {'model averaging', 'model selection', 'probability matching'};
 nDS       = length(ds);
 
-bimResp = NaN(num_s, length(ds), 2, num_trial);
+bimResp = NaN(num_s, length(ds), 2, nT);
+x = 1:1024;
+%%
+% for debug
+% sA = sAV(1,i);
+% sV = sAV(2,i);
 
+for i = 1:num_s
 
+    % stimulus combination
+    % 3 decision strategies (1. averaging, 2. selection, 3. matching)
+    % 2 modalities (1. auditory, 2. visual)
+    % num_trial
+    [bimResp(i,:,:,:),pdf] = simResp_CI_solutions_Multi(pCommon, nT, sAV(1,i),...
+        sAV(2,i), aA, bA, sigA, sigV, muP, sigP,x);
 
+end
 
-
-
-
-
+%% Averaging could be using...
+% separate cause pdf
+% common cause pdf
+% averaged posterior pdf

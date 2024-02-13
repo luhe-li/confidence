@@ -31,7 +31,7 @@ function [r,pdf] = simResp_CI_solutions_Multi(pCommon,nT, sA, sV, aA, bA, sigA, 
     % stochasticity starts here
     mA    = randn(1, nT).*sigA + (sA * aA + bA); 
     mV    = randn(1, nT).*sigV + sV;  
-
+    
     %compute constants (these will come in handy when writing the equations
     %for the likelihood/posterior of a common cause and separate causes.
     JA     = sigA^2;
@@ -71,6 +71,10 @@ function [r,pdf] = simResp_CI_solutions_Multi(pCommon,nT, sA, sV, aA, bA, sigA, 
     pdf.sHat_V_C2 = normpdf(repmat(x,nT,1),sHat_V_C2',1/sqrt(1/JV + 1/JP));
     pdf.AMatching = pdf.sHat_C1 .* post_C1' + pdf.sHat_A_C2 .* post_C2';
     pdf.VMatching = pdf.sHat_C1 .* post_C1' + pdf.sHat_V_C2 .* post_C2';
+    pdf.Aaveraging = normpdf(repmat(x,nT,1),(post_C1.* shat_C1 + post_C2.* sHat_A_C2)', ...
+        sqrt( post_C1.* 1/(1/JV + 1/JA + 1/JP) + post_C2.* 1/(1/JA + 1/JP) + post_C1 .* post_C2 .* (shat_C1 - sHat_A_C2).^2)');
+    pdf.Vaveraging = normpdf(repmat(x,nT,1),(post_C1.* shat_C1 + post_C2.* sHat_V_C2)', ...
+        sqrt( post_C1.* 1/(1/JV + 1/JA + 1/JP) + post_C2.* 1/(1/JV + 1/JP) + post_C1 .* post_C2 .* (shat_C1 - sHat_V_C2).^2)');
     % Matching is effectively conditional probability
     
     % standardize the pdfs
@@ -79,7 +83,8 @@ function [r,pdf] = simResp_CI_solutions_Multi(pCommon,nT, sA, sV, aA, bA, sigA, 
     pdf.sHat_V_C2 = pdf.sHat_V_C2 ./ sum(pdf.sHat_V_C2,2);
     pdf.AMatching = pdf.AMatching ./ sum(pdf.AMatching,2);
     pdf.VMatching = pdf.VMatching ./ sum(pdf.VMatching,2);
-
+    pdf.Aaveraging = pdf.Aaveraging ./ sum(pdf.Aaveraging,2);
+    pdf.Vaveraging = pdf.Vaveraging ./ sum(pdf.Vaveraging,2);
     %compute the final location estimates if we assume model averaging.
     %Based on this strategy, the final location estimate is the sum of the
     %two intermediate location estimates, weighted by the corresponding
@@ -95,6 +100,7 @@ function [r,pdf] = simResp_CI_solutions_Multi(pCommon,nT, sA, sV, aA, bA, sigA, 
     r(2,1:2,:)         = repmat(shat_C1,[2 1]);
     r(2,1,post_C1<0.5) = sHat_A_C2(post_C1<0.5);
     r(2,2,post_C1<0.5) = sHat_V_C2(post_C1<0.5);
+    pdf.selectionComm = ~(post_C1<0.5);
 
     %compute the final location estimates if we assume probability matching.
     %Based on this strategy, the final location estimate is the integrated
@@ -106,6 +112,7 @@ function [r,pdf] = simResp_CI_solutions_Multi(pCommon,nT, sA, sV, aA, bA, sigA, 
     r(3,1:2,:)    = repmat(shat_C1,[2 1]);
     r(3,1,idx_C2) = sHat_A_C2(idx_C2);
     r(3,2,idx_C2) = sHat_V_C2(idx_C2);
+    pdf.matchingComm = ~idx_C2;
     %----------------------------------------------------------------------
 end
 
