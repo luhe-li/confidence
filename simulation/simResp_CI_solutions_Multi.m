@@ -101,6 +101,10 @@ function [r,pdf] = simResp_CI_solutions_Multi(pCommon,nT, sA, sV, aA, bA, sigA, 
     r(2,1,post_C1<0.5) = sHat_A_C2(post_C1<0.5);
     r(2,2,post_C1<0.5) = sHat_V_C2(post_C1<0.5);
     pdf.selectionComm = ~(post_C1<0.5);
+    pdf.A_selected(pdf.selectionComm,:) = pdf.sHat_C1(pdf.selectionComm,:);
+    pdf.A_selected(~pdf.selectionComm,:) = pdf.sHat_A_C2(~pdf.selectionComm,:);
+    pdf.V_selected(pdf.selectionComm,:) = pdf.sHat_C1(pdf.selectionComm,:);
+    pdf.V_selected(~pdf.selectionComm,:) = pdf.sHat_V_C2(~pdf.selectionComm,:);
 
     %compute the final location estimates if we assume probability matching.
     %Based on this strategy, the final location estimate is the integrated
@@ -113,6 +117,10 @@ function [r,pdf] = simResp_CI_solutions_Multi(pCommon,nT, sA, sV, aA, bA, sigA, 
     r(3,1,idx_C2) = sHat_A_C2(idx_C2);
     r(3,2,idx_C2) = sHat_V_C2(idx_C2);
     pdf.matchingComm = ~idx_C2;
+    pdf.A_PMselected(pdf.matchingComm,:) = pdf.sHat_C1(pdf.matchingComm,:);
+    pdf.A_PMselected(~pdf.matchingComm,:) = pdf.sHat_A_C2(~pdf.matchingComm,:);
+    pdf.V_PMselected(pdf.matchingComm,:) = pdf.sHat_C1(pdf.matchingComm,:);
+    pdf.V_PMselected(~pdf.matchingComm,:) = pdf.sHat_V_C2(~pdf.matchingComm,:);
     %----------------------------------------------------------------------
 end
 

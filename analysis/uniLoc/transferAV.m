@@ -1,5 +1,5 @@
 
-nRep = Expinfo.nRep;
+nRep = ExpInfo.nRep;
 targInds = unique([sortedResp.target_idx]);
 targDegs = unique([sortedResp.target_deg]);
 targNum = length(targInds);
@@ -18,41 +18,41 @@ for i = 1:targNum
     rV2(i,:) = estDegsV2([sortedReli2Resp.target_idx] == targInd);
 end
 
-% %%
-% figure
-% subplot(1,3,1)
-% scatter(targDegs,rA,'filled','r')
-% hold on
-% plot(-30:30,-30:30,'--')
-% hold off
-% xlim([-30,30])
-% xlabel('Stimulus')
-% ylabel('Estimation')
-% title('A')
-% 
-% 
-% subplot(1,3,2)
-% scatter(targDegs,rV1,'filled','r')
-% hold on
-% plot(-30:30,-30:30,'--')
-% hold off
-% xlim([-30,30])
-% xlabel('Stimulus')
-% title('V1')
-% 
-% subplot(1,3,3)
-% scatter(targDegs,rV2,'filled','r')
-% hold on
-% plot(-30:30,-30:30,'--')
-% hold off
-% xlim([-30,30])
-% xlabel('Stimulus')
-% title('V2')
-% 
-% %%
-% scatter(rA(:),rV2(:),'filled','r')
-% xlim([-35,35])
-% ylim([-35,35])
+%%
+figure
+subplot(1,3,1)
+scatter(targDegs,rA,'filled','r')
+hold on
+plot(-30:30,-30:30,'--')
+hold off
+xlim([-30,30])
+xlabel('Stimulus')
+ylabel('Estimation')
+title('A')
+
+
+subplot(1,3,2)
+scatter(targDegs,rV1,'filled','r')
+hold on
+plot(-30:30,-30:30,'--')
+hold off
+xlim([-30,30])
+xlabel('Stimulus')
+title('V1')
+
+subplot(1,3,3)
+scatter(targDegs,rV2,'filled','r')
+hold on
+plot(-30:30,-30:30,'--')
+hold off
+xlim([-30,30])
+xlabel('Stimulus')
+title('V2')
+
+%%
+scatter(rA(:),rV2(:),'filled','r')
+xlim([-35,35])
+ylim([-35,35])
 
 %%
 x = repmat(targDegs',1,nRep);
