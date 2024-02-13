@@ -99,11 +99,11 @@ strategy = 3;
 for i = 1:num_s
 radiusPM(i).A_C1 = eGain(pdf(i).sHat_C1, round(squeeze(bimResp(i,strategy,1,:))), maxPoint, minPoint, elbow, screenX);
 radiusPM(i).A_C2 = eGain(pdf(i).sHat_A_C2, round(squeeze(bimResp(i,strategy,1,:))), maxPoint, minPoint, elbow, screenX);
-radiusPM(i).A_PMselect = eGain(pdf(i).AMatching, round(squeeze(bimResp(i,strategy,1,:))), maxPoint, minPoint, elbow, screenX);
+radiusPM(i).A_PMselect = eGain(pdf(i).A_PMselected, round(squeeze(bimResp(i,strategy,1,:))), maxPoint, minPoint, elbow, screenX);
 radiusPM(i).A_mixture = eGain(pdf(i).AMatching, round(squeeze(bimResp(i,strategy,1,:))), maxPoint, minPoint, elbow, screenX);
 
 radiusPM(i).V_C1 = eGain(pdf(i).sHat_C1, round(squeeze(bimResp(i,strategy,2,:))), maxPoint, minPoint, elbow, screenX);
 radiusPM(i).V_C2 = eGain(pdf(i).sHat_V_C2, round(squeeze(bimResp(i,strategy,2,:))), maxPoint, minPoint, elbow, screenX);
-radiusPM(i).V_PMselect = eGain(pdf(i).VMatching, round(squeeze(bimResp(i,strategy,2,:))), maxPoint, minPoint, elbow, screenX);
+radiusPM(i).V_PMselect = eGain(pdf(i).V_PMselected, round(squeeze(bimResp(i,strategy,2,:))), maxPoint, minPoint, elbow, screenX);
 radiusPM(i).V_mixture = eGain(pdf(i).VMatching, round(squeeze(bimResp(i,strategy,1,:))), maxPoint, minPoint, elbow, screenX);
 end
