@@ -184,9 +184,10 @@ ExpInfo.randAudIdx                   = ExpInfo.randAVIdx(1,:);
 
 % convert visual locations from index to perceptually matching pixel
 load('AVbias.mat')
-matchIdx                             = find(ismember(Transfer.targIdx, ExpInfo.visIdx));
-ExpInfo.targetPixel                  = Transfer.fitSV(ExpInfo.subjID, matchIdx) + 512;
-ExpInfo.randVisPixel                 = ExpInfo.targetPixel(ExpInfo.randAVIdx(2,:));
+find(Transfer.targIdx == ExpInfo.visIdx)
+ExpInfo.v_loc_cm                     = ExpInfo.speakerLocCM(ExpInfo.randAVIdx(2,:));
+ExpInfo.v_loc_deg                    = rad2deg(atan(ExpInfo.v_loc_cm/ExpInfo.sittingDistance));
+ExpInfo.randVisPixel                 = ExpInfo.v_loc_cm .* ScreenInfo.numPixels_perCM;
 
 % split all the trials into blocks
 ExpInfo.nTrials                      = ExpInfo.nLevel * ExpInfo.nRep;
