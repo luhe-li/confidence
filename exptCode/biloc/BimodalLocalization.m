@@ -186,7 +186,8 @@ ExpInfo.randAudIdx                   = ExpInfo.randAVIdx(1,:);
 load('AVbias.mat')
 matchIdx                             = find(ismember(Transfer.targIdx, ExpInfo.visIdx));
 ExpInfo.targetPixel                  = Transfer.fitSV(ExpInfo.subjID, matchIdx) + 512;
-ExpInfo.randVisPixel                 = ExpInfo.targetPixel(ExpInfo.randAVIdx(2,:));
+[~, ~, ic]                           = unique(ExpInfo.randAVIdx(2,:));
+ExpInfo.randVisPixel                 = ExpInfo.targetPixel(ic');
 
 % split all the trials into blocks
 ExpInfo.nTrials                      = ExpInfo.nLevel * ExpInfo.nRep;
