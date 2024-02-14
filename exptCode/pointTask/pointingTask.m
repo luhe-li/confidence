@@ -112,7 +112,7 @@ ScreenInfo.y2_ub = ScreenInfo.yaxis-ScreenInfo.liftingYaxis+7;
 
 VSinfo.SD_yaxis            = 5; %SD of the blob in cm (vertical)
 VSinfo.num_randomDots      = 1; %number of blobs
-VSinfo.numFrames           = 3; %for visual stimuli
+VSinfo.numFrames           = 30; %for visual stimuli
 VSinfo.numFramesMasker     = 30; %for mask
 
 % create background
@@ -137,7 +137,7 @@ cloud_temp                           = mvnpdf([X(:) Y(:)],[median(x) median(y)],
 VSinfo.Cloud                         = reshape(cloud_temp,length(x),length(y)) .* (VSinfo.maxBrightness/max(cloud_temp));
 
 %% Experiment set up
-
+ExpInfo.nReliability = 1;
 % choose auditory locations out of 16 speakers, in index
 ExpInfo.audLevel = [5,7,10,12]; %5:12
 ExpInfo.nLevel = numel(ExpInfo.audLevel);
@@ -147,10 +147,8 @@ for tt = 1:ExpInfo.nRep
 end
 ExpInfo.randIdx = reshape(ExpInfo.randIdx, [], 1)';
 ExpInfo.randVisReliabIdx = reshape(ExpInfo.randVisReliabIdx, [], 1)';
-VSinfo.SD_blob(~~rem(ExpInfo.randVisReliabIdx,2)) = 20; % the unit is already in centimeters
-VSinfo.SD_blob(~rem(ExpInfo.randVisReliabIdx,2)) = 28; % visual reliability is mixed here
-ExpInfo.randAudIdx = ExpInfo.audLevel(ExpInfo.randIdx);
-ExpInfo.randVisIdx = ExpInfo.audLevel(ceil(ExpInfo.randVisReliabIdx/2));
+VSinfo.SD_blob(:) = 2; % the unit is already in centimeters
+ExpInfo.randVisIdx = ExpInfo.audLevel(ExpInfo.randIdx);
 
 % location of speakers in CM, visual angle, and pixel
 ExpInfo.sittingDistance              = 113.0; %cm
@@ -201,7 +199,7 @@ Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
 DrawFormattedText(windowPtr, 'Press any button to start the unimodal localization task.',...
     'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis,[255 255 255]);
 Screen('Flip',windowPtr);
-KbWait(-3);
+% KbWait(-3);
 WaitSecs(1);
 
 for i = 1:ExpInfo.nTrials
@@ -211,7 +209,7 @@ for i = 1:ExpInfo.nTrials
 
     SetMouse(ScreenInfo.xaxis*2, ScreenInfo.yaxis*2, windowPtr);
     HideCursor;
-    Resp(i)= LocalizeVisualStim(i, ExpInfo,...
+    Resp(i)= LocalizePointStim(i, ExpInfo,...
         ScreenInfo,VSinfo,windowPtr);
 
 
@@ -226,19 +224,13 @@ for i = 1:ExpInfo.nTrials
         idxBlock = find(ExpInfo.breakTrials==i);
         firstTrial = ExpInfo.firstTrial(idxBlock);
         lastTrial = ExpInfo.lastTrial(idxBlock);
-        blockPt = sum([Resp(firstTrial:lastTrial).point]);
-        maxPtPossible = sum([Resp(firstTrial:lastTrial).maxPtPossible]);
 
         blockInfo = sprintf('You''ve finished block %i/%i. Please take a break.',idxBlock,ExpInfo.numBlocks);
-        pointInfo = sprintf('Your total points of the last block is %.2f (max points possible: %.2f)',blockPt, maxPtPossible);
 
         Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
             [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
         DrawFormattedText(windowPtr, blockInfo,...
             'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis-30,...
-            [255 255 255]);
-        DrawFormattedText(windowPtr, [pointInfo '\nPress any button to resume the experiment.'],...
-            'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis,...
             [255 255 255]);
         Screen('Flip',windowPtr); KbWait(-3); WaitSecs(1);
     end
