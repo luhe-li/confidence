@@ -185,7 +185,7 @@ ExpInfo.randAudIdx                   = ExpInfo.randAVIdx(1,:);
 % convert visual locations from index to perceptually matching pixel
 load('AVbias.mat')
 matchIdx                             = find(ismember(Transfer.targIdx, ExpInfo.visIdx));
-ExpInfo.targetPixel                  = Transfer.fitSV(ExpInfo.subjID, matchIdx) + 512;
+ExpInfo.targetPixel                  = Transfer.fitSV(ExpInfo.subjID, matchIdx);
 [~, ~, ic]                           = unique(ExpInfo.randAVIdx(2,:));
 ExpInfo.randVisPixel                 = ExpInfo.targetPixel(ic');
 
