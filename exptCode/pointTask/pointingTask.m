@@ -29,21 +29,21 @@ ExpInfo.session =  'Pointing';
 
 switch ExpInfo.practice
     case 1
-        outFileName = sprintf('uniLoc_sub%i_ses-%s', ExpInfo.subjID,ExpInfo.session);
+        outFileName = sprintf('point_sub%i_ses-%s', ExpInfo.subjID,ExpInfo.session);
         ExpInfo.nRep = 20; % number of trial per condition level
         ExpInfo.numBlocks = 8;
     case 2
 
         ExpInfo.nRep = 2;
 
-        outFileName = sprintf('uniLoc_practice_sub%i_ses-%s', ExpInfo.subjID, ExpInfo.session);
+        outFileName = sprintf('point_practice_sub%i_ses-%s', ExpInfo.subjID, ExpInfo.session);
         ExpInfo.numBlocks = 2;
 end
 
 % path control
 curDir = pwd;
 [projectDir, ~]  = fileparts(fileparts(curDir));
-outDir = fullfile(projectDir, 'data','uniLoc');
+outDir = fullfile(projectDir, 'data','point');
 if ~exist(outDir,'dir') mkdir(outDir); end
 addpath(genpath(PsychtoolboxRoot))
 
@@ -112,7 +112,7 @@ ScreenInfo.y2_ub = ScreenInfo.yaxis-ScreenInfo.liftingYaxis+7;
 
 VSinfo.SD_yaxis            = 5; %SD of the blob in cm (vertical)
 VSinfo.num_randomDots      = 1; %number of blobs
-VSinfo.numFrames           = 30; %for visual stimuli
+VSinfo.numFrames           = 3; %for visual stimuli
 VSinfo.numFramesMasker     = 30; %for mask
 
 % create background
@@ -139,7 +139,7 @@ VSinfo.Cloud                         = reshape(cloud_temp,length(x),length(y)) .
 %% Experiment set up
 ExpInfo.nReliability = 1;
 % choose auditory locations out of 16 speakers, in index
-ExpInfo.audLevel = [5,7,10,12]; %5:12
+ExpInfo.audLevel = 5:12;
 ExpInfo.nLevel = numel(ExpInfo.audLevel);
 for tt = 1:ExpInfo.nRep
     ExpInfo.randIdx(:,tt) = randperm(ExpInfo.nLevel)';
