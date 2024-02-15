@@ -4,7 +4,8 @@ function Resp = LocalizePointStim(i, ExpInfo,...
 %% precompute visual stimuli
 
 %first compute the location of the visual stimulus in pixels
-loc_pixel = round(ExpInfo.randVisPixel(i));
+jitter = VSinfo.jitter_lb + (VSinfo.jitter_ub - VSinfo.jitter_lb) * rand;
+loc_pixel = round(ExpInfo.randVisPixel(i) + jitter);
 xLoc = ScreenInfo.xmid + loc_pixel;
 yLoc = ScreenInfo.yaxis-ScreenInfo.liftingYaxis;
 targetLoc = [xLoc, yLoc];
@@ -31,15 +32,12 @@ Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
     [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
 Screen('DrawDots',windowPtr,targetLoc,5,[255 255 255],[],1);
 vbl = Screen('Flip',windowPtr);
+Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
+    [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
 Screen('Flip',windowPtr, vbl + (VSinfo.numFrames - 0.5) * ScreenInfo.ifi);
 
 % blank screen 2
-Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
-    [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
-Screen('Flip',windowPtr);
-
-% blank screen 2
-% WaitSecs(ExpInfo.tBlank2);
+WaitSecs(ExpInfo.tBlank2);
 
 %% response
 
@@ -80,8 +78,8 @@ WaitSecs(ExpInfo.ITI);
 
 % calculate points
 Resp.target_idx = ExpInfo.randVisIdx(i); % visual location that corresponds to speaker index
-Resp.target_cm = ExpInfo.speakerLocCM(Resp.target_idx);
-Resp.target_pixel = Resp.target_cm * ScreenInfo.numPixels_perCM;
+Resp.target_pixel = loc_pixel;
+Resp.target_cm    = loc_pixel./ScreenInfo.numPixels_perCM;
 Resp.target_deg = rad2deg(atan(Resp.target_cm/ExpInfo.sittingDistance));
 
 

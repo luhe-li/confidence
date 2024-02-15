@@ -114,6 +114,8 @@ VSinfo.SD_yaxis            = 5; %SD of the blob in cm (vertical)
 VSinfo.num_randomDots      = 1; %number of blobs
 VSinfo.numFrames           = 3; %for visual stimuli
 VSinfo.numFramesMasker     = 30; %for mask
+VSinfo.jitter_lb           = -10; % for jittering the visual target location, in pixel
+VSinfo.jitter_ub           = 10;
 
 % create background
 VSinfo.pblack              = 1/8; % set contrast to 1*1/8 for the "black" background, so it's not too dark and the projector doesn't complain
@@ -205,7 +207,6 @@ WaitSecs(1);
 for i = 1:ExpInfo.nTrials
 
     %% present stimuli
-
 
     SetMouse(ScreenInfo.xaxis*2, ScreenInfo.yaxis*2, windowPtr);
     HideCursor;
