@@ -1,19 +1,4 @@
 
-% In this task, participants localized visual and auditory stimulic
-% presented alone in separate sessions. Each trial started with a fixation
-% cross presented straight ahead for 500 ms, followed by 300 ms of blank
-% screen. Then, either an auditory or a visual 100 ms-long stimulus was
-% presented, followed by 200 ms of blank screen. Next, the response cursor
-% appeared, and participants adjusted the horizontal location of the cursor
-% to match that of the stimulus. There was no tCCime constraint for the
-% response. Visual feedback of the cursor location was provided during its
-% adjustment, but error feedback was not provided. After the response, the
-% loudspeaker moved to its new location. The inter-trial interval was
-% 300 ms.
-
-% Auditory stimuli were presenetd at nine locations, corresponding to
-% speaker indices -12:3:12. Each location was tested 20 times
-% pseudorandomly, resulting in 180 trials.
 
 %% Enter experiment info
 clear; close all;  rng('Shuffle');
