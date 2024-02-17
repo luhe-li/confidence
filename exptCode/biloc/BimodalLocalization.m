@@ -14,7 +14,7 @@ end
 switch ExpInfo.practice
     case 1
         outFileName                          = sprintf('biLoc_sub%i_ses%i', ExpInfo.subjID, ExpInfo.session);
-        ExpInfo.nRep                         = 8; % number of trial per condition level
+        ExpInfo.nRep                         = 4; % number of trial per condition level
         ExpInfo.numBlocks                    = 8;
     case 2
         outFileName                          = sprintf('biLoc_practice_sub%i_ses%i', ExpInfo.subjID, ExpInfo.session);
@@ -265,8 +265,8 @@ c                                    = clock;
 ExpInfo.finish                       = sprintf('%04d/%02d/%02d_%02d:%02d:%02d',c(1),c(2),c(3),c(4),c(5),ceil(c(6)));
 
 % sort trials by location level
-[~, temp]                            = sort([Resp(1:end).loc_idx]);
-sortedResp                           = Resp(temp);
-save(fullfile(outDir,outFileName),'Resp','sortedResp','ExpInfo','ScreenInfo','VSinfo','AudInfo');
+% [~, temp]                            = sort([Resp(1:end).loc_idx]);
+% sortedResp                           = Resp(temp);
+save(fullfile(outDir,outFileName),'Resp','ExpInfo','ScreenInfo','VSinfo','AudInfo');
 
 Screen('CloseAll')
