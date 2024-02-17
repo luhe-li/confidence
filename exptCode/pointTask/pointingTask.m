@@ -28,7 +28,11 @@ end
 % path control
 curDir = pwd;
 [projectDir, ~]  = fileparts(fileparts(curDir));
+<<<<<<< Updated upstream
 outDir = fullfile(projectDir, 'data','point');
+=======
+outDir = fullfile(projectDir, 'data','pointTask');
+>>>>>>> Stashed changes
 if ~exist(outDir,'dir') mkdir(outDir); end
 addpath(genpath(PsychtoolboxRoot))
 
