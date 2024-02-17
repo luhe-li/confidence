@@ -82,5 +82,4 @@ Resp.target_pixel = loc_pixel;
 Resp.target_cm    = loc_pixel./ScreenInfo.numPixels_perCM;
 Resp.target_deg = rad2deg(atan(Resp.target_cm/ExpInfo.sittingDistance));
 
-
 end

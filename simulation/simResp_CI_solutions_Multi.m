@@ -30,8 +30,10 @@ function [r,pdf] = simResp_CI_solutions_Multi(pCommon,nT, sA, sV, aA, bA, sigA, 
     %simulate measurements, which are drawn from Gaussian distributions
     % stochasticity starts here
     mA    = randn(1, nT).*sigA + (sA * aA + bA); 
-    mV    = randn(1, nT).*sigV + sV;  
-    
+    mV    = randn(1, nT).*sigV + sV; 
+
+    mA = bounded(mA,min(x),max(x));
+    mV = bounded(mV,min(x),max(x));
     %compute constants (these will come in handy when writing the equations
     %for the likelihood/posterior of a common cause and separate causes.
     JA     = sigA^2;
@@ -54,17 +56,23 @@ function [r,pdf] = simResp_CI_solutions_Multi(pCommon,nT, sA, sV, aA, bA, sigA, 
     post_C1 = pCommon.*L_C1./(pCommon.*L_C1 + (1-pCommon).*L_C2); 
     %posterior of separate causes = 1 - post_C1
     post_C2 = 1 - post_C1;
+    
 
     %compute the two intermediate location estimates
     %An integrated intermediate estimate is the sum of mA, mV and muP with
     %each weighted by their relative reliabilities
     %Eq. 12 in Körding et al., 2007
     shat_C1   = (mA./JA + mV./JV + muP/JP)./(1/JV + 1/JA + 1/JP); 
+
+    % shat_C1 = bounded(shat_C1,min(x),max(x));
     %A segregated intermediate estimate is the sum of mA/mV and muP with
     %each weighted by their relative reliabilities
     %Eq. 11 in Körding et al., 2007
     sHat_A_C2 = (mA./JA + muP/JP)./(1/JA + 1/JP);
     sHat_V_C2 = (mV./JV + muP/JP)./(1/JV + 1/JP); 
+
+    % sHat_A_C2 = bounded(sHat_A_C2,min(x),max(x));
+    % sHat_V_C2 = bounded(sHat_V_C2,min(x),max(x));
 
     pdf.sHat_C1 = normpdf(repmat(x,nT,1),shat_C1',1/sqrt(1/JV + 1/JA + 1/JP));
     pdf.sHat_A_C2 = normpdf(repmat(x,nT,1),sHat_A_C2',1/sqrt(1/JA + 1/JP));
@@ -92,7 +100,7 @@ function [r,pdf] = simResp_CI_solutions_Multi(pCommon,nT, sA, sV, aA, bA, sigA, 
     %Eq. 4 in Wozny et al., 2010
     r(1,1,:) = post_C1.* shat_C1 + post_C2.* sHat_A_C2;
     r(1,2,:) = post_C1.* shat_C1 + post_C2.* sHat_V_C2;
-    
+    r(1,3,:) = post_C1;
     %compute the final location estimates if we assume model selection.
     %Based on this strategy, the final location estimate depends purely on
     %the causal structure that is more probable.
@@ -100,6 +108,7 @@ function [r,pdf] = simResp_CI_solutions_Multi(pCommon,nT, sA, sV, aA, bA, sigA, 
     r(2,1:2,:)         = repmat(shat_C1,[2 1]);
     r(2,1,post_C1<0.5) = sHat_A_C2(post_C1<0.5);
     r(2,2,post_C1<0.5) = sHat_V_C2(post_C1<0.5);
+    r(2,3,:) = post_C1;
     pdf.selectionComm = ~(post_C1<0.5);
     pdf.A_selected(pdf.selectionComm,:) = pdf.sHat_C1(pdf.selectionComm,:);
     pdf.A_selected(~pdf.selectionComm,:) = pdf.sHat_A_C2(~pdf.selectionComm,:);
@@ -116,6 +125,7 @@ function [r,pdf] = simResp_CI_solutions_Multi(pCommon,nT, sA, sV, aA, bA, sigA, 
     r(3,1:2,:)    = repmat(shat_C1,[2 1]);
     r(3,1,idx_C2) = sHat_A_C2(idx_C2);
     r(3,2,idx_C2) = sHat_V_C2(idx_C2);
+    r(3,3,:) = post_C1;
     pdf.matchingComm = ~idx_C2;
     pdf.A_PMselected(pdf.matchingComm,:) = pdf.sHat_C1(pdf.matchingComm,:);
     pdf.A_PMselected(~pdf.matchingComm,:) = pdf.sHat_A_C2(~pdf.matchingComm,:);
