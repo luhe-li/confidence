@@ -112,17 +112,15 @@ AudInfo.GaussianWhiteNoise           = [AudInfo.intensity_GWN.*sineWindow_gwn.*c
 pahandle                             = PsychPortAudio('Open', our_device, [], [], [], 2);%open device
 
 %% audio test
-if strcmp(ExpInfo.session, 'A')
-    testSpeaker = 8;
-    input_on = ['<',num2str(1),':',num2str(testSpeaker),'>']; %arduino takes input in this format
-    fprintf(Arduino,input_on);
-    PsychPortAudio('FillBuffer',pahandle, AudInfo.GaussianWhiteNoise);
-    PsychPortAudio('Start',pahandle,1,0,0);
-    WaitSecs(0.1);
-    input_off = ['<',num2str(0),':',num2str(testSpeaker),'>'];
-    fprintf(Arduino,input_off);
-    PsychPortAudio('Stop',pahandle);
-end
+testSpeaker = 8;
+input_on = ['<',num2str(1),':',num2str(testSpeaker),'>']; %arduino takes input in this format
+fprintf(Arduino,input_on);
+PsychPortAudio('FillBuffer',pahandle, AudInfo.GaussianWhiteNoise);
+PsychPortAudio('Start',pahandle,1,0,0);
+WaitSecs(0.1);
+input_off = ['<',num2str(0),':',num2str(testSpeaker),'>'];
+fprintf(Arduino,input_off);
+PsychPortAudio('Stop',pahandle);
 
 %% make visual stimuli
 
@@ -273,4 +271,4 @@ ExpInfo.finish                       = sprintf('%04d/%02d/%02d_%02d:%02d:%02d',c
 % sortedResp                           = Resp(temp);
 save(fullfile(outDir,outFileName),'Resp','ExpInfo','ScreenInfo','VSinfo','AudInfo');
 
-Screen('CloseAll')
+%Screen('CloseAll')
