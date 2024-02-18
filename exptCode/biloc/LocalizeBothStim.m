@@ -222,6 +222,7 @@ else % V
     Resp.target_idx = ExpInfo.randAVIdx(2,i);
 end
 Resp.target_cm = ExpInfo.speakerLocCM(Resp.target_idx);
+Resp.target_pixel = Resp.target_cm .* ScreenInfo.numPixels_perCM;
 Resp.target_deg = rad2deg(atan(Resp.target_cm/ExpInfo.sittingDistance));
 Resp.enclosed = abs(Resp.target_cm - Resp.response_cm) <= Resp.conf_radius_cm;
 bestRadius_cm = abs(Resp.target_cm - Resp.response_cm);

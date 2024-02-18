@@ -190,7 +190,11 @@ ExpInfo.targetPixel                  = Transfer.fitSV(ExpInfo.subjID, matchIdx);
 ExpInfo.randVisPixel                 = ExpInfo.targetPixel(ic');
 
 % split all the trials into blocks
-ExpInfo.nTrials                      = ExpInfo.nLevel * ExpInfo.nRep;
+if ExpInfo.practice == 1
+    ExpInfo.nTrials                      = ExpInfo.nLevel * ExpInfo.nRep;
+elseif ExpInfo.practice == 2
+    ExpInfo.nTrials                      = 20;
+end
 blocks                               = linspace(0,ExpInfo.nTrials,...
     ExpInfo.numBlocks+1);
 ExpInfo.breakTrials                  = floor(blocks(2:(end-1)));
