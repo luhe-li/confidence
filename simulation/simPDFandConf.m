@@ -1,13 +1,15 @@
+clear; close all;
+
 speakerSpan = 65.5 * 2; % cm
 sittingDist = 113; % cm
 screenWidth = 170; % cm
 screenX = 1024; % pixel
-screenMid = mean(1:screenX);
+screenMid = 0; %mean(1:screenX);
 numSpeakerIntervals = 15; % 15 intervals between 16 speakers
 cmPerAudInd = speakerSpan / numSpeakerIntervals;
 pixelPerCm = screenX / screenWidth;
 
-ExpInfo.audLevel = [5 7 10 12];%[5,7,10,12];
+ExpInfo.audLevel = [5 7 10 12];
 mostLRUsed = [min(ExpInfo.audLevel),max(ExpInfo.audLevel)];
 angleRange = rad2deg(atan((mostLRUsed(2) - mostLRUsed(1)) / 2 * cmPerAudInd / sittingDist));
 angleRange = [-angleRange, angleRange];
@@ -44,7 +46,7 @@ x = 1:1024; % the screen pixel space
 % sV = sAV(2,i);
 
 for i = 1:num_s
-    [bimResp(i,:,:,:),pdf(i)] = simResp_CI_solutions_Multi(pCommon, nT, sAV(1,i),...
+    [bimResp(i,:,:,:), pdf(i)] = simResp_CI_solutions_Multi(pCommon, nT, sAV(1,i),...
         sAV(2,i), aA, bA, sigA, sigV, muP, sigP,x);
 end
 
@@ -147,7 +149,7 @@ modality = 2;
 plotInd = 1;
 for i = 1:4
     for j = 1:4
-        cond_ind = cond_indice(j,i)
+        cond_ind = cond_indice(j,i);
         % cond_ind = plotInd;
         subplot(4,4,plotInd)
         h1 = histogram(squeeze(bimResp(cond_ind,1,3,:)),'FaceAlpha',0.6);
