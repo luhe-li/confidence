@@ -14,7 +14,7 @@ cm_per_aud_ind     = speaker_span / num_speaker_int;
 pixel_per_cm       = screenX / screen_width;
 aud_level          = [5 7 10 12];
 fixP.screenX       = 1024;
-fixP.x             = -512:1:512; % the screen pixel space
+fixP.x             = 1:1024; % the screen pixel space
 
 sA                 = round((aud_level - 8.5) .* cm_per_aud_ind .* pixel_per_cm + screen_mid); % in pixel. 8.5 being middle point
 sV                 = sA;
@@ -73,6 +73,8 @@ for i = 1:num_s
             sAV(2,i), aA, bA, sigA, sigVs(v), muP, sigP, fixP);
     end
 end
+
+loc = loc - 512;
 
 %% Plot set up
 
@@ -138,7 +140,7 @@ for d = 1%1:numel(ds_conf)
         for v = 1:length(sV)
             curr_resp = squeeze(org_resp(a, v, 1, :, :));
             nexttile
-            h = histogram(curr_resp, numel(curr_resp));
+            h = histogram(curr_resp, 100);
             h.FaceColor = repmat(0.5, 1, 3);
             h.EdgeColor = 'none';
 
