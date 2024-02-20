@@ -81,7 +81,7 @@ unity                       = post_C1 > 0.5;
 %An integrated intermediate estimate is the sum of mA, mV and muP with
 %each weighted by their relative reliabilities
 %Eq. 12 in Körding et al., 2007
-shat_C1                     = (mA./JA + mV./JV + muP/JP)./(1/JV + 1/JA + 1/JP);
+sHat_C1                     = (mA./JA + mV./JV + muP/JP)./(1/JV + 1/JA + 1/JP);
 
 % shat_C1 = bounded(shat_C1,min(x),max(x));
 %A segregated intermediate estimate is the sum of mA/mV and muP with
@@ -96,13 +96,13 @@ sHat_V_C2                   = (mV./JV + muP/JP)./(1/JV + 1/JP);
 %two intermediate location estimates, weighted by the corresponding
 %causal structure.
 %Eq. 4 in Wozny et al., 2010
-loc(1,1,:)                  = post_C1.* shat_C1 + post_C2.* sHat_A_C2;
-loc(1,2,:)                  = post_C1.* shat_C1 + post_C2.* sHat_V_C2;
+loc(1,1,:)                  = post_C1.* sHat_C1 + post_C2.* sHat_A_C2;
+loc(1,2,:)                  = post_C1.* sHat_C1 + post_C2.* sHat_V_C2;
 
-pdf.MA_A                    = normpdf(repmat(x,nT,1),(post_C1.* shat_C1 + post_C2.* sHat_A_C2)', ...
-    sqrt( post_C1.* 1/(1/JV + 1/JA + 1/JP) + post_C2.* 1/(1/JA + 1/JP) + post_C1 .* post_C2 .* (shat_C1 - sHat_A_C2).^2)');
-pdf.MA_V                    = normpdf(repmat(x,nT,1),(post_C1.* shat_C1 + post_C2.* sHat_V_C2)', ...
-    sqrt( post_C1.* 1/(1/JV + 1/JA + 1/JP) + post_C2.* 1/(1/JV + 1/JP) + post_C1 .* post_C2 .* (shat_C1 - sHat_V_C2).^2)');
+pdf.MA_A                    = normpdf(repmat(x,nT,1),(post_C1.* sHat_C1 + post_C2.* sHat_A_C2)', ...
+    sqrt( post_C1.* 1/(1/JV + 1/JA + 1/JP) + post_C2.* 1/(1/JA + 1/JP) + post_C1 .* post_C2 .* (sHat_C1 - sHat_A_C2).^2)');
+pdf.MA_V                    = normpdf(repmat(x,nT,1),(post_C1.* sHat_C1 + post_C2.* sHat_V_C2)', ...
+    sqrt( post_C1.* 1/(1/JV + 1/JA + 1/JP) + post_C2.* 1/(1/JV + 1/JP) + post_C1 .* post_C2 .* (sHat_C1 - sHat_V_C2).^2)');
 pdf.MA_A                    = pdf.MA_A ./ sum(pdf.MA_A,2);
 pdf.MA_V                    = pdf.MA_V ./ sum(pdf.MA_V,2);
 
@@ -113,12 +113,12 @@ conf(1,2,:)                 = eGain(pdf.MA_V, round(loc(1,2,:)), fixP.maxPoint, 
 %Based on this strategy, the final location estimate depends purely on
 %the causal structure that is more probable.
 %Eq. 5 in Wozny et al., 2010
-loc(2,1:2,:)                = repmat(shat_C1,[2 1]);
+loc(2,1:2,:)                = repmat(sHat_C1,[2 1]);
 loc(2,1,post_C1<0.5)        = sHat_A_C2(post_C1<0.5);
 loc(2,2,post_C1<0.5)        = sHat_V_C2(post_C1<0.5);
 
 % initialize intermediate estimate pdfs
-pdf.sHat_C1                 = norm_vector(normpdf(repmat(x,nT,1),shat_C1',1/sqrt(1/JV + 1/JA + 1/JP)));
+pdf.sHat_C1                 = norm_vector(normpdf(repmat(x,nT,1),sHat_C1',1/sqrt(1/JV + 1/JA + 1/JP)));
 pdf.sHat_A_C2               = norm_vector(normpdf(repmat(x,nT,1),sHat_A_C2',1/sqrt(1/JA + 1/JP)));
 pdf.sHat_V_C2               = norm_vector(normpdf(repmat(x,nT,1),sHat_V_C2',1/sqrt(1/JV + 1/JP)));
 
@@ -139,7 +139,7 @@ conf(2,2,:)                 = eGain(pdf.MS_V, round(loc(2,2,:)), fixP.maxPoint, 
 %Eq. 6 in Wozny et al., 2010
 idx                         = rand(1,nT);
 idx_C2                      = (idx > post_C1);
-loc(3,1:2,:)                = repmat(shat_C1,[2 1]);
+loc(3,1:2,:)                = repmat(sHat_C1,[2 1]);
 loc(3,1,idx_C2)             = sHat_A_C2(idx_C2);
 loc(3,2,idx_C2)             = sHat_V_C2(idx_C2);
 
