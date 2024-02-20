@@ -55,6 +55,7 @@ ds_conf            = {'Model averaging', 'Model selection', ...
     'Probability matching_{select}', 'Probability matching_{mix}'};
 cue_label   = {'Post-cue: A','Post-cue: V'};
 num_cue            = numel(cue_label);
+rel_label   = {'High reliability','Low reliability'};
 
 %% simulate data
 
@@ -89,13 +90,14 @@ clt = [30, 120, 180; % blue
 
 %% analyze data
 
-for d = 1:numel(ds_loc)
+for d = 1:numel(ds_conf)
 
     % organize data
 
-    if d ~= numel(ds_conf)
-        d_loc = d;
+    if d == numel(ds_conf)
+        d_loc = 3;
     else
+        d_loc = d;
     end
 
     d_resp = squeeze(loc(:,d_loc,:,:,:));
@@ -108,7 +110,8 @@ for d = 1:numel(ds_loc)
     % organize response by discrepancy
     allDiffs = unique(abs(sA' - sV));
 
-    [mean_conf, sd_conf] = deal(NaN(numel(allDiffs), num_cue, numel(sigVs), num_rep));
+    [mean_conf, sd_conf] = deal(NaN(numel(ds_conf)),NaN(numel(allDiffs), num_cue, numel(sigVs)));
+
     for i = 1:length(allDiffs)
         diff = allDiffs(i);
         % Find pairs of audIdx and visIdx that match this difference
@@ -121,8 +124,8 @@ for d = 1:numel(ds_loc)
         end
 
         % Store the collected data in the main cell array
-        mean_conf(i,:,:,:) = mean(tempData,1);
-        sd_conf(i,:,:,:) = std(tempData,[],1);
+        mean_conf(d,i,:,:,:) = squeeze(mean(tempData,1));
+        sd_conf(d,i,:,:,:) = std(tempData,[],1);
 
     end
 
@@ -161,151 +164,30 @@ for d = 1:numel(ds_loc)
     end
 end
 
-%% plot confidence for congruent trials
+%% plot confidence as a function of discrepancy and reliability
 
-for d = 1 %1:numel(ds_conf)
+figure; hold on
 
-    % plot set up
-    figure
-    set(gcf, 'Position', get(0, 'Screensize')); hold on
-    t = tiledlayout(4, 1);
-    title(t, ['Auditory response with ' ds_conf{d}])
-    xlabel(t, 'Stimulus Location (pixel)');
-    ylabel(t, 'Count');
-    t.TileSpacing = 'compact';
-    t.Padding = 'compact';
-    % Loop over each auditory index
-    for a = 1:length(sA)
-        % Loop over each visual index
-        for v = 1:length(sV)
-            if a == v  % limiting only congurent trials
-                curr_resp = squeeze(org_conf(a, v, 1, :, :));
-                nexttile
-                h = histogram(curr_resp, 100);
-                h.FaceColor = repmat(0.5, 1, 3);
-                h.EdgeColor = 'none';
+t = tiledlayout(2, 1);
+xlabel(t, 'Audiovisual discrepancy (pixel)');
+ylabel(t, 'Confidence (pixel)');
+t.TileSpacing = 'compact';
+t.Padding = 'compact';
 
-                xline(aud_locs(a),'LineWidth',lw,'Color',clt(1,:))
-                xline(vis_locs(v),'LineWidth',lw,'Color',clt(2,:))
+for d = 1:numel(ds_conf)
 
-                xlim([0, 512])
-            end
-        end
-        % if (a == 1) && (v == 4)
-        %     legend('s_{hat}','Aud Stim', 'Vis Stim','Location','northeast')
-        % end
-    end
-
-end
-
-%%
-nRep = num_rep;
-d = 1;
-curr_resp = NaN(nRep, length(aud_locs));
-    d_conf = squeeze(conf(:,d,:,:,:));
-    org_conf = reshape(d_conf, [numel(sA), numel(sV), num_cue, numel(sigVs), num_rep]);
-
-    figure
-    t = tiledlayout(2, 1);
-    title(t, 'Aud locolization' )
-    xlabel(t, 'Confidence radius')
-    ylabel(t, 'Count');
-    t.TileSpacing = 'compact';
-    t.Padding = 'compact';
-    % Loop over each auditory inde
-for vis_reliability = 1:2 %1:numel(ds_conf)
-    % plot set up
+for cue = 1:num_cue
     nexttile
-
-    title('Auditory response')
-    xlabel('Stimulus Location (pixel)');
-    ylabel('Count');
-
-    % Loop over each auditory index
-    for i = 1:length(aud_locs)
-        curr_resp(:,i) = squeeze(org_conf(i, i, 1, vis_reliability, :));
-
+    title(cue_label{cue})
+    hold on
+    for rel = 1:numel(sigVs)
+%         plot(disc_locs, squeeze(mean_conf(d,:, cue, rel, :)),'Color',clt(rel+1,:))
+        errorbar(disc_locs, squeeze(mean_conf(d,:, cue, rel, :)), ...
+           'Color',clt(rel+1,:))
     end
-    h = histogram(curr_resp, 100);
-    h.FaceColor = repmat(0.5, 1, 3);
-    h.EdgeColor = 'none';
-    xlim([0,120])
+    xticks(disc_locs)
+end
+legend(rel_label, 'Location', 'eastoutside');
 
 end
-
-
-%%
-
-for d = 1 %1:numel(ds_loc)
-
-    % organize data
-
-    if d ~= numel(ds_conf)
-        d_loc = d;
-    else
-    end
-
-    d_resp = squeeze(loc(:,d_loc,:,:,:));
-    org_resp = reshape(d_resp, [numel(sA), numel(sV), num_cue, numel(sigVs), num_rep]);
-
-    d_conf = squeeze(conf(:,d,:,:,:));
-    org_conf = reshape(d_conf, [numel(sA), numel(sV), num_cue, numel(sigVs), num_rep]);
-
-
-    % organize response by discrepancy
-    allDiffs = unique(abs(sA' - sV));
-
-    [mean_conf, sd_conf] = deal(NaN(numel(allDiffs), num_cue, numel(sigVs), num_rep));
-    for i = 1:length(allDiffs)
-        diff = allDiffs(i);
-        % Find pairs of audIdx and visIdx that match this difference
-        [audPairs, visPairs] = find(abs(sA' - sV) == diff);
-        tempData = NaN(numel(audPairs), num_cue, numel(sigVs), num_rep);
-        % For each pair, extract and store the corresponding data
-        for j = 1:numel(audPairs)
-            % Extract data for this specific audIdx and visIdx pair across all other dimensions
-            tempData(j,:,:,:) = squeeze(org_conf(audPairs(j), visPairs(j), :, :, :));
-        end
-
-        % Store the collected data in the main cell array
-        mean_conf(i,:,:,:) = mean(tempData,1);
-        sd_conf(i,:,:,:) = std(tempData,[],1);
-
-    end
-
-    for a = 1:length(aud_locs)
-        % Loop over each visual index
-        for v = 1:length(vis_locs)
-            
-                curr_resp(a,v,:,:) = squeeze(org_resp(a, v, 1, :, :));
-                curr_conf(a,v,:,:) = squeeze(org_conf(a, v, 1, :, :));
-                curr_err(a,v,:,:) = curr_resp(a,v,:,:) - aud_locs(a);
-        end
-        % if (a == 1) && (v == 4)
-        %     legend('s_{hat}','Aud Stim', 'Vis Stim','Location','northeast')
-        % end
-    end
-end
-
-
-
-%%
-figure
-set(gca, 'LineWidth', lw, 'FontSize', fontSZ, 'TickDir', 'out')
-set(gcf, 'Position',[0 0 500 400])
-hold on 
-scatter(err, conf,'filled','k')
-[linearFit, gof] = fit(err', conf', 'poly1');
-plot(linearFit, 'r-');
-legend off
-xlabel('Error (pixel)')
-ylabel('Confidence (pixel)')
-
-
-
-
-
-
-
-
 
