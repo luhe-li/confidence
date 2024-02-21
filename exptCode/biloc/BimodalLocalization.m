@@ -14,7 +14,7 @@ end
 switch ExpInfo.practice
     case 1
         outFileName                          = sprintf('biLoc_sub%i_ses%i', ExpInfo.subjID, ExpInfo.session);
-        ExpInfo.nRep                         = 4; % number of trial per condition level
+        ExpInfo.nRep                         = 8; % number of trial per condition level
         ExpInfo.numBlocks                    = 8;
     case 2
         outFileName                          = sprintf('biLoc_practice_sub%i_ses%i', ExpInfo.subjID, ExpInfo.session);
