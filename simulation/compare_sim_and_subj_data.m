@@ -101,7 +101,7 @@ clt = [30, 120, 180; % blue
     227, 27, 27;  % dark red
     251, 154, 153]./255; % light red
 
-curr_resp = NaN(nRep, length(aud_locs));
+curr_resp = NaN(16, length(aud_locs));
     figure
     t = tiledlayout(2, 1);
     title(t, 'Aud locolization' )
