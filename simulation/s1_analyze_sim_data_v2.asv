@@ -214,7 +214,7 @@ for d = 1:numel(ds_conf)
     end
     legend(rel_label, 'Location', 'eastoutside');
 
-    saveas(gca, fullfile(out_dir, sprintf('conf_%s',  ds_conf{d})), 'png')
+    saveas(gca, fullfile(out_dir, sprintf('hist_conf_aud_%s',  ds_conf{d})), 'png')
 
 end
 
