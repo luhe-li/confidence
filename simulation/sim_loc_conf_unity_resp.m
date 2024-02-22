@@ -1,4 +1,4 @@
-function [loc, conf, unity] = sim_loc_conf_unity_resp(pCommon, nT, sA, sV, aA, bA, sigA, sigV, muP, sigP, fixP)
+function [loc, conf, unity, pdf] = sim_loc_conf_unity_resp(pCommon, nT, sA, sV, aA, bA, sigA, sigV, muP, sigP, fixP)
 
 %SIM_LOC_CONF_UNITY_RESP Simulates localization responses, confidence judgements,
 %and unity judgements for a bimodal audiovisual stimulus.

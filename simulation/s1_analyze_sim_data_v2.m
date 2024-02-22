@@ -1,5 +1,10 @@
 clear; close all;
 
+%% out dir
+cur_dir                          = pwd;
+[project_dir, ~]                 = fileparts(cur_dir);
+out_dir                          = fullfile(cur_dir, 's1Fig');
+if ~exist(out_dir,'dir') mkdir(out_dir); end
 
 %% experimental info
 
@@ -15,6 +20,7 @@ pixel_per_cm       = screenX / screen_width;
 aud_level          = [5 7 10 12];
 fixP.screenX       = 1024;
 fixP.x             = 1:1024; % the screen pixel space
+center_x           = fixP.x - 512;
 
 sA                 = round((aud_level - 8.5) .* cm_per_aud_ind .* pixel_per_cm + screen_mid); % in pixel. 8.5 being middle point
 sV                 = sA;
@@ -42,7 +48,7 @@ disc_locs   = unique(abs(diffs));
 
 bA                 = 0;
 sigA               = 100;
-sigVs              = [25,125];
+sigVs              = [50,125];
 muP                = screen_mid;
 sigP               = 10000; % arbitarily using screen width here
 pCommon            = 0.57; % only 1/4 of the trials are common cause so I assume this here
@@ -70,7 +76,7 @@ unity              = NaN(num_s, numel(sigVs), num_rep);
 
 for i = 1:num_s
     for v = 1:numel(sigVs)
-        [loc(i,:,:,v,:), conf(i,:,:,v,:), unity(i,v,:)] = sim_loc_conf_unity_resp(pCommon, num_rep, sAV(1,i),...
+        [loc(i,:,:,v,:), conf(i,:,:,v,:), unity(i,v,:), pdf(i,v)] = sim_loc_conf_unity_resp(pCommon, num_rep, sAV(1,i),...
             sAV(2,i), aA, bA, sigA, sigVs(v), muP, sigP, fixP);
     end
 end
@@ -91,10 +97,11 @@ clt = [30, 120, 180; % blue
 %% analyze data
 
 allDiffs = unique(abs(sA' - sV));
+num_diff = numel(allDiffs);
 
 org_resp = NaN(numel(ds_loc),numel(sA), numel(sV), num_cue, numel(sigVs), num_rep);
 org_conf = NaN(numel(ds_conf),numel(sA), numel(sV), num_cue, numel(sigVs), num_rep);
-[mean_conf, sd_conf] = deal(NaN(numel(ds_conf),numel(allDiffs), num_cue, numel(sigVs)));
+[mean_conf, sd_conf] = deal(NaN(numel(ds_conf),num_diff, num_cue, numel(sigVs)));
 
 for d = 1:numel(ds_conf)
 
@@ -115,15 +122,21 @@ for d = 1:numel(ds_conf)
     % organize response by discrepancy
 
     for i = 1:length(allDiffs)
+
         diff = allDiffs(i);
+
         % Find pairs of audIdx and visIdx that match this difference
         [audPairs, visPairs] = find(abs(sA' - sV) == diff);
         tempData = [];
+
         % For each pair, extract and store the corresponding data
         for j = 1:numel(audPairs)
             % Extract data for this specific audIdx and visIdx pair across all other dimensions
             tempData = cat(3, tempData, squeeze(org_conf(d, audPairs(j), visPairs(j), :, :, :)));
         end
+
+        % store conf by discrepancy
+        diff_conf{d,i} = tempData;
 
         % take average and sd
         mean_conf(d,i,:,:) = squeeze(mean(tempData,3));
@@ -136,6 +149,7 @@ end
 %% plot localization response
 
 for d = 1:numel(ds_loc)
+
     % plot set up
     figure
     set(gcf, 'Position', get(0, 'Screensize')); hold on
@@ -145,7 +159,6 @@ for d = 1:numel(ds_loc)
     ylabel(t, 'Count');
     t.TileSpacing = 'compact';
     t.Padding = 'compact';
-
 
     % Loop over each auditory index
     for a = 1:length(sA)
@@ -167,9 +180,9 @@ for d = 1:numel(ds_loc)
                 xline(vis_locs(v),'LineWidth',lw,'Color',clt(2,:))
 
                 xlim([-512, 512])
-%                 if (a == 1) && (v == 4)
-%                     legend('s_{hat}','Aud Stim', 'Vis Stim','Location','northeast')
-%                 end
+                if (a == 1) && (v == 4)
+                    legend('s_{hat}','Aud Stim', 'Vis Stim','Location','northeast')
+                end
 
             end
         end
@@ -203,5 +216,103 @@ for d = 1:numel(ds_conf)
 
 end
 
-%% plot posterior by conditions and strategies
+%% plot confidence histogram as a function of discrepancy, fixing reliability
+
+for d = 1:numel(ds_conf)
+
+    figure;
+    set(gcf, 'Position',[10 10 1200 400]); hold on
+    t = tiledlayout(2, 5);
+    title(t, ds_conf{d})
+%     xlabel(t, 'Audiovisual discrepancy (pixel)');
+    ylabel(t, 'Count');
+    t.TileSpacing = 'compact';
+    t.Padding = 'compact';
+
+    for rel = 1:2
+
+        for diff = 1:num_diff
+        
+            nexttile
+            hold on
+
+            histogram(squeeze(diff_conf{d, diff}(cue, rel, :)),'BinWidth',5);
+            xlim([0, 200])
+
+            if diff == 1 && rel == 1
+                ylabel('High visual reliability')
+            elseif diff == 1 && rel == 2
+                ylabel('Low visual reliability')
+            end
+
+            if rel == 2
+                xlabel(sprintf('Discrepancy = %i', disc_locs(diff)))
+            end
+
+        end
+    end
+   
+end
+
+
+%% plot posterior pdf by conditions and strategies
+
+org_pdf = reshape(pdf, [4, 4, 2]);
+
+for d = 1:numel(ds_conf)
+
+    % plot set up
+    figure
+    set(gcf, 'Position', get(0, 'Screensize')); hold on
+    t = tiledlayout(4, 4);
+    title(t, ['Posterior of auditory stimulus location: ' ds_conf{d}])
+    xlabel(t, 'Stimulus Location (pixel)');
+    ylabel(t, 'Probability');
+    t.TileSpacing = 'compact';
+    t.Padding = 'compact';
+
+    % Loop over each auditory index
+    for a = 1:length(sA)
+        % Loop over each visual index
+        for v = 1:length(sV)
+
+            nexttile
+            hold on
+
+            for r = 1%:2
+
+                if d == 1
+                    post = org_pdf(a,v,r).MA_A;
+                elseif d == 2
+                    post = org_pdf(a,v,r).MS_A;
+                elseif d == 3
+                    post = org_pdf(a,v,r).PM_select_A;
+                elseif d == 4
+                    post = org_pdf(a,v,r).PM_match_A;
+                end
+
+                post = post(1,:);
+                plot(center_x, post,'LineWidth', 1, 'Color', clt(r+1,:));
+
+                xline(aud_locs(a),'LineWidth',lw,'Color',clt(1,:),'HandleVisibility','off')
+                xline(vis_locs(v),'LineWidth',lw,'Color',clt(2,:),'HandleVisibility','off')
+
+                xlim([min(center_x), max(center_x)])
+
+            end
+
+
+
+            if (a == 1) && (v == 4)
+                 legend('s_{hat}','Aud Stim', 'Vis Stim','Location','northeast')
+            end
+
+        end
+    end
+
+    saveas(gca, fullfile(out_dir, sprintf('pdf_aud_%s',  ds_conf{d})), 'png')
+
+end
+
+
 
