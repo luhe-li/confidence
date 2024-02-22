@@ -1,5 +1,5 @@
-function [org_resp, org_conf, org_err] = org_data(sub_slc,ses_slc,total_num_rep)
-[org_resp, org_conf, org_err] = deal(NaN(4, 4, 2, 2, total_num_rep));
+function [org_resp, org_conf, org_err,ExpInfo] = org_data(sub_slc,ses_slc,total_num_rep)
+[org_resp, org_conf, org_err] = deal([]);
 for i = 1:numel(ses_slc)
     % manage path
     cur_dir      = pwd;

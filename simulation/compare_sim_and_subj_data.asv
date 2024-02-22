@@ -159,12 +159,12 @@ for d = 1 %1:numel(ds_conf)
 end
 
 
-for cue = 1:2 %:numel(ds_conf)
+for d = 1 %:numel(ds_conf)
 
     figure;
     set(gcf, 'Position',[10 10 1200 400]); hold on
     t = tiledlayout(2, 5);
-    title(t, 'Confidence (pixel)')
+    title(t, 'Conf')
 %     xlabel(t, 'Audiovisual discrepancy (pixel)');
     ylabel(t, 'Count');
     t.TileSpacing = 'compact';
@@ -177,7 +177,7 @@ for cue = 1:2 %:numel(ds_conf)
             nexttile
             hold on
 
-            histogram(squeeze(diff_conf{1, diff}(cue, rel, :)),'BinWidth',5);
+            histogram(squeeze(diff_conf{d, diff}(cue, rel, :)),'BinWidth',5);
             xlim([0, 200])
 
             if diff == 1 && rel == 1
