@@ -21,7 +21,7 @@ titleSZ = 20;
 dotSZ = 80;
 clt = [30, 120, 180; % blue
     227, 27, 27;  % dark red
-    251, 154, 153]./255; % light red
+    128 128 128]./255; % grey
 modal_str = {"Audio","Visual"};
 sA = ExpInfo.speakerLocPixel(ExpInfo.audIdx);
 sV = sA;
@@ -32,6 +32,7 @@ num_cue            = numel(cue_label);
 disc_locs   = unique(abs(allDiffs));
 rel_label   = {'High reliability','Low reliability'};
 num_diff = numel(allDiffs);
+%%
 for modality = 1:2
 
     curr_resp = NaN(total_num_rep, 4);
@@ -89,7 +90,7 @@ for d = 1 %1:numel(ds_conf)
 end
 
 %% plot localization response
-
+edges = linspace(-512,512,128);
 for modality = 1:2
     % plot set up
     figure
@@ -113,19 +114,21 @@ for modality = 1:2
             for rel = 1:2
 
                 curr_resp = squeeze(org_resp(a, v, modality, rel, :));
-                h = histogram(curr_resp, 100);
+                h = histogram(curr_resp, edges);
                 h.FaceColor = clt(rel+1,:);
                 h.EdgeColor = 'none';
                 h.FaceAlpha = 0.5;
-                xline(sA(a),'LineWidth',lw,'Color',clt(1,:))
-                xline(sV(v),'LineWidth',lw,'Color',clt(2,:))
 
-                xlim([-512, 512])
-                if (a == 1) && (v == 4)
-                    legend('estimation','Aud Stim', 'Vis Stim','Location','northeast')
-                end
+
                 
-            end
+            end                
+            xline(sA(a),'--','LineWidth',lw,'Color',clt(1,:))
+                xline(sV(v),'--','LineWidth',lw,'Color',clt(2,:))
+
+                xlim([-512, 512])                
+            if (a == 1) && (v == 4)
+                    legend('high rel est','low rel est','Aud Stim', 'Vis Stim','Location','northeast')
+                end
             hold off
         end
     end
@@ -158,13 +161,13 @@ for d = 1 %1:numel(ds_conf)
 
 end
 
-
-for cue = 1:2 %:numel(ds_conf)
+%%
+for modality = 1:2 %:numel(ds_conf)
 
     figure;
     set(gcf, 'Position',[10 10 1200 400]); hold on
     t = tiledlayout(2, 5);
-    title(t, 'Confidence (pixel)')
+    title(t, [modal_str{modality} ' Confidence (pixel)'])
 %     xlabel(t, 'Audiovisual discrepancy (pixel)');
     ylabel(t, 'Count');
     t.TileSpacing = 'compact';
@@ -177,7 +180,7 @@ for cue = 1:2 %:numel(ds_conf)
             nexttile
             hold on
 
-            histogram(squeeze(diff_conf{1, diff}(cue, rel, :)),'BinWidth',5);
+            histogram(squeeze(diff_conf{1, diff}(modality, rel, :)),'BinWidth',5);
             xlim([0, 200])
 
             if diff == 1 && rel == 1
