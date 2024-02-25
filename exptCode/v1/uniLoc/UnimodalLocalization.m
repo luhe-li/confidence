@@ -5,7 +5,7 @@
 % screen. Then, either an auditory or a visual 100 ms-long stimulus was
 % presented, followed by 200 ms of blank screen. Next, the response cursor
 % appeared, and participants adjusted the horizontal location of the cursor
-% to match that of the stimulus. There was no time constraint for the
+% to match that of the stimulus. There was no tCCime constraint for the
 % response. Visual feedback of the cursor location was provided during its
 % adjustment, but error feedback was not provided. After the response, the
 % loudspeaker moved to its new location. The inter-trial interval was
