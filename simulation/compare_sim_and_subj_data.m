@@ -181,7 +181,7 @@ for modality = 1:2 %:numel(ds_conf)
             hold on
 
             histogram(squeeze(diff_conf{1, diff}(modality, rel, :)),'BinWidth',5);
-            xlim([0, 200])
+            xlim([0, 250])
 
             if diff == 1 && rel == 1
                 ylabel('High visual reliability')

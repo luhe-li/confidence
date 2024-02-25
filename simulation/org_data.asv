@@ -40,7 +40,7 @@ for i = 1:numel(ses_slc)
     resp        = [Resp.response_pixel] - ScreenInfo.xmid; % rescale response with center as 0
     err         = abs(resp - target);
     conf        = [Resp.conf_radius_pixel];
-    uni         = [Resp.unityConf];
+    uni         = Resp.unityConf;
     % organize response
     [org_resp_temp, org_conf_temp, org_err_temp, org_uni_temp] = deal(NaN(numel(audIdx), numel(visIdx), numel(cueIdx), numel(visReliIdx), num_rep));
     for trial = 1:length(resp)
