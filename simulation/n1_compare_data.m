@@ -118,7 +118,7 @@ for modality = 1:2 %:numel(ds_conf)
     set(gcf, 'Position',[10 10 1200 400]); hold on
     t = tiledlayout(2, 5);
     title(t, [modal_str{modality} ' Confidence (pixel)'])
-%     xlabel(t, 'Audiovisual discrepancy (pixel)');
+    %     xlabel(t, 'Audiovisual discrepancy (pixel)');
     ylabel(t, 'Count');
     t.TileSpacing = 'compact';
     t.Padding = 'compact';
@@ -126,7 +126,7 @@ for modality = 1:2 %:numel(ds_conf)
     for rel = 1:2
 
         for diff = 1:num_diff
-        
+
             nexttile
             hold on
             for scenario = 0:1
@@ -154,7 +154,7 @@ for modality = 1:2 %:numel(ds_conf)
 
         end
     end
-   
+
 end
 %% plot localization response
 edges = linspace(-512,512,128);
@@ -190,14 +190,14 @@ for modality = 1:2
                 h.FaceAlpha = 0.5;
 
 
-                
-            end                
-            xline(sA(a),'--','LineWidth',lw,'Color',clt(1,:))
-                xline(sV(v),'--','LineWidth',lw,'Color',clt(2,:))
 
-                xlim([-512, 512])                
+            end
+            xline(sA(a),'--','LineWidth',lw,'Color',clt(1,:))
+            xline(sV(v),'--','LineWidth',lw,'Color',clt(2,:))
+
+            xlim([-512, 512])
             if (a == 1) && (v == 4)
-                    legend('C = 1','C = 2','Aud Stim', 'Vis Stim','Location','northeast')
+                legend('C = 1','C = 2','Aud Stim', 'Vis Stim','Location','northeast')
             end
             hold off
         end
@@ -235,18 +235,107 @@ for modality = 1:2
                 h.FaceAlpha = 0.5;
 
 
-                
-            end                
+
+            end
             % xline(sA(a),'--','LineWidth',lw,'Color',clt(1,:))
             %     xline(sV(v),'--','LineWidth',lw,'Color',clt(2,:))
-            % 
-            %     xlim([-512, 512])                
+            %
+            %     xlim([-512, 512])
             if (a == 1) && (v == 4)
-                    legend('high rel est','low rel est','Aud Stim', 'Vis Stim','Location','northeast')
-                end
+                legend('high rel est','low rel est','Aud Stim', 'Vis Stim','Location','northeast')
+            end
             hold off
         end
     end
 end
+
+%% metamer trials to congruent trials
+
+
+
+
+for scenario = 0:1
+all_con = [];
+all_incon = [];
+figure;
+set(gcf, 'Position',[10 10 1200 300]); hold on
+t = tiledlayout(1,4);
+    for i  = 1:4
+
+        slc_cue = 1;
+        slc_rel = 1;
+        slc_resp = squeeze(org_resp(:,:,slc_cue,slc_rel,:));
+
+        % curr_uni_bool = squeeze(org_uni_bool(:,:,slc_cue,slc_rel,:));
+        % slc_resp(curr_uni_bool ~= scenario) = NaN;
+
+        con_conf = org_conf(i,i,slc_cue, slc_rel,:);
+        curr_uni_bool = squeeze(org_uni_bool(i,i,slc_cue, slc_rel,:));
+        con_conf(curr_uni_bool ~= scenario) = NaN;
+
+        all_con = [all_con; con_conf];
+
+        con_resp = slc_resp(i,i,:);
+        i_mu = mean(con_resp);
+        i_sd = std(con_resp,[],'all');
+
+        lb = i_mu - 10;%0.5*i_sd;
+        ub = i_mu + 10;%0.5*i_sd;
+
+        withinRange = (slc_resp>= lb) & (slc_resp<= ub);
+        linearIndices = find(withinRange);
+
+        [I1, I2, I3] = ind2sub(size(slc_resp), linearIndices);
+
+        incon_conf = [];
+
+        for j = 1:length(linearIndices)
+
+            if I1(j) == i && I2(j) == i
+            else
+                incon_conf_temp = org_conf(I1(j), I2(j), slc_cue, slc_rel, I3(j));
+                curr_uni_bool = squeeze(org_uni_bool(I1(j), I2(j), slc_cue, slc_rel, I3(j)));
+                incon_conf_temp(curr_uni_bool ~= scenario) = NaN;
+                incon_conf = [incon_conf; incon_conf_temp];
+                all_incon = [all_incon; incon_conf];
+
+            end
+
+        end
+
+        nexttile
+        hold on
+        h= histogram(con_conf,'BinWidth',5);
+        h.FaceColor = clt(2,:);
+        h.EdgeColor = 'none';
+        h.FaceAlpha = 0.5;
+
+        h= histogram(incon_conf,'BinWidth',5);
+        h.FaceColor = repmat(0.5, 1, 3);
+        h.EdgeColor = 'none';
+        h.FaceAlpha = 0.5;
+
+        xlim([0, 300])
+        title(sprintf('estimate: %.2f - %.2f', lb, ub))
+
+        if i == 4
+            legend('congruent', 'incongruent')
+        end
+    end
+    figure;
+hold on
+h= histogram(all_con,'BinWidth',5);
+h.FaceColor = clt(2,:);
+h.EdgeColor = 'none';
+h.FaceAlpha = 0.5;
+
+h= histogram(all_incon,'BinWidth',5);
+h.FaceColor = repmat(0.5, 1, 3);
+h.EdgeColor = 'none';
+h.FaceAlpha = 0.5;
+xlim([0, 300])
+end
+%%
+
 
 
