@@ -92,7 +92,7 @@ titleSZ = 20;
 dotSZ = 80;
 clt = [30, 120, 180; % blue
     227, 27, 27;  % dark red
-    251, 154, 153]./255; % light red
+    128, 128, 128]./255; % light red
 
 %% analyze data
 
@@ -263,7 +263,8 @@ end
 
 org_pdf = reshape(pdf, [4, 4, 2]);
 
-for d = 1:numel(ds_conf)
+
+for d = 1:2%:numel(ds_conf)
 
     % plot set up
     figure
@@ -300,7 +301,8 @@ for d = 1:numel(ds_conf)
 
                 xline(aud_locs(a),'LineWidth',lw,'Color',clt(1,:))
                 xline(vis_locs(v),'LineWidth',lw,'Color',clt(2,:))
-
+                xline(squeeze(org_resp(1, a, v, 1, r, 1)),'LineWidth',lw,'Color',clt(3,:))
+                
                 xlim([min(center_x), max(center_x)])
 
             end
@@ -308,7 +310,7 @@ for d = 1:numel(ds_conf)
 
 
             if (a == 1) && (v == 4)
-                 legend('Posterior','Aud Stim', 'Vis Stim','Location','northeast')
+                 legend('Posterior','Aud Stim', 'Vis Stim','estX','Location','northeast')
             end
 
         end

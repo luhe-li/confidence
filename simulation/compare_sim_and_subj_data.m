@@ -9,7 +9,7 @@ sub_slc = 4;
 ses_slc = 1:3;
 total_num_rep = 16;
 
-[org_resp, org_conf, org_err,ExpInfo] = org_data(sub_slc,ses_slc,total_num_rep);
+[org_resp, org_conf, org_err,org_uni,ExpInfo] = org_data(sub_slc,ses_slc,total_num_rep);
 
 
 %%
