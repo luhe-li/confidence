@@ -42,7 +42,7 @@ while 1
         dots_targetLoc_coordinates = dots_targetLoc_coordinates(:,1:end-1);
     end
 end
-
+Resp.vStimDotsCoor = dots_targetLoc_coordinates;
 %% trial start
 
 % fixation
