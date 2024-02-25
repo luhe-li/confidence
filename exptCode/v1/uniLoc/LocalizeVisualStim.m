@@ -1,10 +1,9 @@
-function Resp = LocalizeBothStim(i, ExpInfo,...
-    ScreenInfo,AudInfo,VSinfo,Arduino,pahandle,windowPtr)
+function Resp = LocalizeVisualStim(i, ExpInfo,...
+    ScreenInfo,VSinfo,windowPtr)
 
-%% generate stimulus
+%% precompute visual stimuli
 
-% randomly draw VSinfo.num_randomDots [x;y] coordinates based on the centroid
-% first compute the location of the visual stimulus in pixels
+%first compute the location of the visual stimulus in pixels
 loc_pixel = round(ExpInfo.randVisPixel(i));
 targetLoc = ScreenInfo.xmid + loc_pixel;
 RNcoordinates = randn(2,1);
@@ -43,7 +42,7 @@ while 1
     end
 end
 
-%% trial start
+%% start the trial
 
 % fixation
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
@@ -61,21 +60,11 @@ Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
 Screen('Flip',windowPtr);
 WaitSecs(ExpInfo.tBlank1);
 
-% present both stimulus
-input_on = ['<',num2str(1),':',num2str(ExpInfo.randAudIdx(i)),'>']; %arduino takes input in this format
-fprintf(Arduino,input_on);
-PsychPortAudio('FillBuffer',pahandle, AudInfo.GaussianWhiteNoise);
+% display visual stimulus
 Screen('DrawTexture',windowPtr,dotClouds_targetLoc,[],...
         [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
-vbl = Screen('Flip',windowPtr); % v onset
-PsychPortAudio('Start',pahandle,1,0,0);
-Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
-    [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
-Screen('Flip',windowPtr, vbl + (ExpInfo.frameStim - 0.5) * ScreenInfo.ifi);
-WaitSecs(0.1);
-input_off = ['<',num2str(0),':',num2str(ExpInfo.randAudIdx(i)),'>'];
-fprintf(Arduino,input_off);
-PsychPortAudio('Stop',pahandle);
+vbl = Screen('Flip',windowPtr);
+Screen('Flip',windowPtr, vbl + (VSinfo.numFrames - 0.5) * ScreenInfo.ifi);
 
 % mask
 for jj = 1:VSinfo.numFramesMasker 
@@ -83,30 +72,43 @@ Screen('DrawTexture', windowPtr, VSinfo.gwn_texture(rem(jj,VSinfo.GWNnumFrames)+
          [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
 Screen('Flip',windowPtr);
 end
+     
+% % display visual stimulus
+% for j = 1:VSinfo.numFrames 
+%     Screen('DrawTexture',windowPtr,dotClouds_targetLoc,[],...
+%         [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
+%     Screen('Flip',windowPtr);
+% end
+% 
+% % display post-stimulus mask
+% for jj = 1:VSinfo.numFramesMasker
+%     Screen('DrawTexture', windowPtr, VSinfo.gwn_texture(jj),[],...
+%         [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
+%     Screen('Flip',windowPtr);
+% end
+Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
+    [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
+Screen('Flip',windowPtr);
 
 % blank screen 2
 % WaitSecs(ExpInfo.tBlank2);
 
 %% response
 
-% perception response
+% perceptual response
 yLoc = ScreenInfo.yaxis-ScreenInfo.liftingYaxis;
-Screen('TextSize',windowPtr,20);
-SetMouse(randi(ScreenInfo.xmid*2,1), yLoc*2, windowPtr);
+SetMouse(randi(ScreenInfo.xaxis*2,1), yLoc*2, windowPtr);
+HideCursor;
 buttons = 0;
 tic;
-HideCursor;
 while sum(buttons)==0
-    [x,~,buttons] = GetMouse(windowPtr); 
+    [x,~,buttons] = GetMouse(windowPtr);
+    HideCursor;
     x = min(x, ScreenInfo.xmid*2); 
     x = max(0,x);
-    HideCursor;
     Screen('DrawTexture',windowPtr, VSinfo.grey_texture,[],...
         [0,0,ScreenInfo.xaxis, ScreenInfo.yaxis]);
     Screen('DrawLine', windowPtr, [255 255 255],x, yLoc-3, x, yLoc+3, 1);
-    DrawFormattedText(windowPtr, ExpInfo.cue{ExpInfo.randAVIdx(3,i)}, 'center', 'center', ...
-        [255 255 255],[], [], [], [], [], ...
-        [x-20,yLoc-12,x+20,yLoc-6]);
     Screen('Flip',windowPtr);
     [~, ~, keyCode] = KbCheck(-1);
     if keyCode(KbName('ESCAPE'))
@@ -121,29 +123,52 @@ Resp.response_pixel = x;
 Resp.response_cm    = (Resp.response_pixel -  ScreenInfo.xmid)/ScreenInfo.numPixels_perCM;
 Resp.response_deg   = rad2deg(atan(Resp.response_cm/ExpInfo.sittingDistance));
 HideCursor;
-
 % confidence response
-DrawFormattedText(windowPtr, 'Are you confident about your estimation?\nYes: 1\nNo: 2', ...
-    'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis-30,[255 255 255]);
-Screen('Flip',windowPtr);
-
-resp=1; tic;
-while resp
-    [~, ~, keyCode] = KbCheck();
-    if keyCode(KbName('numLock'))
-        ShowCursor;
+Screen('TextSize',windowPtr,15);
+SetMouse(x*2, yLoc*2, windowPtr);
+HideCursor;
+buttons = 0;
+WaitSecs(0.2);
+tic;
+while sum(buttons)==0
+    [conf_x,~,buttons] = GetMouse(windowPtr);
+    conf_radius = abs(conf_x - x);
+    potentialconfRcm = conf_radius/ScreenInfo.numPixels_perCM;
+    potentialPoint = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * potentialconfRcm, ExpInfo.minPoint);
+    
+    potentialEnclosed = abs(ExpInfo.speakerLocCM(ExpInfo.randVisIdx(i)) - Resp.response_cm) <= potentialconfRcm;
+    
+    Screen('DrawTexture',windowPtr, VSinfo.grey_texture,[],...
+        [0,0,ScreenInfo.xaxis, ScreenInfo.yaxis]);
+    Screen('DrawLine', windowPtr, [255 255 255],x, yLoc+3, x, yLoc-3, 1);
+    Screen('DrawLine', windowPtr, [255 255 255],x-conf_radius, yLoc, x+conf_radius, yLoc, 1);
+    
+    if ExpInfo.practice == 2
+    DrawFormattedText(windowPtr, ['Actual score: ' num2str(round(potentialPoint * potentialEnclosed,2))], 'center', 'center', ...
+        [255 255 255],[], [], [], [], [], ...
+        [x-20,yLoc-25,x+20,yLoc-19]);
+    DrawFormattedText(windowPtr, ['Potential score: ' num2str(round(potentialPoint,2))], 'center', 'center', ...
+        [255 255 255],[], [], [], [], [], ...
+        [x-20,yLoc-12,x+20,yLoc-6]);
+    else
+    DrawFormattedText(windowPtr, num2str(round(potentialPoint,2)), 'center', 'center', ...
+        [255 255 255],[], [], [], [], [], ...
+        [x-20,yLoc-12,x+20,yLoc-6]);
+    end
+    
+    Screen('Flip',windowPtr);
+    [~, ~, keyCode] = KbCheck(-1);
+    if keyCode(KbName('ESCAPE'))
         sca;
+        ShowCursor;
+        Screen('CloseAll');
         error('Escape');
-    elseif keyCode(KbName('1'))
-        conf = 1;
-        resp = 0;
-    elseif keyCode(KbName('2'))
-        conf = 0;
-        resp = 0;
     end
 end
-Resp.RT2 = toc;
-Resp.conf = conf;
+Resp.RT2             = toc;
+Resp.conf_x = conf_x;
+Resp.conf_radius_pixel= conf_radius;
+Resp.conf_radius_cm  = Resp.conf_radius_pixel/ScreenInfo.numPixels_perCM;
 
 % ITI
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
@@ -151,14 +176,10 @@ Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
 Screen('Flip',windowPtr);
 WaitSecs(ExpInfo.ITI);
 
-%calculate points
-if ExpInfo.randAVIdx(3,i) == 1 % A
-    Resp.target_idx = ExpInfo.randAVIdx(1,i);
-else % V
-    Resp.target_idx = ExpInfo.randAVIdx(2,i);
-end
+% calculate points
+Resp.target_idx = ExpInfo.randVisIdx(i); % visual location that corresponds to speaker index
 Resp.target_cm = ExpInfo.speakerLocCM(Resp.target_idx);
-Resp.target_pixel = Resp.target_cm .* ScreenInfo.numPixels_perCM;
+Resp.target_pixel = Resp.target_cm * ScreenInfo.numPixels_perCM;
 Resp.target_deg = rad2deg(atan(Resp.target_cm/ExpInfo.sittingDistance));
 Resp.enclosed = abs(Resp.target_cm - Resp.response_cm) <= Resp.conf_radius_cm;
 bestRadius_cm = abs(Resp.target_cm - Resp.response_cm);
