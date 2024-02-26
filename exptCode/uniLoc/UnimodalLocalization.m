@@ -181,7 +181,7 @@ VSinfo.gwn_texture         = generateNoisyBackground(VSinfo,ScreenInfo,windowPtr
 % draw one blob
 VSinfo.width                         = 8; %(pixel) Increasing this value will make the cloud more blurry (arbituary value)
 VSinfo.boxSize                       = 15; %This is the box size for each cloud (arbituary value)
-VSinfo.maxBrightness                 = 80; %indirectly control contrast
+VSinfo.maxBrightness                 = 128; %indirectly control contrast
 x = 1:1:VSinfo.boxSize; y = x;
 [X,Y]                                = meshgrid(x,y);
 cloud_temp                           = mvnpdf([X(:) Y(:)],[median(x) median(y)],...
@@ -284,18 +284,18 @@ for i = 1:ExpInfo.nTrials
         idxBlock = find(ExpInfo.breakTrials==i);
         firstTrial = ExpInfo.firstTrial(idxBlock);
         lastTrial = ExpInfo.lastTrial(idxBlock);
-        blockPt = sum([Resp(firstTrial:lastTrial).point]);
-        maxPtPossible = sum([Resp(firstTrial:lastTrial).maxPtPossible]);
+%         blockPt = sum([Resp(firstTrial:lastTrial).point]);
+%         maxPtPossible = sum([Resp(firstTrial:lastTrial).maxPtPossible]);
         
         blockInfo = sprintf('You''ve finished block %i/%i. Please take a break.',idxBlock,ExpInfo.numBlocks);
-        pointInfo = sprintf('Your total points of the last block is %.2f (max points possible: %.2f)',blockPt, maxPtPossible);
+%         pointInfo = sprintf('Your total points of the last block is %.2f (max points possible: %.2f)',blockPt, maxPtPossible);
         
         Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
         [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
         DrawFormattedText(windowPtr, blockInfo,...
             'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis-30,...
             [255 255 255]);
-        DrawFormattedText(windowPtr, [pointInfo '\nPress any button to resume the experiment.'],...
+        DrawFormattedText(windowPtr, '\nPress any button to resume the experiment.',...
             'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis,...
             [255 255 255]);
         Screen('Flip',windowPtr); KbWait(-3); WaitSecs(1);
@@ -327,4 +327,4 @@ else
     save(fullfile(outDir,outFileName),'Resp','sortedResp','ExpInfo','ScreenInfo','VSinfo','AudInfo');
 end
 
-Screen('CloseAll');
+% Screen('CloseAll');

@@ -41,7 +41,7 @@ while 1
         dots_targetLoc_coordinates = dots_targetLoc_coordinates(:,1:end-1);
     end
 end
-
+Resp.vStimDotsCoor = dots_targetLoc_coordinates;
 %% start the trial
 
 % fixation
@@ -123,52 +123,32 @@ Resp.response_pixel = x;
 Resp.response_cm    = (Resp.response_pixel -  ScreenInfo.xmid)/ScreenInfo.numPixels_perCM;
 Resp.response_deg   = rad2deg(atan(Resp.response_cm/ExpInfo.sittingDistance));
 HideCursor;
+
 % confidence response
-Screen('TextSize',windowPtr,15);
-SetMouse(x*2, yLoc*2, windowPtr);
-HideCursor;
-buttons = 0;
-WaitSecs(0.2);
-tic;
-while sum(buttons)==0
-    [conf_x,~,buttons] = GetMouse(windowPtr);
-    conf_radius = abs(conf_x - x);
-    potentialconfRcm = conf_radius/ScreenInfo.numPixels_perCM;
-    potentialPoint = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * potentialconfRcm, ExpInfo.minPoint);
-    
-    potentialEnclosed = abs(ExpInfo.speakerLocCM(ExpInfo.randVisIdx(i)) - Resp.response_cm) <= potentialconfRcm;
-    
-    Screen('DrawTexture',windowPtr, VSinfo.grey_texture,[],...
+Screen('DrawTexture',windowPtr, VSinfo.grey_texture,[],...
         [0,0,ScreenInfo.xaxis, ScreenInfo.yaxis]);
-    Screen('DrawLine', windowPtr, [255 255 255],x, yLoc+3, x, yLoc-3, 1);
-    Screen('DrawLine', windowPtr, [255 255 255],x-conf_radius, yLoc, x+conf_radius, yLoc, 1);
-    
-    if ExpInfo.practice == 2
-    DrawFormattedText(windowPtr, ['Actual score: ' num2str(round(potentialPoint * potentialEnclosed,2))], 'center', 'center', ...
-        [255 255 255],[], [], [], [], [], ...
-        [x-20,yLoc-25,x+20,yLoc-19]);
-    DrawFormattedText(windowPtr, ['Potential score: ' num2str(round(potentialPoint,2))], 'center', 'center', ...
-        [255 255 255],[], [], [], [], [], ...
-        [x-20,yLoc-12,x+20,yLoc-6]);
-    else
-    DrawFormattedText(windowPtr, num2str(round(potentialPoint,2)), 'center', 'center', ...
-        [255 255 255],[], [], [], [], [], ...
-        [x-20,yLoc-12,x+20,yLoc-6]);
-    end
-    
-    Screen('Flip',windowPtr);
-    [~, ~, keyCode] = KbCheck(-1);
-    if keyCode(KbName('ESCAPE'))
-        sca;
+DrawFormattedText(windowPtr, 'Are you confident about your estimation?\nYes: 1\nNo: 2', ...
+    'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis-30,[255 255 255]);
+Screen('Flip',windowPtr);
+
+resp=1; 
+tic;
+while resp
+    [~, ~, keyCode] = KbCheck();
+    if keyCode(KbName('numLock'))
         ShowCursor;
-        Screen('CloseAll');
+        sca;
         error('Escape');
+    elseif keyCode(KbName('1'))
+        conf = 1;
+        resp = 0;
+    elseif keyCode(KbName('2'))
+        conf = 0;
+        resp = 0;
     end
 end
-Resp.RT2             = toc;
-Resp.conf_x = conf_x;
-Resp.conf_radius_pixel= conf_radius;
-Resp.conf_radius_cm  = Resp.conf_radius_pixel/ScreenInfo.numPixels_perCM;
+Resp.RT2 = toc;
+Resp.conf = conf;
 
 % ITI
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
@@ -181,13 +161,13 @@ Resp.target_idx = ExpInfo.randVisIdx(i); % visual location that corresponds to s
 Resp.target_cm = ExpInfo.speakerLocCM(Resp.target_idx);
 Resp.target_pixel = Resp.target_cm * ScreenInfo.numPixels_perCM;
 Resp.target_deg = rad2deg(atan(Resp.target_cm/ExpInfo.sittingDistance));
-Resp.enclosed = abs(Resp.target_cm - Resp.response_cm) <= Resp.conf_radius_cm;
-bestRadius_cm = abs(Resp.target_cm - Resp.response_cm);
-Resp.maxPtPossible = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * bestRadius_cm, ExpInfo.minPoint);
-if Resp.enclosed
-    Resp.point = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * Resp.conf_radius_cm, ExpInfo.minPoint);
-else
-    Resp.point = 0;
-end
+% Resp.enclosed = abs(Resp.target_cm - Resp.response_cm) <= Resp.conf_radius_cm;
+% bestRadius_cm = abs(Resp.target_cm - Resp.response_cm);
+% Resp.maxPtPossible = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * bestRadius_cm, ExpInfo.minPoint);
+% if Resp.enclosed
+%     Resp.point = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * Resp.conf_radius_cm, ExpInfo.minPoint);
+% else
+%     Resp.point = 0;
+% end
 
 end

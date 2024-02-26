@@ -61,6 +61,8 @@ Resp.response_cm    = (Resp.response_pixel -  ScreenInfo.xmid)/ScreenInfo.numPix
 Resp.response_deg   = rad2deg(atan(Resp.response_cm/ExpInfo.sittingDistance));
 
 % confidence response
+Screen('DrawTexture',windowPtr, VSinfo.grey_texture,[],...
+        [0,0,ScreenInfo.xaxis, ScreenInfo.yaxis]);
 DrawFormattedText(windowPtr, 'Are you confident about your estimation?\nYes: 1\nNo: 2', ...
     'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis-30,[255 255 255]);
 Screen('Flip',windowPtr);

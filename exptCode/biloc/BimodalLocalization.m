@@ -143,18 +143,18 @@ VSinfo.gwn_texture                   = generateNoisyBackground(VSinfo,ScreenInfo
 % draw one blob
 VSinfo.width                         = 8; %(pixel) Increasing this value will make the cloud more blurry (arbituary value)
 VSinfo.boxSize                       = 15; %This is the box size for each cloud (arbituary value)
-VSinfo.maxBrightness                 = 80; %indirectly control contrast
+VSinfo.maxBrightness                 = 128; %indirectly control contrast
 x                                    = 1:1:VSinfo.boxSize; y = x;
 [X,Y]                                = meshgrid(x,y);
 cloud_temp                           = mvnpdf([X(:) Y(:)],[median(x) median(y)],...
     [VSinfo.width 0; 0 VSinfo.width]);
-VSinfo.Cloud                         = reshape(cloud_temp,length(x),length(y)) .* (255/max(cloud_temp));
+VSinfo.Cloud                         = reshape(cloud_temp,length(x),length(y)) .* (VSinfo.maxBrightness/max(cloud_temp));
 
 %% Experiment set up
 
 % choose audiovisual locations out of 16 speakers, in index
-ExpInfo.audIdx                       = [5,7,10,12];
-ExpInfo.visIdx                       = [5,7,10,12];
+ExpInfo.audIdx                       = [6,8,9,11];
+ExpInfo.visIdx                       = [6,8,9,11];
 ExpInfo.cueIdx                       = [1,2]; % 1 = A, 2 = V
 ExpInfo.visReliIdx                   = [10,28]; % std in centimeters
 ExpInfo.cue                          = {'A','V'};
@@ -245,17 +245,17 @@ for i                                = 1:ExpInfo.nTrials
         idxBlock                             = find(ExpInfo.breakTrials==i);
         firstTrial                           = ExpInfo.firstTrial(idxBlock);
         lastTrial                            = ExpInfo.lastTrial(idxBlock);
-        blockPt                              = sum([Resp(firstTrial:lastTrial).point]);
-        maxPtPossible = sum([Resp(firstTrial:lastTrial).maxPtPossible]);
+%         blockPt                              = sum([Resp(firstTrial:lastTrial).point]);
+%         maxPtPossible = sum([Resp(firstTrial:lastTrial).maxPtPossible]);
         blockInfo = sprintf('You''ve finished block %i/%i. Please take a break.',idxBlock,ExpInfo.numBlocks);
-        pointInfo = sprintf('Your total points of the last block is %.2f (max points possible: %.2f)',blockPt, maxPtPossible);
+%         pointInfo = sprintf('Your total points of the last block is %.2f (max points possible: %.2f)',blockPt, maxPtPossible);
      
         Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
         [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
         DrawFormattedText(windowPtr, blockInfo,...
             'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis-30,...
             [255 255 255]);
-        DrawFormattedText(windowPtr, [pointInfo '\nPress any button to resume the experiment.'],...
+        DrawFormattedText(windowPtr, '\nPress any button to resume the experiment.',...
             'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis,...
             [255 255 255]);
         Screen('Flip',windowPtr); KbWait(-3); WaitSecs(1);

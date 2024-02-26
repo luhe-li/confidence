@@ -19,7 +19,7 @@ switch ExpInfo.practice
         ExpInfo.numBlocks = 8;
     case 2
 
-        ExpInfo.nRep = 2;
+        ExpInfo.nRep = 4;
 
         outFileName = sprintf('point_practice_sub%i_ses-%s', ExpInfo.subjID, ExpInfo.session);
         ExpInfo.numBlocks = 2;
@@ -28,11 +28,8 @@ end
 % path control
 curDir = pwd;
 [projectDir, ~]  = fileparts(fileparts(curDir));
-<<<<<<< Updated upstream
-outDir = fullfile(projectDir, 'data','point');
-=======
 outDir = fullfile(projectDir, 'data','pointTask');
->>>>>>> Stashed changes
+
 if ~exist(outDir,'dir') mkdir(outDir); end
 addpath(genpath(PsychtoolboxRoot))
 
@@ -120,7 +117,7 @@ VSinfo.gwn_texture         = generateNoisyBackground(VSinfo,ScreenInfo,windowPtr
 % draw one blob
 VSinfo.width                         = 8; %(pixel) Increasing this value will make the cloud more blurry (arbituary value)
 VSinfo.boxSize                       = 15; %This is the box size for each cloud (arbituary value)
-VSinfo.maxBrightness                 = 80; %indirectly control contrast
+VSinfo.maxBrightness                 = 128; %indirectly control contrast
 x = 1:1:VSinfo.boxSize; y = x;
 [X,Y]                                = meshgrid(x,y);
 cloud_temp                           = mvnpdf([X(:) Y(:)],[median(x) median(y)],...

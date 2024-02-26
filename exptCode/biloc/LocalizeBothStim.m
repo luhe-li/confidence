@@ -123,6 +123,8 @@ Resp.response_deg   = rad2deg(atan(Resp.response_cm/ExpInfo.sittingDistance));
 HideCursor;
 
 % confidence response
+Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
+    [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
 DrawFormattedText(windowPtr, 'Are you confident about your estimation?\nYes: 1\nNo: 2', ...
     'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis-30,[255 255 255]);
 Screen('Flip',windowPtr);
@@ -160,13 +162,13 @@ end
 Resp.target_cm = ExpInfo.speakerLocCM(Resp.target_idx);
 Resp.target_pixel = Resp.target_cm .* ScreenInfo.numPixels_perCM;
 Resp.target_deg = rad2deg(atan(Resp.target_cm/ExpInfo.sittingDistance));
-Resp.enclosed = abs(Resp.target_cm - Resp.response_cm) <= Resp.conf_radius_cm;
-bestRadius_cm = abs(Resp.target_cm - Resp.response_cm);
-Resp.maxPtPossible = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * bestRadius_cm, ExpInfo.minPoint);
-if Resp.enclosed
-    Resp.point = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * Resp.conf_radius_cm, ExpInfo.minPoint);
-else
-    Resp.point = 0;
-end
+% Resp.enclosed = abs(Resp.target_cm - Resp.response_cm) <= Resp.conf_radius_cm;
+% bestRadius_cm = abs(Resp.target_cm - Resp.response_cm);
+% Resp.maxPtPossible = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * bestRadius_cm, ExpInfo.minPoint);
+% if Resp.enclosed
+%     Resp.point = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * Resp.conf_radius_cm, ExpInfo.minPoint);
+% else
+%     Resp.point = 0;
+% end
 
 end
