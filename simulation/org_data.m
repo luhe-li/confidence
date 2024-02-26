@@ -1,15 +1,24 @@
-function [org_resp, org_conf, org_err, org_uni, ExpInfo] = org_data(sub_slc,ses_slc,total_num_rep)
+function [org_resp, org_conf, org_err, org_uni, ExpInfo] = org_data(sub_slc,ses_slc,total_num_rep,exp)
+% exp can be 'biLoc', 'uniLoc', or 'pointTask'
+
 [org_resp, org_conf, org_err, org_uni] = deal([]);
 for i = 1:numel(ses_slc)
     % manage path
     cur_dir      = pwd;
     [project_dir, ~]= fileparts(fileparts(cur_dir));
     % out_dir      = fullfile(cur_dir, 's1Fig');
-    data_dir     = fullfile(project_dir, 'confidence','data','biLoc');
+    data_dir     = fullfile(project_dir, 'confidence','data',exp);
     % if ~exist(out_dir,'dir') mkdir(out_dir); end
 
     % organize data
-    flnm        = sprintf('biLoc_sub%i_ses%i', sub_slc, ses_slc(i));
+    switch exp
+        case 'biLoc'
+            flnm        = sprintf('biLoc_sub%i_ses%i', sub_slc, ses_slc(i));
+        case 'uniLoc'
+            flnm        = sprintf(['uniLoc_sub%i_ses-' ses_slc], sub_slc);
+        case 'pointTask'
+            flnm        = sprintf('uniLoc_sub%i_ses-Pointing', sub_slc);
+    end
     load(fullfile(data_dir, flnm))
 
     % experiment info
