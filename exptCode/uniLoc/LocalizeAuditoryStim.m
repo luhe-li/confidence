@@ -91,4 +91,8 @@ Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
 Screen('Flip',windowPtr);
 WaitSecs(ExpInfo.ITI);
 
+Resp.target_idx = ExpInfo.randAudIdx(i); % visual location that corresponds to speaker index
+Resp.target_cm = ExpInfo.speakerLocCM(Resp.target_idx);
+Resp.target_pixel = Resp.target_cm * ScreenInfo.numPixels_perCM;
+Resp.target_deg = rad2deg(atan(Resp.target_cm/ExpInfo.sittingDistance));
 end

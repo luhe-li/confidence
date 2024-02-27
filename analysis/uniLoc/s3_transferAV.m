@@ -3,7 +3,7 @@ clear; clc; close all;
 
 %% set up
 
-sub = 4;
+sub = 1;
 
 %% manage path
 
@@ -18,11 +18,10 @@ if ~exist(out_dir,'dir') mkdir(out_dir); end
 % load V first to avoid overwriting sortedResp
 load(sprintf('uniLoc_sub%i_ses%s', sub, '-V'))
 load(sprintf('uniLoc_sub%i_ses%s', sub, '-A'))
-
 % set up
 nRep = ExpInfo.nRep;
-targIdx = unique([sortedResp.target_idx]);
-targPxs = unique([sortedResp.target_cm] * ScreenInfo.numPixels_perCM);
+targIdx = unique([ExpInfo.randAudIdx]);
+targPxs = unique([ExpInfo.randVisPixel]);
 targNum = length(targIdx);
 rA = NaN(targNum,nRep);
 rV1 = NaN(targNum,nRep);

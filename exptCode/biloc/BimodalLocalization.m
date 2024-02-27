@@ -14,7 +14,7 @@ end
 switch ExpInfo.practice
     case 1
         outFileName                          = sprintf('biLoc_sub%i_ses%i', ExpInfo.subjID, ExpInfo.session);
-        ExpInfo.nRep                         = 8; % number of trial per condition level
+        ExpInfo.nRep                         = 6; % number of trial per condition level
         ExpInfo.numBlocks                    = 8;
     case 2
         outFileName                          = sprintf('biLoc_practice_sub%i_ses%i', ExpInfo.subjID, ExpInfo.session);
@@ -182,8 +182,17 @@ ExpInfo.randAudIdx                   = ExpInfo.randAVIdx(1,:);
 
 % convert visual locations from index to perceptually matching pixel
 load('AVbias.mat')
-matchIdx                             = find(ismember(Transfer.targIdx, ExpInfo.visIdx));
-ExpInfo.targetPixel                  = Transfer.fitSV(ExpInfo.subjID, matchIdx);
+
+
+x = ExpInfo.speakerLocPixel(ExpInfo.randAudIdx);
+
+coefsA = squeeze(Transfer.coeff(ExpInfo.subjID, 1, :));
+coefsV = squeeze(Transfer.coeff(ExpInfo.subjID, 2, :));
+fitRA = x .* coefsA(2) + coefsA(1);
+fitSV = (fitRA - coefsV(1)) ./ coefsV(2);
+
+
+ExpInfo.targetPixel                  = unique(fitSV);
 [~, ~, ic]                           = unique(ExpInfo.randAVIdx(2,:));
 ExpInfo.randVisPixel                 = ExpInfo.targetPixel(ic');
 

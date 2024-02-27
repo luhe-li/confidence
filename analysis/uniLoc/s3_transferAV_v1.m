@@ -56,6 +56,7 @@ mdlV2 = fitlm(x(:),rV2(:));
 coefsV2 = table2array(mdlV2.Coefficients(:,1));
 fitSV2 = (fitRA - coefsV2(1)) ./ coefsV2(2);
 
+coeffLabels.subjects = sub;
 coeffLabels.subjects = unique([coeffLabels.subjects, sub]);
 coeffLabels.conditions = {'A', 'V1', 'V2'};
 coeffLabels.Cofficients = {'Slope', 'Intercept'};
