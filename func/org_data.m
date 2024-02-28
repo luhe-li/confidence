@@ -1,13 +1,13 @@
-function [org_resp, org_conf, org_err, org_uni, ExpInfo] = org_data(sub_slc,ses_slc,tt_trial,exp)
+function [org_resp, org_conf, org_err, ExpInfo] = org_data(sub_slc,ses_slc,exp)
 % exp can be 'biLoc', 'uniLoc', or 'pointTask'
 
-[org_resp, org_conf, org_err, org_uni] = deal([]);
+[org_resp, org_conf, org_err] = deal([]);
 
 for i = 1:numel(ses_slc)
     % manage path
     cur_dir      = pwd;
     [project_dir, ~]= fileparts(fileparts(cur_dir));
-    data_dir     = fullfile(project_dir,'confidence', 'data',exp);
+    data_dir     = fullfile(project_dir, 'data',exp);
 
     % organize data
     switch exp
@@ -29,8 +29,7 @@ for i = 1:numel(ses_slc)
             diffs(i, j) = aud_locs(i) - aud_locs(j);
         end
     end
-    disc_locs   = unique(abs(diffs));
-
+   
     % conditions
     seq         = ExpInfo.randAVIdx;
     audIdx      = ExpInfo.audIdx;
@@ -38,19 +37,15 @@ for i = 1:numel(ses_slc)
     cueIdx      = ExpInfo.cueIdx;
     visReliIdx  = ExpInfo.visReliIdx;
     num_rep     = ExpInfo.nRep;
-    disc        = abs(seq(1,:) - seq(2,:));
-    discIdx     = unique(disc);
-    cue_label   = {'Post-cue: A','Post-cue: V'};
-    rel_label   = {'High visual reliability','Low visual reliability'};
-
+    
     % data
     target      = [Resp.target_cm] * ScreenInfo.numPixels_perCM; % convert target to pixel, center as 0
     resp        = [Resp.response_pixel] - ScreenInfo.xmid; % rescale response with center as 0
     err         = abs(resp - target);
-    conf        = [Resp.conf_radius_pixel];
-    uni         = [Resp.unityConf];
+    conf        = [Resp.conf];
+    
     % organize response
-    [org_resp_temp, org_conf_temp, org_err_temp, org_uni_temp] = deal(NaN(numel(audIdx), numel(visIdx), numel(cueIdx), numel(visReliIdx), num_rep));
+    [org_resp_temp, org_conf_temp, org_err_temp] = deal(NaN(numel(audIdx), numel(visIdx), numel(cueIdx), numel(visReliIdx), num_rep));
     for trial = 1:length(resp)
         % Find indices for each condition
         aIdx = find(audIdx == seq(1, trial));
@@ -66,12 +61,10 @@ for i = 1:numel(ses_slc)
         org_resp_temp(aIdx, vIdx, cIdx, rIdx, repIdx) = resp(trial);
         org_conf_temp(aIdx, vIdx, cIdx, rIdx, repIdx) = conf(trial);
         org_err_temp(aIdx, vIdx, cIdx, rIdx, repIdx) = err(trial);
-        org_uni_temp(aIdx, vIdx, cIdx, rIdx, repIdx) = uni(trial);
     end
     org_resp = cat(5,org_resp,org_resp_temp);
     org_conf = cat(5,org_conf,org_conf_temp);
     org_err = cat(5,org_err,org_err_temp);
-    org_uni = cat(5,org_uni,org_uni_temp);
 end
 
 end

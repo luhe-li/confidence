@@ -16,13 +16,13 @@ flnm        = sprintf('uniLoc_sub%i_ses-V', sub_slc);
 
 load(fullfile(data_dir, flnm))
 %%
-sigVperTrial = NaN(1,length(Resp));
-confTrial = NaN(1,length(Resp));
-errTrial = NaN(1,length(Resp));
+% sigVperTrial = NaN(1,length(seq));
+confTrial = NaN(1,length(seq));
+errTrial = NaN(1,length(seq));
 
-for i = 1:length(Resp)
-sigVperTrial(i) = std(Resp(i).vStimDotsCoor(1,:),[],2);
-confTrial(i) = Resp(i).conf;
+for i = 1:length(seq)
+% sigVperTrial(i) = std(Resp(i).vStimDotsCoor(1,:),[],2);
+confTrial = org_conf(:);
 errTrial(i) = Resp(i).response_pixel - 512 - Resp(i).target_pixel;
 end
 

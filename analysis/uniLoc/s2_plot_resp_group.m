@@ -2,7 +2,7 @@ clear; clc; close all;
 
 %% set up
 
-sub_slc = 4;
+sub_slc = 1;
 
 % session
 ses_labels = {'-A','-V'};
@@ -66,9 +66,9 @@ for i = 1:numel(sub_slc)
     for j = 1:num_cond
 
         % reshape by stimulus level
-        locRep = reshape([orgResp{i,j}(1:end).target_deg],[num_rep,num_loc]);
+        locRep = reshape([orgResp{i,j}(1:end).target_cm],[num_rep,num_loc]);
         stim(i, j, :) = locRep(1,:);
-        temp_resp = reshape([orgResp{i,j}(1:end).response_deg],[num_rep,num_loc]);
+        temp_resp = reshape([orgResp{i,j}(1:end).response_cm],[num_rep,num_loc]);
 
         resp(i, j, :, :) = temp_resp'; % subject, session(aud, v1, v2), location, rep
 

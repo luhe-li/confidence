@@ -29,7 +29,7 @@ screen_mid         = screenX ./2;
 num_speaker_int    = 15; % 15 intervals between 16 speakers
 cm_per_aud_ind     = speaker_span / num_speaker_int;
 pixel_per_cm       = screenX / screen_width;
-aud_level          = [3 5 7 10 12 14];
+aud_level          = [6 8 9 11];
 fixP.screenX       = 1024;
 fixP.x             = 1:1024; % the screen pixel space
 center_x           = fixP.x - 512;
@@ -59,8 +59,8 @@ disc_locs   = unique(abs(diffs));
 %% free parameters
 
 bA                 = 0;
-sigA               = 75;
-sigVs              = [50,90];
+sigA               = 30;
+sigVs              = [15,50];
 muP                = screen_mid;
 sigP               = 10000; % arbitarily using screen width here
 pCommon            = 0.57; % only 1/4 of the trials are common cause so I assume this here
@@ -173,7 +173,7 @@ end
 
 
 %% plot confidence/variance/p(report Confident) as a function of discrepancy and reliability
-indVar = "p"; 
+indVar = "v"; 
 % use this to choose which independent variable you compare between conditions
 % choices are c:confidence, v:variance, and p:p(report confident)
 switch indVar
