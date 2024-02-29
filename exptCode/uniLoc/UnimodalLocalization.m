@@ -202,7 +202,7 @@ ExpInfo.randVisReliabIdx = reshape(ExpInfo.randVisReliabIdx, [], 1)';
 VSinfo.SD_blob(~~rem(ExpInfo.randVisReliabIdx,2)) = 10; % the unit is already in centimeters
 VSinfo.SD_blob(~rem(ExpInfo.randVisReliabIdx,2)) = 28; % visual reliability is mixed here
 ExpInfo.randAudIdx = ExpInfo.audLevel(ExpInfo.randIdx);
-ExpInfo.randVisIdx = ExpInfo.audLevel(ExpInfo.randIdx);
+ExpInfo.randVisIdx = ExpInfo.audLevel(ceil(ExpInfo.randVisReliabIdx ./ 2));
 
 % location of speakers in CM, visual angle, and pixel
 ExpInfo.sittingDistance              = 113.0; %cm

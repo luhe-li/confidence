@@ -1,5 +1,3 @@
-
-
 %% Enter experiment info
 clear; close all;  rng('Shuffle');
 
