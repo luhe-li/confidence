@@ -3,7 +3,7 @@ clear; clc; close all;
 
 %% set up
 
-sub = 2;
+sub = 1;
 
 %% manage path
 
@@ -21,7 +21,7 @@ load(sprintf('uniLoc_sub%i_ses%s', sub, '-A'))
 % set up
 nRep = ExpInfo.nRep;
 targIdx = unique([ExpInfo.randAudIdx]);
-targPxs = unique([ExpInfo.randVisPixel]);
+targPxs = unique(ExpInfo.speakerLocPixel(ExpInfo.randAudIdx));
 targNum = length(targIdx);
 rA = NaN(targNum,nRep);
 rV1 = NaN(targNum,nRep);
