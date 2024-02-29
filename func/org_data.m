@@ -41,7 +41,7 @@ for i = 1:numel(ses_slc)
     % data
     target      = [Resp.target_cm] * ScreenInfo.numPixels_perCM; % convert target to pixel, center as 0
     resp        = [Resp.response_pixel] - ScreenInfo.xmid; % rescale response with center as 0
-    err         = abs(resp - target);
+    err         = resp - target; % positive = right; negative = left;
     conf        = [Resp.conf];
     
     % organize response
