@@ -1,4 +1,5 @@
 clear; close all;
+
 %% 
 % What's new? 
 % This script uses sim_loc_conf_unity_resp_EVResp.m which is new. This
@@ -16,7 +17,7 @@ clear; close all;
 %% out dir
 cur_dir                          = pwd;
 [project_dir, ~]                 = fileparts(cur_dir);
-out_dir                          = fullfile(cur_dir, 's1Fig');
+out_dir                          = fullfile(cur_dir, 's3Fig');
 if ~exist(out_dir,'dir') mkdir(out_dir); end
 
 %% experimental info
@@ -60,7 +61,7 @@ disc_locs   = unique(abs(diffs));
 %% free parameters
 
 bA                 = 0;
-sigA               = 30;
+sigA               = 50;
 sigVs              = [15,50];
 muP                = screen_mid;
 sigP               = 10000; % arbitarily using screen width here
@@ -174,7 +175,7 @@ end
 
 
 %% plot confidence/variance/p(report Confident) as a function of discrepancy and reliability
-indVar = "v"; 
+indVar = "p"; 
 % use this to choose which independent variable you compare between conditions
 % choices are c:confidence, v:variance, and p:p(report confident)
 switch indVar
