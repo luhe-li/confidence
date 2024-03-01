@@ -1,7 +1,7 @@
-function [conf_by_diff, all_diffs] = org_by_diffs(org_data, sA)
+function [conf_by_diff, all_diffs] = org_by_raw_diffs(org_data, sA)
 
 sV = sA;
-all_diffs = unique(abs(sA' - sV))';
+all_diffs = unique(sA' - sV)';
 num_diffs = length(all_diffs);
 conf_by_diff = cell(1,num_diffs);
 
@@ -10,7 +10,7 @@ for i = 1:num_diffs
     diff = all_diffs(i);
     
     % Find pairs of audIdx and visIdx that match this difference
-    [audPairs, visPairs] = find(abs(sA' - sV) == diff);
+    [audPairs, visPairs] = find((sA' - sV) == diff);
     
     tempData = [];
     % For each pair, extract and store the corresponding data
