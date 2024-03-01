@@ -17,7 +17,7 @@ for i = 1:num_diffs
     for j = 1:numel(audPairs)
         
         % Extract data for this specific audIdx and visIdx pair across all other dimensions
-        tempData = cat(3, tempData, squeeze(org_data(audPairs(j), visPairs(j), :, :, :)));
+        tempData = cat(3, tempData, squeeze(org_data(audPairs(j), visPairs(j), :, :)));
     
     end
     

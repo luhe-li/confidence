@@ -63,7 +63,6 @@ switch exp
         load(fullfile(data_dir, selectedFiles(1).name));
 
         a_org_target = reshape([sortedResp.target_cm],[ExpInfo.nRep, ExpInfo.nLevel])' * ScreenInfo.numPixels_perCM; % convert target to pixel, center as 0
-        
         temp = reshape([sortedResp.response_pixel],[ExpInfo.nRep, ExpInfo.nLevel])' - ScreenInfo.xmid;
         org_resp(1,:,:) = temp;
         org_err(1,:,:) = temp - a_org_target;
