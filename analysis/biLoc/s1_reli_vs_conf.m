@@ -52,7 +52,7 @@ clt = [30, 120, 180; % blue
 
 for cue = 1:numel(cueIdx)
     % nexttile
-
+    % subplot(2,1,cue)
     % hold on
     % for rel = 1:numel(visReliIdx)
     [p_conf, se_conf] = deal(NaN(1, numel(diff_locs)));
