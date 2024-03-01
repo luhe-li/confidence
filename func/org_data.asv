@@ -36,7 +36,7 @@ switch exp
             end
             sigVs = std(squeeze(visDotsCoords(:,1,:)),[],2);
             % organize response
-            [org_resp_temp, org_conf_temp, org_err_temp, org_sigVs_temp] = deal(NaN(numel(audIdx), numel(visIdx), numel(cueIdx), numel(visReliIdx), num_rep));
+            [org_resp_temp, org_conf_temp, org_err_temp] = deal(NaN(numel(audIdx), numel(visIdx), numel(cueIdx), numel(visReliIdx), num_rep));
             for trial = 1:length(resp)
                 % Find indices for each condition
                 aIdx = find(audIdx == seq(1, trial));
@@ -57,7 +57,7 @@ switch exp
             org_resp = cat(5,org_resp,org_resp_temp);
             org_conf = cat(5,org_conf,org_conf_temp);
             org_err = cat(5,org_err,org_err_temp);
-            org_sigVs = cat(5,org_sigVs,org_sigVs_temp);
+            org_err = cat(5,org_err,org_err_temp);
             
         end
 
