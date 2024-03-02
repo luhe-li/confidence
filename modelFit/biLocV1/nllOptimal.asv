@@ -1,32 +1,39 @@
-function out = nll_MA(sigA, sigV1, sigV2, sigP, pC1, c, data, model)
+function out = nllOptimal(sigA, sigV1, sigV2, sigP, pC1, c, model, data)
 
+% fix parameters
 aA = 1;
 bA = 0;
-mu_P = 0;
-aV = 1;
-bV = 0;
+muP = 0;
+lapse = 0.01;
 
+switch model.mode
 
-switch mode
-    
-    case 'init'
+    case 'optimize'
 
+        f_logit = @(x) 1 ./ (1 + exp(-x));
 
-
-    case 'fit'
-
-        %% bimodal
         x = model.x;
+
+        transA = model.sA * aA + bA;
+        transV = transA;
+        sAV  = combvec(transA, transV);
+        
+        num_a_stim = numel(transA);
+        num_stim = size(sAV, 2);
         num_rep = model.num_rep;
-        stim = model.stim;
-        num_stim = numel(stim);
         sigVs = [sigV1, sigV2];
+        sigmaM = data.sigM;
+
+        [loc_LL, conf_LL] = NaN(1,numel(sigVs));
 
         for i = 1:numel(sigVs)
-
+            
             sigV = sigVs(i);
-            mA                          = randn(num_rep, num_stim).*sigA + (sA * aA + bA);
-            mV                          = randn(num_rep, num_stim).*sigV + (sV * aV + bV);
+            data_resp = squeeze(data.org_resp(:,:,:,i,:));
+            data_conf = squeeze(data.org_conf(:,:,:,i,:));
+
+            mA                          = randn(num_stim, num_rep).*sigA + repmat(sAV(1,:)',[1, num_rep]);
+            mV                          = randn(num_stim, num_rep).*sigV + repmat(sAV(2,:)',[1, num_rep]);
 
             mA                          = bounded(mA,min(x),max(x));
             mV                          = bounded(mV,min(x),max(x));
@@ -49,7 +56,7 @@ switch mode
 
             %calculate posterior of a common cause and separate causes
             %Eq. 2 in Körding et al., 2007
-            post_C1                     = pCommon.*L_C1./(pCommon.*L_C1 + (1-pCommon).*L_C2);
+            post_C1                     = pC1.*L_C1./(pC1.*L_C1 + (1-pC1).*L_C2);
             %posterior of separate causes = 1 - post_C1
             post_C2                     = 1 - post_C1;
 
@@ -71,32 +78,45 @@ switch mode
             %two intermediate location estimates, weighted by the corresponding
             %causal structure.
             %Eq. 4 in Wozny et al., 2010
-            loc(1,:,:) = post_C1.* sHat_C1 + post_C2.* sHat_A_C2;
-            loc(2,:,:) = post_C1.* sHat_C1 + post_C2.* sHat_V_C2;
+            sHat_A = post_C1.* sHat_C1 + post_C2.* sHat_A_C2;
+            sHat_V = post_C1.* sHat_C1 + post_C2.* sHat_V_C2;
+            loc(:,:,1,:) = reshape(sHat_A, [num_a_stim, num_a_stim, num_rep]);
+            loc(:,:,2,:) = reshape(sHat_V, [num_a_stim, num_a_stim, num_rep]);
 
-            % base confidence on variance
-            var(1,:,:) = post_C1'.* 1/(1/JA + 1/JP) + post_C2'.* 1/(1/JV + 1/JA + 1/JP) + post_C1'.* post_C2' .* (sHat_A_C2' - sHat_C1').^2;
-            var(2,:,:) = post_C1'.* 1/(1/JV + 1/JP) + post_C2'.* 1/(1/JV + 1/JA + 1/JP) + post_C1'.* post_C2' .* (sHat_V_C2' - sHat_C1').^2;
-            p_conf = var > c;
+            % this model bases confidence on the variance of the full
+            % posterior
+            var_A = post_C1'.* 1/(1/JA + 1/JP) + post_C2'.* 1/(1/JV + 1/JA + 1/JP) + post_C1'.* post_C2' .* (sHat_A_C2' - sHat_C1').^2;
+            var_V = post_C1'.* 1/(1/JV + 1/JP) + post_C2'.* 1/(1/JV + 1/JA + 1/JP) + post_C1'.* post_C2' .* (sHat_V_C2' - sHat_C1').^2;
+            var(:,:,1,:) = reshape(var_A, [num_a_stim, num_a_stim, num_rep]);
+            var(:,:,2,:) = reshape(var_V, [num_a_stim, num_a_stim, num_rep]);
+
+            % convert variance to confidence variable
+            conf = f_logit(var);
+            p_conf = conf > c;
             p_conf_lapsed = NaN(size(p_conf));
             p_conf_lapsed(p_conf == 1) = 1 - lapse;
             p_conf_lapsed(p_conf == 0) = lapse;
 
             % likelihood
-            p_loc = norm_dst(loc_resp, loc, sigmaR, 1e-20);
-            conf_LL = nt_yes * log()' + nt_no * log()';
+            p_loc = norm_dst(data_resp, loc, sigmaM, 1e-20);
+            loc_LL(i) = sum(log(p_loc),'all');
+            conf_LL(i) = sum(log(p_conf_lapsed.*data_conf),'all');
 
         end
 
-        out = -conf_LL;
+        out = nansumsum(loc_LL(:)) - nansum(conf_LL(:));
 
     case 'predict'
 
 
 end
 
+    function x = bounded(x,LB,UB)
+        x = max(LB,min(x, UB));
+    end
+
+    function p = norm_dst(x,mu,sigma,t)
+        p = 1/sqrt(2*pi*sigma^2).*exp(-(x-mu).^2./(2*sigma^2)) + t;
+    end
 
 end
-
-function p = norm_dst(x,mu,sigma,t)
-p = 1/sqrt(2*pi*sigma^2).*exp(-(x-mu).^2./(2*sigma^2)) + t;

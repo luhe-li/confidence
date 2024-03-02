@@ -1,4 +1,4 @@
-function out = nllOptimal(sigA, sigV1, sigV2, sigP, pC1, c, data, model)
+function out = nllOptimal(sigA, sigV1, sigV2, sigP, pC1, c, model, data)
 
 % fix parameters
 aA = 1;
@@ -6,22 +6,39 @@ bA = 0;
 muP = 0;
 lapse = 0.01;
 
-switch mode
+switch model.mode
 
-    case 'fit'
+    case 'optimize'
 
-        x = model.x;
-        num_rep = model.num_rep;
-        num_stim = numel(sA);
-        sigVs = [sigV1, sigV2];
+        f_logit = @(x) 1 ./ (1 + exp(-x));
+
+        % combination of auditory and visual locations
         transA = model.sA * aA + bA;
         transV = transA;
+        sAV  = combvec(transA, transV);
+        
+        % fixed parameters
+        num_a_stim = numel(transA);
+        num_stim = size(sAV, 2);
+        num_rep = model.num_rep;
+        sigVs = [sigV1, sigV2];
+        sigmaM = data.sigM;
+        x = model.x;
 
+        [loc_LL, conf_LL] = NaN(1,numel(sigVs));
+
+        % loop by visual variable
         for i = 1:numel(sigVs)
-
+            
             sigV = sigVs(i);
-            mA                          = randn(num_rep, num_stim).*sigA + transA;
-            mV                          = randn(num_rep, num_stim).*sigV + transV;
+
+            % auditory locations (4) x visual locations (4) x postcues (2)
+            % x rep
+            data_resp = squeeze(data.org_resp(:,:,:,i,:));
+            data_conf = squeeze(data.org_conf(:,:,:,i,:));
+
+            mA                          = randn(num_stim, num_rep).*sigA + repmat(sAV(1,:)',[1, num_rep]);
+            mV                          = randn(num_stim, num_rep).*sigV + repmat(sAV(2,:)',[1, num_rep]);
 
             mA                          = bounded(mA,min(x),max(x));
             mV                          = bounded(mV,min(x),max(x));
@@ -66,25 +83,33 @@ switch mode
             %two intermediate location estimates, weighted by the corresponding
             %causal structure.
             %Eq. 4 in Wozny et al., 2010
-            loc(1,:,:) = post_C1.* sHat_C1 + post_C2.* sHat_A_C2;
-            loc(2,:,:) = post_C1.* sHat_C1 + post_C2.* sHat_V_C2;
+            sHat_A = post_C1.* sHat_C1 + post_C2.* sHat_A_C2;
+            sHat_V = post_C1.* sHat_C1 + post_C2.* sHat_V_C2;
+            loc(:,:,1,:) = reshape(sHat_A, [num_a_stim, num_a_stim, num_rep]);
+            loc(:,:,2,:) = reshape(sHat_V, [num_a_stim, num_a_stim, num_rep]);
 
-            % base confidence on variance
-            var(1,:,:) = post_C1'.* 1/(1/JA + 1/JP) + post_C2'.* 1/(1/JV + 1/JA + 1/JP) + post_C1'.* post_C2' .* (sHat_A_C2' - sHat_C1').^2;
-            var(2,:,:) = post_C1'.* 1/(1/JV + 1/JP) + post_C2'.* 1/(1/JV + 1/JA + 1/JP) + post_C1'.* post_C2' .* (sHat_V_C2' - sHat_C1').^2;
-            p_conf = var > c;
+            % this model bases confidence on the variance of the full
+            % posterior
+            var_A = post_C1'.* 1/(1/JA + 1/JP) + post_C2'.* 1/(1/JV + 1/JA + 1/JP) + post_C1'.* post_C2' .* (sHat_A_C2' - sHat_C1').^2;
+            var_V = post_C1'.* 1/(1/JV + 1/JP) + post_C2'.* 1/(1/JV + 1/JA + 1/JP) + post_C1'.* post_C2' .* (sHat_V_C2' - sHat_C1').^2;
+            var(:,:,1,:) = reshape(var_A, [num_a_stim, num_a_stim, num_rep]);
+            var(:,:,2,:) = reshape(var_V, [num_a_stim, num_a_stim, num_rep]);
+
+            % convert variance to confidence variable
+            conf = f_logit(var);
+            p_conf = conf > c;
             p_conf_lapsed = NaN(size(p_conf));
             p_conf_lapsed(p_conf == 1) = 1 - lapse;
             p_conf_lapsed(p_conf == 0) = lapse;
 
             % likelihood
-            p_loc = norm_dst(loc_resp, loc, sigmaM, 1e-20);
-            loc_LL = log(p_loc);
-            conf_LL = nt_yes * log()' + nt_no * log()';
+            p_loc = norm_dst(data_resp, loc, sigmaM, 1e-20);
+            loc_LL(i) = sum(log(p_loc),'all');
+            conf_LL(i) = sum(log(p_conf_lapsed.*data_conf),'all');
 
         end
 
-        out = -conf_LL;
+        out = - nansum(loc_LL(:)) - nansum(conf_LL(:));
 
     case 'predict'
 

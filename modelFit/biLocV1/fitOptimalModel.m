@@ -49,21 +49,25 @@ addpath(genpath(fullfile(projectDir, 'func')));
 
 %% organize data
 
-[data.org_resp, data.org_conf, ~, ExpInfo] = org_data(sub,ses,'biLoc');
-data.sigM = 
+[data.org_resp, data.org_conf, ~, ExpInfo, ~, ScreenInfo] = org_data(sub,ses,'biLoc');
+data.sigM = get_point_sigM(sub);
 
 %% define model
 
 % set mode
 model.mode                  = 'optimize';
+model.num_runs              = 100;
 
 % set fixed & set-up parameters
-model.num_runs              = 100;
-model.x                     = 1:1024; % the screen pixel space
-model.sA                    = 1;
-model.sV                    = 1;
+deg_per_px  = rad2deg(atan(170 / 2 / ExpInfo.sittingDistance)) .* 2 / ScreenInfo.xaxis;
+model.x                     = (-512:1:512) * deg_per_px;
+model.sA                    = ExpInfo.speakerLocVA(ExpInfo.audIdx);
+model.sV                    = model.sA;
+
 model.paraID                = {'\sigma_{A}','\sigma_{V1}','\sigma_{V2}','\sigma_{P}','p_{common}','criterion'};
 model.num_para              = length(model.paraID);
+model.num_rep               = size(data.org_resp, 5);
+
 
 % hard bounds, the range for LB, UB, larger than soft bounds
 paraH.sigA                  = [   1,    20]; % degree
@@ -109,7 +113,7 @@ minNLL                      = NaN(1, model.num_runs);
 estimatedP                  = NaN(model.num_runs, length(model.lb));
 
 % test with a set of parameters if needed
-% p = [100 65 105.009765625 175.48828125 0.030048828125 0.9998046875 0.02 1 100];
+p = [1e-4, 1e-4, 1e-4, 15, 0.56, 0.5];
 testnll     = nllOptimal(p(1), p(2), p(3), p(4), p(5), p(6), model, data);
 
 for i                    = 1:model.num_runs
