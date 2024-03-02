@@ -181,13 +181,13 @@ ExpInfo.speakerLocPixel              = round(ExpInfo.speakerLocCM * ScreenInfo.n
 ExpInfo.randAudIdx                   = ExpInfo.randAVIdx(1,:);
 
 % convert visual locations from index to perceptually matching pixel
-load('AVbias.mat')
+load([sprintf('AVbias_sub%i', ExpInfo.subjID) '.mat'])
 
 
 x = ExpInfo.speakerLocPixel(ExpInfo.randAudIdx);
 
-coefsA = squeeze(Transfer.coeff(ExpInfo.subjID, 1, :));
-coefsV = squeeze(Transfer.coeff(ExpInfo.subjID, 2, :));
+coefsA = squeeze(Transfer.coeff(1, :));
+coefsV = squeeze(Transfer.coeff(2, :));
 fitRA = x .* coefsA(2) + coefsA(1);
 fitSV = (fitRA - coefsV(1)) ./ coefsV(2);
 

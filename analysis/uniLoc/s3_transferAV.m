@@ -3,7 +3,7 @@ clear; clc; close all;
 
 %% set up
 
-sub = 2;
+sub = 1;
 
 %% manage path
 
@@ -51,15 +51,15 @@ mdlV = fitlm(x2(:),[rV1(:);rV2(:)]);
 coefsV = table2array(mdlV.Coefficients(:,1));
 fitSV = (fitRA - coefsV(1)) ./ coefsV(2);
 
-Transfer.coeff(sub, 1, :) = coefsA;
-Transfer.coeff(sub, 2, :) = coefsV;
+Transfer.coeff(1, :) = coefsA;
+Transfer.coeff(2, :) = coefsV;
 
 Transfer.targIdx          = targIdx;
 Transfer.targPxs          = targPxs;
-Transfer.fitRA(sub, :)    = fitRA;
-Transfer.fitSV(sub, :)    = fitSV;
+Transfer.fitRA(:)    = fitRA;
+Transfer.fitSV(:)    = fitSV;
 
-save(fullfile(out_dir, 'AVbias'), 'Transfer')
+save(fullfile(out_dir, sprintf('AVbias_sub%i',sub)), 'Transfer')
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%% check plot %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %% plot response to check
