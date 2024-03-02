@@ -65,7 +65,7 @@ sigVs              = [15,50];
 muP                = screen_mid;
 sigP               = 10000; % arbitarily using screen width here
 pCommon            = 0.57; % only 1/4 of the trials are common cause so I assume this here
-criterion = [5e3,5e3;3500,3e3;7e3,7e3]; % eyeballed arbitary criterion 
+criterion = [5e3,1500;700,1000;1000,2200]; % eyeballed arbitary criterion 
 % derivative info
 num_rep            = 1000;
 ds_loc             = {'Model averaging E[V]','Model averaging MAP', 'Model selection','Probability Matching'};
@@ -174,7 +174,7 @@ end
 
 
 %% plot confidence/variance/p(report Confident) as a function of discrepancy and reliability
-indVar = "v"; 
+indVar = "p"; 
 % use this to choose which independent variable you compare between conditions
 % choices are c:confidence, v:variance, and p:p(report confident)
 switch indVar
@@ -187,7 +187,7 @@ switch indVar
     sd_iv = sd_var;
     indVarName = "Posterior Variance (cm^2)";
     case "p"
-    mean_iv = mean_p_conf;
+    mean_iv = 1-mean_p_conf;
     sd_iv = sd_p_conf;
     indVarName = "P(report Confident)";
 end
@@ -208,8 +208,12 @@ for d = 1:numel(ds_conf)
         title(cue_label{cue})
         hold on
         for rel = 1:numel(sigVs)
+            if indVar == "p"
+                plot(disc_locs, squeeze(mean_iv(d,:,cue,rel)),'-o','Color',clt(rel+1,:),'LineWidth',1)
+            else
             errorbar(disc_locs, squeeze(mean_iv(d,:,cue,rel)), ...
                 squeeze(sd_iv(d,:,cue,rel)),'Color',clt(rel+1,:),'LineWidth',1)
+            end
         end
         xticks(disc_locs)
     end

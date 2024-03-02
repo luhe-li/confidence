@@ -90,7 +90,8 @@ switch exp
         org_conf(3,:,:) = reshape([sortedReli2Resp.conf],[ExpInfo.nRep, ExpInfo.nLevel])';
 
     case 'pointTask'
-        flnm        = sprintf('uniLoc_sub%i_ses-Pointing', sub_slc);
+        flnm        = sprintf('point_sub%i_ses-Pointing', sub_slc);
+        load(fullfile(data_dir, flnm));
 end
 
 
