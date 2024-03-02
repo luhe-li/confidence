@@ -46,11 +46,9 @@ x2 = repmat(targDegs',1,nRep*2);
 
 mdlA = fitlm(x(:),rA(:));
 coefsA = table2array(mdlA.Coefficients(:,1));
-fitRA = x(:,1) .* coefsA(2) + coefsA(1);
 
 mdlV = fitlm(x2(:),[rV1(:);rV2(:)]);
 coefsV = table2array(mdlV.Coefficients(:,1));
-fitSV = (fitRA - coefsV(1)) ./ coefsV(2);
 
 Transfer.degCoeff(1, :) = coefsA;
 Transfer.degCoeff(2, :) = coefsV;

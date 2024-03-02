@@ -54,6 +54,7 @@ addpath(genpath(fullfile(projectDir, 'exptCode/biloc/')));
 data.sigM = get_point_sigM(sub);
 load(fullfile(projectDir, ['exptCode/biloc/' sprintf('AVbias_sub%i', sub) '.mat']));
 data.coefsA = squeeze(Transfer.degCoeff(1, :));
+
 %% define model
 
 % set mode
