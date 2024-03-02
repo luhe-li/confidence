@@ -46,17 +46,19 @@ currentDir                  = pwd;
 addpath(genpath(fullfile(projectDir, 'data')));
 addpath(genpath(fullfile(projectDir, 'bads')));
 addpath(genpath(fullfile(projectDir, 'func')));
+addpath(genpath(fullfile(projectDir, 'exptCode/biloc/')));
 
 %% organize data
 
 [data.org_resp, data.org_conf, ~, ExpInfo, ~, ScreenInfo] = org_data(sub,ses,'biLoc');
 data.sigM = get_point_sigM(sub);
+a = fullfile(projectDir, 'exptCode/biloc/AVbias.mat');
 
 %% define model
 
 % set mode
 model.mode                  = 'optimize';
-model.num_runs              = 100;
+model.num_runs              = 5;
 
 % set fixed & set-up parameters
 deg_per_px  = rad2deg(atan(170 / 2 / ExpInfo.sittingDistance)) .* 2 / ScreenInfo.xaxis;
@@ -70,18 +72,18 @@ model.num_rep               = size(data.org_resp, 5);
 
 
 % hard bounds, the range for LB, UB, larger than soft bounds
-paraH.sigA                  = [   1,    20]; % degree
-paraH.sigV1                 = [   1,    10]; % degree
-paraH.sigV2                 = [   1,    20]; % degree
-paraH.sigP                  = [   1,    20]; % degree
+paraH.sigA                  = [1e-2,    20]; % degree
+paraH.sigV1                 = [1e-2,    20]; % degree
+paraH.sigV2                 = [1e-2,    20]; % degree
+paraH.sigP                  = [   1,    30]; % degree
 paraH.pC1                   = [1e-4,1-1e-4]; % weight
 paraH.c                     = [1e-4,1-1e-4]; % weight
 
 % soft bounds, the range for PLB, PUB
-paraS.sigA                  = [   1,    30]; % degree
-paraS.sigV1                 = [   1,    20]; % degree
-paraS.sigV2                 = [   1,    30]; % degree
-paraS.sigP                  = [   1,    30]; % degree
+paraS.sigA                  = [   5,    15]; % degree
+paraS.sigV1                 = [   5,    10]; % degree
+paraS.sigV2                 = [   5,    15]; % degree
+paraS.sigP                  = [   1,    20]; % degree
 paraS.pC1                   = [ 0.4,   0.6]; % weight
 paraS.c                     = [ 0.2,   0.5]; % weight
 
@@ -109,18 +111,18 @@ numSections                 = model.num_runs;
 model.init                  = getInit(model.lb, model.ub, numSections, model.num_runs);
 
 %initialize matrices that store negative log likelihood and best-fit paramters
-minNLL                      = NaN(1, model.num_runs);
+NLL                      = NaN(1, model.num_runs);
 estimatedP                  = NaN(model.num_runs, length(model.lb));
 
 % test with a set of parameters if needed
-p = [1e-4, 1e-4, 1e-4, 15, 0.56, 0.5];
+p = [ 1.6992    0.0122    0.0342   29.9916    0.2557    0.4714];
 testnll     = nllOptimal(p(1), p(2), p(3), p(4), p(5), p(6), model, data);
 
 for i                    = 1:model.num_runs
     disp(i);
     try
         tempModel                   = model;
-        [estimatedP(i,:),minNLL(i)] = bads(funcNLL, tempModel.init(i,:), tempModel.lb,...
+        [estimatedP(i,:),NLL(i)] = bads(funcNLL, tempModel.init(i,:), tempModel.lb,...
             tempModel.ub, tempModel.plb, tempModel.pub, [], OPTIONS);
         disp(estimatedP(i,:))
     catch
@@ -130,7 +132,9 @@ for i                    = 1:model.num_runs
 end
 
 model.estimatedP            = estimatedP;
-model.minNLL                = minNLL;
+model.minNLL                = NLL;
+[~, best_idx] = min(NLL);
+bestP = estimatedP(best_idx, :);
 
 % save the data for each participant
 flnm                        = sprintf('sub%d_batch%d', sub, idx_batch);
