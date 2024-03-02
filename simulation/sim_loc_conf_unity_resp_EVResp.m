@@ -101,8 +101,8 @@ sHat_V_C2                   = (mV./JV + muP/JP)./(1/JV + 1/JP);
 pdf.sHat_C1                 = norm_vector(normpdf(repmat(x,num_rep,1),sHat_C1',1/sqrt(1/JV + 1/JA + 1/JP)));
 pdf.sHat_A_C2               = norm_vector(normpdf(repmat(x,num_rep,1),sHat_A_C2',1/sqrt(1/JA + 1/JP)));
 pdf.sHat_V_C2               = norm_vector(normpdf(repmat(x,num_rep,1),sHat_V_C2',1/sqrt(1/JV + 1/JP)));
-pdf.unisense_A               = norm_vector(normpdf(repmat(x,num_rep,1),mA',sigA));
-pdf.unisense_V               = norm_vector(normpdf(repmat(x,num_rep,1),mV',sigV));
+pdf.unisense_A              = norm_vector(normpdf(repmat(x,num_rep,1),mA',sigA));
+pdf.unisense_V              = norm_vector(normpdf(repmat(x,num_rep,1),mV',sigV));
 
 %compute the final location estimates if we assume model averaging.
 %Based on this strategy, the final location estimate is the sum of the

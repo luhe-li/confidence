@@ -24,7 +24,7 @@ switch exp
             cueIdx      = ExpInfo.cueIdx;
             visReliIdx  = ExpInfo.visReliIdx;
             num_rep     = ExpInfo.nRep;
-            deg_per_px  = 1 ./ ScreenInfo.numPixels_perCM * ExpInfo.LRmostVisualAngle / ExpInfo.LRmostSpeakers2center;
+            deg_per_px  = rad2deg(atan(170 / 2 / ExpInfo.sittingDistance)) .* 2 / ScreenInfo.xaxis;
             % data
             target      = [Resp.target_deg]; % convert target to pixel, center as 0
             resp        = [Resp.response_deg]; % rescale response with center as 0
