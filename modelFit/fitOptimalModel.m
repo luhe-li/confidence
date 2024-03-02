@@ -110,9 +110,9 @@ estimatedP                  = NaN(model.num_runs, length(model.lb));
 
 % test with a set of parameters if needed
 % p = [100 65 105.009765625 175.48828125 0.030048828125 0.9998046875 0.02 1 100];
-% testnll     = nllOptimal(p(1), p(2), p(3), p(4), p(5), p(6), model, data);
+testnll     = nllOptimal(p(1), p(2), p(3), p(4), p(5), p(6), model, data);
 
-parfor i                    = 1:model.num_runs
+for i                    = 1:model.num_runs
     disp(i);
     try
         tempModel                   = model;

@@ -4,8 +4,7 @@ function out = nllOptimal(sigA, sigV1, sigV2, sigP, pC1, c, data, model)
 aA = 1;
 bA = 0;
 muP = 0;
-aV = 1;
-bV = 0;
+lapse = 0.01;
 
 switch mode
 
@@ -13,16 +12,16 @@ switch mode
 
         x = model.x;
         num_rep = model.num_rep;
-        sA = model.sA;
-        sV = model.sV;
         num_stim = numel(sA);
         sigVs = [sigV1, sigV2];
+        transA = model.sA * aA + bA;
+        transV = transA;
 
         for i = 1:numel(sigVs)
 
             sigV = sigVs(i);
-            mA                          = randn(num_rep, num_stim).*sigA + (sA * aA + bA);
-            mV                          = randn(num_rep, num_stim).*sigV + (sV * aV + bV);
+            mA                          = randn(num_rep, num_stim).*sigA + transA;
+            mV                          = randn(num_rep, num_stim).*sigV + transV;
 
             mA                          = bounded(mA,min(x),max(x));
             mV                          = bounded(mV,min(x),max(x));
