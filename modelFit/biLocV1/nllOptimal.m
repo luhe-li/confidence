@@ -25,7 +25,7 @@ switch model.mode
         sigmaM = data.sigM;
         x = model.x;
 
-        [loc_LL, conf_LL] = NaN(1,numel(sigVs));
+        [loc_LL, conf_LL] = deal(NaN(1,numel(sigVs)));
 
         % loop by visual variable
         for i = 1:numel(sigVs)
@@ -98,9 +98,6 @@ switch model.mode
             % convert variance to confidence variable
             conf = f_logit(var);
             pred_conf = conf > c;
-            % p_conf_lapsed = NaN(size(pred_conf));
-            % p_conf_lapsed(pred_conf == 1) = 1 - lapse;
-            % p_conf_lapsed(pred_conf == 0) = lapse;
 
             % likelihood
             p_loc = norm_dst(data_resp, loc, sigmaM, 1e-20);
