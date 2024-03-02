@@ -1,4 +1,4 @@
-function [org_resp, org_conf, org_err, ExpInfo, org_sigVs] = org_data(sub_slc,ses_slc,exp)
+function [org_resp, org_conf, org_err, ExpInfo, org_sigVs, ScreenInfo] = org_data(sub_slc,ses_slc,exp)
 
 [org_resp, org_conf, org_err, org_sigVs] = deal([]);
 
@@ -24,17 +24,17 @@ switch exp
             cueIdx      = ExpInfo.cueIdx;
             visReliIdx  = ExpInfo.visReliIdx;
             num_rep     = ExpInfo.nRep;
-            
+            deg_per_px  = 1 ./ ScreenInfo.numPixels_perCM * ExpInfo.LRmostVisualAngle / ExpInfo.LRmostSpeakers2center;
             % data
-            target      = [Resp.target_cm] * ScreenInfo.numPixels_perCM; % convert target to pixel, center as 0
-            resp        = [Resp.response_pixel] - ScreenInfo.xmid; % rescale response with center as 0
+            target      = [Resp.target_deg]; % convert target to pixel, center as 0
+            resp        = [Resp.response_deg]; % rescale response with center as 0
             err         = resp - target; % positive = right; negative = left;
             conf        = [Resp.conf];
             visDotsCoords = NaN(length(Resp),2,10);
             for i = 1:length(Resp)
                 visDotsCoords(i,:,:) = Resp(i).vStimDotsCoor;
             end
-            sigVs = std(squeeze(visDotsCoords(:,1,:)),[],2);
+            sigVs = std(squeeze(visDotsCoords(:,1,:)),[],2) .* deg_per_px;
             % organize response
             [org_resp_temp, org_conf_temp, org_err_temp, org_sigVs_temp] = deal(NaN(numel(audIdx), numel(visIdx), numel(cueIdx), numel(visReliIdx), num_rep));
             for trial = 1:length(resp)
@@ -68,23 +68,23 @@ switch exp
 
         % A
         load(fullfile(data_dir, selectedFiles(1).name));
-
-        a_org_target = reshape([sortedResp.target_cm],[ExpInfo.nRep, ExpInfo.nLevel])' * ScreenInfo.numPixels_perCM; % convert target to pixel, center as 0
-        temp = reshape([sortedResp.response_pixel],[ExpInfo.nRep, ExpInfo.nLevel])' - ScreenInfo.xmid;
+        deg_per_CM  = ExpInfo.LRmostVisualAngle / ExpInfo.LRmostSpeakers2center;
+        a_org_target = reshape([sortedResp.target_cm] .* deg_per_CM,[ExpInfo.nRep, ExpInfo.nLevel])'; % convert target to pixel, center as 0
+        temp = reshape([sortedResp.response_deg],[ExpInfo.nRep, ExpInfo.nLevel])';
         org_resp(1,:,:) = temp;
         org_err(1,:,:) = temp - a_org_target;
         org_conf(1,:,:) = reshape([sortedResp.conf],[ExpInfo.nRep, ExpInfo.nLevel])';
 
         % V
         load(fullfile(data_dir, selectedFiles(2).name));
-        v1_org_target = reshape([sortedReli1Resp.target_pixel],[ExpInfo.nRep, ExpInfo.nLevel])';
-        temp2 = reshape([sortedReli1Resp.response_pixel],[ExpInfo.nRep, ExpInfo.nLevel])' - ScreenInfo.xmid;
+        v1_org_target = reshape([sortedReli1Resp.target_deg],[ExpInfo.nRep, ExpInfo.nLevel])';
+        temp2 = reshape([sortedReli1Resp.response_deg],[ExpInfo.nRep, ExpInfo.nLevel])' ;
         org_resp(2,:,:) = temp2;
         org_err(2,:,:) = temp2 - v1_org_target;
         org_conf(2,:,:) = reshape([sortedReli1Resp.conf],[ExpInfo.nRep, ExpInfo.nLevel])';
 
-        v2_org_target = reshape([sortedReli2Resp.target_pixel],[ExpInfo.nRep, ExpInfo.nLevel])';
-        temp3 = reshape([sortedReli2Resp.response_pixel],[ExpInfo.nRep, ExpInfo.nLevel])' - ScreenInfo.xmid;
+        v2_org_target = reshape([sortedReli2Resp.target_deg],[ExpInfo.nRep, ExpInfo.nLevel])';
+        temp3 = reshape([sortedReli2Resp.response_deg],[ExpInfo.nRep, ExpInfo.nLevel])';
         org_resp(3,:,:) = temp3;
         org_err(3,:,:) = temp3 - v2_org_target;
         org_conf(3,:,:) = reshape([sortedReli2Resp.conf],[ExpInfo.nRep, ExpInfo.nLevel])';
