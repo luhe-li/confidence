@@ -1,32 +1,27 @@
-function out = nll_MA(sigA, sigV1, sigV2, sigP, pC1, c, data, model)
+function out = nllOptimal(sigA, sigV1, sigV2, sigP, pC1, c, data, model)
 
+% fix parameters
 aA = 1;
 bA = 0;
-mu_P = 0;
-aV = 1;
-bV = 0;
-
+muP = 0;
+lapse = 0.01;
 
 switch mode
-    
-    case 'init'
-
-
 
     case 'fit'
 
-        %% bimodal
         x = model.x;
         num_rep = model.num_rep;
-        stim = model.stim;
-        num_stim = numel(stim);
+        num_stim = numel(sA);
         sigVs = [sigV1, sigV2];
+        transA = model.sA * aA + bA;
+        transV = transA;
 
         for i = 1:numel(sigVs)
 
             sigV = sigVs(i);
-            mA                          = randn(num_rep, num_stim).*sigA + (sA * aA + bA);
-            mV                          = randn(num_rep, num_stim).*sigV + (sV * aV + bV);
+            mA                          = randn(num_rep, num_stim).*sigA + transA;
+            mV                          = randn(num_rep, num_stim).*sigV + transV;
 
             mA                          = bounded(mA,min(x),max(x));
             mV                          = bounded(mV,min(x),max(x));
@@ -49,7 +44,7 @@ switch mode
 
             %calculate posterior of a common cause and separate causes
             %Eq. 2 in Körding et al., 2007
-            post_C1                     = pCommon.*L_C1./(pCommon.*L_C1 + (1-pCommon).*L_C2);
+            post_C1                     = pC1.*L_C1./(pC1.*L_C1 + (1-pC1).*L_C2);
             %posterior of separate causes = 1 - post_C1
             post_C2                     = 1 - post_C1;
 
@@ -83,7 +78,8 @@ switch mode
             p_conf_lapsed(p_conf == 0) = lapse;
 
             % likelihood
-            p_loc = norm_dst(loc_resp, loc, sigmaR, 1e-20);
+            p_loc = norm_dst(loc_resp, loc, sigmaM, 1e-20);
+            loc_LL = log(p_loc);
             conf_LL = nt_yes * log()' + nt_no * log()';
 
         end
@@ -95,8 +91,12 @@ switch mode
 
 end
 
+    function x = bounded(x,LB,UB)
+        x = max(LB,min(x, UB));
+    end
+
+    function p = norm_dst(x,mu,sigma,t)
+        p = 1/sqrt(2*pi*sigma^2).*exp(-(x-mu).^2./(2*sigma^2)) + t;
+    end
 
 end
-
-function p = norm_dst(x,mu,sigma,t)
-p = 1/sqrt(2*pi*sigma^2).*exp(-(x-mu).^2./(2*sigma^2)) + t;

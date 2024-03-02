@@ -1,0 +1,98 @@
+
+clear; clc; close all; rng('Shuffle');
+
+%% set environment
+
+useCluster                  = 0;
+sub = 1;
+ses = 1:2;
+
+% set cores
+if ~exist('useCluster', 'var') || isempty(useCluster)
+    useCluster                  = false;
+end
+
+switch useCluster
+    case true
+
+        % See how many cores we have:
+        if ~exist('numCores', 'var') || isempty(numCores)
+            numCores                    = maxNumCompThreads;
+        end
+        fprintf('Number of cores %i  \n', numCores);
+        % Make sure Matlab does not exceed this
+        maxNumCompThreads(numCores);
+
+        hpc_job_number              = str2double(getenv('SLURM_ARRAY_TASK_ID'));
+        if isnan(hpc_job_number), error('Problem with array assigment'); end
+
+        numJob                      = numel(hpc_job_number);
+        fprintf('job number: %i \n', hpc_job_number);
+%         sub                         = hpc_job_number;
+
+        if isempty(gcp('nocreate'))
+            parpool(numCores-1);
+        end
+
+    case false
+        numCores                    = 8; % number of cores locally
+        fprintf('Number of cores: %i  \n', numCores);
+end
+
+%% manage paths
+
+currentDir                  = pwd;
+[projectDir, ~]             = fileparts(currentDir);
+addpath(genpath(fullfile(projectDir, 'data')));
+addpath(genpath(fullfile(projectDir, 'bads')));
+addpath(genpath(fullfile(projectDir, 'func')));
+
+%% organize data
+
+[data.org_resp, data.org_conf, ~, ExpInfo] = org_data(sub,ses,'biLoc');
+
+%% define model
+
+% set mode
+model.mode                  = 'optimize';
+
+% set fixed & set-up parameters
+model.x = 1:1024; % the screen pixel space
+model.paraID      = {'\tau','\sigma_{A}','\sigma_{V}','c','\lambda','p_{common}','\alpha','\sigma_{C=1}','\sigma_{C=2}'};
+model.num_para              = length(model.paraID);
+
+% hard bounds, the range for LB, UB, larger than soft bounds
+paraH.tau                   = [-100,   100]; % ms
+paraH.sigma_a               = [  10,   120]; % ms
+paraH.sigma_v               = [  10,   200]; % ms
+paraH.criterion             = [   1,   350]; % criterion, s
+paraH.lambda                = [1e-4,  0.06]; % percentage
+paraH.p_common              = [1e-4,1-1e-4]; % weight
+paraH.alpha                 = [1e-4,  0.02]; % percentage
+paraH.sigma_C1              = [   1,   300]; % ms
+paraH.sigma_C2              = [ 100,   1e3]; % ms
+
+% soft bounds, the range for PLB, PUB
+paraS.tau                   = [ -50,    50]; % ms
+paraS.sigma_a               = [  20,    50]; % ms
+paraS.sigma_v               = [  20,   120]; % ms
+paraS.criterion             = [  30,   150]; % criterion, s
+paraS.lambda                = [0.01,  0.03]; % percentage
+paraS.p_common              = [ 0.3,   0.7]; % weight
+paraS.alpha                 = [1e-3,  2e-3]; % percentage
+paraS.sigma_C1              = [  10,   100]; % ms
+paraS.sigma_C2              = [ 500,   700]; % ms
+
+% reorganize parameter bounds to feed to bads
+fn                          = fieldnames(paraH);
+for k                       = 1:numel(fn)
+    model.lb(:,k)               = paraH.(fn{k})(1);
+    model.ub(:,k)               = paraH.(fn{k})(2);
+    model.plb(:,k)              = paraS.(fn{k})(1);
+    model.pub(:,k)              = paraS.(fn{k})(2);
+end
+model.paraS                 = paraS; model.paraH = paraH;
+
+% set OPTIONS to tell bads that my objective function is noisy
+OPTIONS.UncertaintyHandling = 1;
+
