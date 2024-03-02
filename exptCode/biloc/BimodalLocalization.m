@@ -186,8 +186,8 @@ load([sprintf('AVbias_sub%i', ExpInfo.subjID) '.mat'])
 
 x = ExpInfo.speakerLocPixel(ExpInfo.randAudIdx);
 
-coefsA = squeeze(Transfer.coeff(1, :));
-coefsV = squeeze(Transfer.coeff(2, :));
+coefsA = squeeze(Transfer.PxCoeff(1, :));
+coefsV = squeeze(Transfer.PxCoeff(2, :));
 fitRA = x .* coefsA(2) + coefsA(1);
 fitSV = (fitRA - coefsV(1)) ./ coefsV(2);
 

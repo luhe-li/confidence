@@ -1,8 +1,6 @@
 function out = nllOptimal(sigA, sigV1, sigV2, sigP, pC1, c, model, data)
 
 % fix parameters
-aA = 1;
-bA = 0;
 muP = 0;
 lapse = 0.01;
 
@@ -13,7 +11,7 @@ switch model.mode
         f_logit = @(x) 1 ./ (1 + exp(-x));
 
         % combination of auditory and visual locations
-        transA = model.sA * aA + bA;
+        transA = model.sA * data.coefsA(2) + data.coefsA(1);
         transV = transA;
         sAV  = combvec(transA, transV);
         
