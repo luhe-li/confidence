@@ -1,4 +1,4 @@
-function [loc, conf, unity, pdf, variance, p_conf] = sim_loc_conf_unity_resp_EVResp(pCommon, num_rep, sA, sV, aA, bA, sigA, sigV, muP, sigP, fixP, criterion)
+function [loc, unity, pdf, variance, p_conf] = sim_loc_conf_unity_resp_EVResp(pCommon, num_rep, sA, sV, aA, bA, sigA, sigV, muP, sigP, fixP, criterion)
 
 %SIM_LOC_CONF_UNITY_RESP Simulates localization responses, confidence judgements,
 %and unity judgements for a bimodal audiovisual stimulus.
@@ -135,12 +135,12 @@ pdf.MS_V(slc,:)             = pdf.sHat_C1(slc,:);
 pdf.MS_V(~slc,:)            = pdf.sHat_V_C2(~slc,:);
 
 % calculate optimal confidence decision given each model
-conf(1,1,:)                 = eGain(pdf.unisense_A, round(loc(1,1,:)), fixP.maxPoint, fixP.minPoint, fixP.elbow, fixP.screenX);
-conf(1,2,:)                 = eGain(pdf.unisense_V, round(loc(1,2,:)), fixP.maxPoint, fixP.minPoint, fixP.elbow, fixP.screenX);
-conf(2,1,:)                 = eGain(pdf.MS_A, round(loc(1,1,:)), fixP.maxPoint, fixP.minPoint, fixP.elbow, fixP.screenX);
-conf(2,2,:)                 = eGain(pdf.MS_V, round(loc(1,2,:)), fixP.maxPoint, fixP.minPoint, fixP.elbow, fixP.screenX);
-conf(3,1,:)                 = eGain(pdf.MA_A, round(loc(1,1,:)), fixP.maxPoint, fixP.minPoint, fixP.elbow, fixP.screenX);
-conf(3,2,:)                 = eGain(pdf.MA_V, round(loc(1,2,:)), fixP.maxPoint, fixP.minPoint, fixP.elbow, fixP.screenX);
+% conf(1,1,:)                 = eGain(pdf.unisense_A, round(loc(1,1,:)), fixP.maxPoint, fixP.minPoint, fixP.elbow, fixP.screenX);
+% conf(1,2,:)                 = eGain(pdf.unisense_V, round(loc(1,2,:)), fixP.maxPoint, fixP.minPoint, fixP.elbow, fixP.screenX);
+% conf(2,1,:)                 = eGain(pdf.MS_A, round(loc(1,1,:)), fixP.maxPoint, fixP.minPoint, fixP.elbow, fixP.screenX);
+% conf(2,2,:)                 = eGain(pdf.MS_V, round(loc(1,2,:)), fixP.maxPoint, fixP.minPoint, fixP.elbow, fixP.screenX);
+% conf(3,1,:)                 = eGain(pdf.MA_A, round(loc(1,1,:)), fixP.maxPoint, fixP.minPoint, fixP.elbow, fixP.screenX);
+% conf(3,2,:)                 = eGain(pdf.MA_V, round(loc(1,2,:)), fixP.maxPoint, fixP.minPoint, fixP.elbow, fixP.screenX);
 
 % calculate posterior variance given each model
 
