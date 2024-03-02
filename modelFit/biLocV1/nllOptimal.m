@@ -97,15 +97,15 @@ switch model.mode
 
             % convert variance to confidence variable
             conf = f_logit(var);
-            p_conf = conf > c;
-            p_conf_lapsed = NaN(size(p_conf));
-            p_conf_lapsed(p_conf == 1) = 1 - lapse;
-            p_conf_lapsed(p_conf == 0) = lapse;
+            pred_conf = conf > c;
+            % p_conf_lapsed = NaN(size(pred_conf));
+            % p_conf_lapsed(pred_conf == 1) = 1 - lapse;
+            % p_conf_lapsed(pred_conf == 0) = lapse;
 
             % likelihood
             p_loc = norm_dst(data_resp, loc, sigmaM, 1e-20);
             loc_LL(i) = sum(log(p_loc),'all');
-            conf_LL(i) = sum(log(p_conf_lapsed.*data_conf),'all');
+            conf_LL(i) = sum(log( xor(pred_conf,data_conf) .* lapse + ~xor(pred_conf,data_conf) .* (1-lapse) ) ,'all');
 
         end
 

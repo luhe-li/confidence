@@ -12,23 +12,28 @@ switch model.mode
 
         f_logit = @(x) 1 ./ (1 + exp(-x));
 
-        x = model.x;
-
+        % combination of auditory and visual locations
         transA = model.sA * aA + bA;
         transV = transA;
         sAV  = combvec(transA, transV);
         
+        % fixed parameters
         num_a_stim = numel(transA);
         num_stim = size(sAV, 2);
         num_rep = model.num_rep;
         sigVs = [sigV1, sigV2];
         sigmaM = data.sigM;
+        x = model.x;
 
         [loc_LL, conf_LL] = NaN(1,numel(sigVs));
 
+        % loop by visual variable
         for i = 1:numel(sigVs)
             
             sigV = sigVs(i);
+
+            % auditory locations (4) x visual locations (4) x postcues (2)
+            % x rep
             data_resp = squeeze(data.org_resp(:,:,:,i,:));
             data_conf = squeeze(data.org_conf(:,:,:,i,:));
 
@@ -92,19 +97,19 @@ switch model.mode
 
             % convert variance to confidence variable
             conf = f_logit(var);
-            p_conf = conf > c;
-            p_conf_lapsed = NaN(size(p_conf));
-            p_conf_lapsed(p_conf == 1) = 1 - lapse;
-            p_conf_lapsed(p_conf == 0) = lapse;
+            pred_conf = conf > c;
+            % p_conf_lapsed = NaN(size(pred_conf));
+            % p_conf_lapsed(pred_conf == 1) = 1 - lapse;
+            % p_conf_lapsed(pred_conf == 0) = lapse;
 
             % likelihood
             p_loc = norm_dst(data_resp, loc, sigmaM, 1e-20);
             loc_LL(i) = sum(log(p_loc),'all');
-            conf_LL(i) = sum(log(p_conf_lapsed.*data_conf),'all');
+            conf_LL(i) = sum(log( xor(p_conf,data_conf) .* lapse + ~xor(p_conf,data_conf .* (1-lapse))),'all');
 
         end
 
-        out = nansumsum(loc_LL(:)) - nansum(conf_LL(:));
+        out = - nansum(loc_LL(:)) - nansum(conf_LL(:));
 
     case 'predict'
 

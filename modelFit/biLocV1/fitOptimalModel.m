@@ -42,7 +42,7 @@ end
 %% manage paths
 
 currentDir                  = pwd;
-[projectDir, ~]             = fileparts(currentDir);
+[projectDir, ~]             = fileparts(fileparts(currentDir));
 addpath(genpath(fullfile(projectDir, 'data')));
 addpath(genpath(fullfile(projectDir, 'bads')));
 addpath(genpath(fullfile(projectDir, 'func')));
