@@ -9,5 +9,6 @@ flnm        = sprintf('point_sub%i_ses-Pointing', sub_slc);
 load(fullfile(data_dir, flnm));
 %%
 err = [sortedResp.target_pixel] - [sortedResp.response_pixel] + ScreenInfo.xmid;
-sigma_m = std(err);
+deg_per_px  = rad2deg(atan(170 / 2 / ExpInfo.sittingDistance)) .* 2 / ScreenInfo.xaxis;
+sigma_m = std(err .* deg_per_px);
 end
