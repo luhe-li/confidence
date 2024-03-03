@@ -156,7 +156,7 @@ VSinfo.Cloud                         = reshape(cloud_temp,length(x),length(y)) .
 ExpInfo.audIdx                       = [6,8,9,11];
 ExpInfo.visIdx                       = [6,8,9,11];
 ExpInfo.cueIdx                       = [1,2]; % 1 = A, 2 = V
-ExpInfo.visReliIdx                   = [10,28]; % std in centimeters
+ExpInfo.visReliIdx                   = [8,20];%[10,28]; % std in centimeters
 ExpInfo.cue                          = {'A','V'};
 ExpInfo.avIdx                        = combvec(ExpInfo.audIdx, ExpInfo.visIdx, ExpInfo.cueIdx,ExpInfo.visReliIdx);
 ExpInfo.nLevel                       = size(ExpInfo.avIdx, 2);
