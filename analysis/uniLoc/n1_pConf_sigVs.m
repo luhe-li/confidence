@@ -1,5 +1,5 @@
 clear; clc;
-sub_slc = 1;
+sub_slc = 4;
 ses_slc = 'V';
 total_num_rep = 20;
 exp = 'uniLoc';
