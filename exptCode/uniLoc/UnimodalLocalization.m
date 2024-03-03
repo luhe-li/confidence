@@ -199,8 +199,8 @@ for tt = 1:ExpInfo.nRep
 end
 ExpInfo.randIdx = reshape(ExpInfo.randIdx, [], 1)';
 ExpInfo.randVisReliabIdx = reshape(ExpInfo.randVisReliabIdx, [], 1)';
-VSinfo.SD_blob(~~rem(ExpInfo.randVisReliabIdx,2)) = 10; % the unit is already in centimeters
-VSinfo.SD_blob(~rem(ExpInfo.randVisReliabIdx,2)) = 28; % visual reliability is mixed here
+VSinfo.SD_blob(~~rem(ExpInfo.randVisReliabIdx,2)) = 8;%10; % the unit is already in centimeters
+VSinfo.SD_blob(~rem(ExpInfo.randVisReliabIdx,2)) = 20;%28; % visual reliability is mixed here
 ExpInfo.randAudIdx = ExpInfo.audLevel(ExpInfo.randIdx);
 ExpInfo.randVisIdx = ExpInfo.audLevel(ceil(ExpInfo.randVisReliabIdx ./ 2));
 
