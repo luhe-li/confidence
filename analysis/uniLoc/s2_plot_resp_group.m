@@ -2,7 +2,7 @@ clear; clc; close all;
 
 %% set up
 
-sub_slc = 4;
+sub_slc = 2:4;
 
 % session
 ses_labels = {'-A','-V'};
@@ -66,9 +66,9 @@ for i = 1:numel(sub_slc)
     for j = 1:num_cond
 
         % reshape by stimulus level
-        locRep = reshape([orgResp{i,j}(1:end).target_cm],[num_rep,num_loc]);
+        locRep = reshape([orgResp{i,j}(1:end).target_deg],[num_rep,num_loc]);
         stim(i, j, :) = locRep(1,:);
-        temp_resp = reshape([orgResp{i,j}(1:end).response_cm],[num_rep,num_loc]);
+        temp_resp = reshape([orgResp{i,j}(1:end).response_deg],[num_rep,num_loc]);
 
         resp(i, j, :, :) = temp_resp'; % subject, session(aud, v1, v2), location, rep
 
@@ -107,8 +107,8 @@ for i = 1:numel(sub_slc)
 
     set(gcf, 'Position',[0 0 1400 400])
     t = tiledlayout(1,3);
-    xlabel(t,'Stimulus location', 'FontSize', titleSZ)
-    ylabel(t,'Estimate','FontSize', titleSZ)
+    xlabel(t,'Stimulus location (deg)', 'FontSize', titleSZ)
+    ylabel(t,'Estimate (deg)','FontSize', titleSZ)
     title(t, sprintf('sub%i',sub),'FontSize', titleSZ)
 
 
@@ -236,4 +236,5 @@ end
     xticks(1:num_cond)
     xtickangle(30)
     xticklabels(cond_label)
+    title('Group average')
 
