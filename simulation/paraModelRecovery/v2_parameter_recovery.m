@@ -2,7 +2,7 @@ clear; close all;
 
 %% key model recovery parameters
 
-num_rep               = 15;
+num_rep               = 12;
 num_runs              = 10;
 num_sample            = 10;
 
@@ -200,6 +200,8 @@ for i                 = 1:num_sample
 
 end
 
+save('recoveryResults')
+
 %% Plot parameters (predicted vs. ground-truth)
 
 for dd                = 1:num_model
@@ -207,7 +209,6 @@ for dd                = 1:num_model
     figure;
     t                     = tiledlayout(2, 4);
     title(t, sprintf('%s, rep: %i', ds_conf{dd}, num_rep));
-
 
     % Loop through each parameter
     for jj                = 1:8
