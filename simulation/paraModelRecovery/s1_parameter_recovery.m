@@ -100,7 +100,7 @@ else
         % calculate criterion based on noise
         [c_lb, ~]= getCriterionRange(GT.sigV1(1), (GT.sigV1(1)+GT.delta_sigA(1)), (GT.sigV1(1)+GT.delta_sigA(1)), GT.sigP(1), ds_conf{d});
         [~, c_ub]= getCriterionRange(GT.sigV1(2), (GT.sigV1(2)+GT.delta_sigA(2)), (GT.sigV1(2)+GT.delta_sigA(2)), GT.sigP(2), ds_conf{d});
-        GT.criterion = [c_lb, c_ub];
+        GT.criterion = [c_lb*2, c_ub];
 
         fn                    = fieldnames(GT);
         num_para              = numel(fn);
