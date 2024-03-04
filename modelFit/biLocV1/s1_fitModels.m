@@ -112,6 +112,8 @@ for m = 1:numel(models)
 
     % save the data for each participant
     flnm        = sprintf('sub%d_ses%i-%i', sub, min(ses), max(ses));
-    save(['FitResults_' models{m} '_' flnm datestr(datetime('now'))],'data','model','pred')
+    currentDateTimeStr = datestr(datetime('now'));
+    modifiedDateTimeStr = strrep(currentDateTimeStr, ':', '-');
+    save(['FitResults_' models{m} '_' flnm modifiedDateTimeStr],'data','model','pred')
 
 end

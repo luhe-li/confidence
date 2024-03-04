@@ -31,7 +31,6 @@ clt = [30, 120, 180; % blue
 %% start
 
 flnm = sprintf('recoveryResults_rep%i_sample%i_run%i', num_rep, num_sample, num_runs);
-pred                  = cell(num_sample, num_model, num_model);
 
 if exist(flnm,'file')
 
@@ -86,13 +85,14 @@ else
 
     % preallocate
     saveModel             = cell(1, num_model); % for each simulated model
-    [org_resp, org_conf, org_var]  = deal(NaN(numel(ds_conf),numel(sA), numel(sV), num_cue, numel(sigVs), num_rep));
+    pred                  = cell(num_sample, num_model, num_model);
+    [org_resp, org_conf, org_var]  = deal(NaN(numel(ds_conf),numel(sA), numel(sV), num_cue, numel(rel_label), num_rep));
 
     for d = 1:num_model
 
         GT.aA                 = [ 1.1,   1.5]; % scale
         GT.bA                 = [  -1,     1]; % intercept in degree
-        GT.sigV1              = [ 1, 1.2]; % degree
+        GT.sigV1              = [   1,   1.2]; % degree
         GT.delta_sigA         = [ 2, 3]; % degree
         GT.delta_sigV2        = [ 3, 5]; % degree
         GT.sigP               = [  10,    20]; % degree
@@ -164,10 +164,10 @@ else
     %% check fake data
     if checkFakeData
 
-        for d = 1:num_model
+        for d = 1:2%num_model
 
             %{diff} cue x reliability x rep
-            [conf_by_diff, all_diffs] = org_by_diffs(squeeze(org_var(d,:,:,:,:,:)), sA);
+            [conf_by_diff, all_diffs] = org_by_diffs(squeeze(org_conf(d,:,:,:,:,:)), sA);
 
             figure; hold on
 
@@ -266,11 +266,12 @@ else
 
     end
 
-end
-
-save(flnm)
+    save(flnm)
 
 end
+
+
+
 
 %% Plot parameters (predicted vs. ground-truth)
 
