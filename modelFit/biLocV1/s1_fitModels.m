@@ -3,12 +3,10 @@ clear; clc; close all; rng('Shuffle');
 
 %% set environment
 
-useCluster                  = 0;
+useCluster = 0;
 sub = 2;
 ses = 1:2;
-models = {'Optimal',...
-    'Suboptimal',...
-    'Heuristic'};
+models = {'Optimal','Suboptimal','Heuristic'};
 
 % set cores
 if ~exist('useCluster', 'var') || isempty(useCluster)
@@ -55,8 +53,8 @@ addpath(genpath(fullfile(projectDir, 'exptCode/biloc/')));
 
 [data.org_resp, data.org_conf, ~, ExpInfo, ~, ScreenInfo] = org_data(sub,ses,'biLoc');
 data.sigM = get_point_sigM(sub);
-load(fullfile(projectDir, ['exptCode/biloc/' sprintf('AVbias_sub%i', sub) '.mat']));
-data.coefsA = squeeze(Transfer.degCoeff(1, :));
+% load(fullfile(projectDir, ['exptCode/biloc/' sprintf('AVbias_sub%i', sub) '.mat']));
+% data.coefsA = squeeze(Transfer.degCoeff(1, :));
 
 %% define model
 
