@@ -4,26 +4,26 @@ switch model.mode
 
     case 'initiate'
 
-        out.paraID                   = {'aA','bA','\sigma_{A}','\sigma_{V1}','\sigma_{V2}','\sigma_{P}','p_{common}','criterion'};
+        out.paraID                   = {'aA','bA','\sigma_{V1}','\sigma_{A} - \sigma_{V1}','\sigma_{V2} - \sigma_{V1}','\sigma_{P}','p_{common}','criterion'};
         out.num_para                 = length(out.paraID);
 
         % hard bounds, the range for LB, UB, larger than soft bounds
         paraH.aA                     = [ 0.5,     2]; % degree
         paraH.bA                     = [  -8,     8]; % degree
-        paraH.sigA                   = [1e-2,    10]; % degree
-        paraH.sigV1                  = [1e-2,    10]; % degree
-        paraH.sigV2                  = [1e-2,    10]; % degree
-        paraH.sigP                   = [   1,    30]; % degree
+        paraH.sigV1                  = [1e-2,     2]; % degree
+        paraH.delta_sigA             = [1e-2,     5]; % degree
+        paraH.delta_sigV2            = [1e-2,     5]; % degree
+        paraH.sigP                   = [   1,    20]; % degree
         paraH.pC1                    = [1e-4,1-1e-4]; % weight
         paraH.c                      = [1e-4,1-1e-4]; % weight
 
         % soft bounds, the range for PLB, PUB
         paraS.aA                     = [ 0.8,   1.2]; % degree
         paraS.bA                     = [  -4,     4]; % degree
-        paraS.sigA                   = [   4,     6]; % degree
-        paraS.sigV1                  = [   2,     6]; % degree
-        paraS.sigV2                  = [   4,     6]; % degree
-        paraS.sigP                   = [   1,    20]; % degree
+        paraS.sigV1                  = [ 0.1,     1]; % degree
+        paraS.delta_sigA             = [ 0.5,     2]; % degree
+        paraS.delta_sigV2            = [ 0.5,     2]; % degree
+        paraS.sigP                   = [   1,    10]; % degree
         paraS.pC1                    = [ 0.4,   0.6]; % weight
         paraS.c                      = [ 0.2,   0.5]; % weight
 
@@ -44,9 +44,9 @@ switch model.mode
 
         aA                           = freeParam(1);
         bA                           = freeParam(2);
-        sigA                         = freeParam(3);
-        sigV1                        = freeParam(4);
-        sigV2                        = freeParam(5);
+        sigV1                        = freeParam(3);
+        delta_sigA                   = freeParam(4);
+        delta_sigV2                  = freeParam(5);
         sigP                         = freeParam(6);
         pC1                          = freeParam(7);
         c                            = freeParam(8);
@@ -67,7 +67,8 @@ switch model.mode
         num_a_stim = numel(transA);
         num_stim = size(sAV, 2);
         num_rep = model.num_rep;
-        sigVs = [sigV1, sigV2];
+        sigA = sigV1 + delta_sigA;
+        sigVs = [sigV1, sigV1 + delta_sigV2];
         sigmaM = data.sigM;
         x = model.x;
 

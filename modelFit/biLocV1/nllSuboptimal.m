@@ -10,20 +10,20 @@ switch model.mode
         % hard bounds, the range for LB, UB, larger than soft bounds
         paraH.aA                     = [ 0.5,     2]; % degree
         paraH.bA                     = [  -8,     8]; % degree
-        paraH.sigA                   = [1e-2,    10]; % degree
-        paraH.sigV1                  = [1e-2,    10]; % degree
-        paraH.sigV2                  = [1e-2,    10]; % degree
-        paraH.sigP                   = [   1,    30]; % degree
+        paraH.sigV1                  = [1e-2,     2]; % degree
+        paraH.delta_sigA             = [1e-2,     5]; % degree
+        paraH.delta_sigV2            = [1e-2,     5]; % degree
+        paraH.sigP                   = [   1,    20]; % degree
         paraH.pC1                    = [1e-4,1-1e-4]; % weight
         paraH.c                      = [1e-4,1-1e-4]; % weight
 
         % soft bounds, the range for PLB, PUB
         paraS.aA                     = [ 0.8,   1.2]; % degree
         paraS.bA                     = [  -4,     4]; % degree
-        paraS.sigA                   = [   4,     6]; % degree
-        paraS.sigV1                  = [   2,     6]; % degree
-        paraS.sigV2                  = [   4,     6]; % degree
-        paraS.sigP                   = [   1,    20]; % degree
+        paraS.sigV1                  = [ 0.1,     1]; % degree
+        paraS.delta_sigA             = [ 0.5,     2]; % degree
+        paraS.delta_sigV2            = [ 0.5,     2]; % degree
+        paraS.sigP                   = [   1,    10]; % degree
         paraS.pC1                    = [ 0.4,   0.6]; % weight
         paraS.c                      = [ 0.2,   0.5]; % weight
 
@@ -44,9 +44,9 @@ switch model.mode
 
         aA                           = freeParam(1);
         bA                           = freeParam(2);
-        sigA                         = freeParam(3);
-        sigV1                        = freeParam(4);
-        sigV2                        = freeParam(5);
+        sigV1                        = freeParam(3);
+        delta_sigA                   = freeParam(4);
+        delta_sigV2                  = freeParam(5);
         sigP                         = freeParam(6);
         pC1                          = freeParam(7);
         c                            = freeParam(8);
@@ -59,17 +59,18 @@ switch model.mode
         lapse                        = 0.01;
 
         % combination of auditory and visual locations
-        transA                       = model.sA * aA + bA;
-        transV                       = transA;
-        sAV                          = combvec(transA, transV);
+        transA = model.sA * aA + bA;
+        transV = transA;
+        sAV  = combvec(transA, transV);
 
         % fixed parameters
-        num_a_stim                   = numel(transA);
-        num_stim                     = size(sAV, 2);
-        num_rep                      = model.num_rep;
-        sigVs                        = [sigV1, sigV2];
-        sigmaM                       = data.sigM;
-        x                            = model.x;
+        num_a_stim = numel(transA);
+        num_stim = size(sAV, 2);
+        num_rep = model.num_rep;
+        sigA = sigV1 + delta_sigA;
+        sigVs = [sigV1, sigV1 + delta_sigV2];
+        sigmaM = data.sigM;
+        x = model.x;
 
         [loc_LL, conf_LL]            = deal(NaN(1,numel(sigVs)));
         [all_loc, all_var, all_conf] = deal(NaN(num_a_stim,num_a_stim,2,2,num_rep));
@@ -137,11 +138,10 @@ switch model.mode
 
             % this model bases confidence on the variance of the intermediate
             % posterior
-            cc                           = post_C1 > 0.5;
-            var_A(cc)                    = 1/(1/JV + 1/JA + 1/JP);
-            var_V(cc)                    = 1/(1/JV + 1/JA + 1/JP);
-            var_A(~cc)                   = 1/(1/JA + 1/JP);
-            var_V(~cc)                   = 1/(1/JV + 1/JP);
+            [var_A, var_V]               = deal(repmat(1/(1/JV + 1/JA + 1/JP), [num_stim, num_rep]));
+            cc                           = post_C1 < 0.5;
+            var_A(cc)                    = 1/(1/JA + 1/JP);
+            var_V(cc)                    = 1/(1/JV + 1/JP);
             var(:,:,1,:)                 = reshape(var_A, [num_a_stim, num_a_stim, num_rep]);
             var(:,:,2,:)                 = reshape(var_V, [num_a_stim, num_a_stim, num_rep]);
 

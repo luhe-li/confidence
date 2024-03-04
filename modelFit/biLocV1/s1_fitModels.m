@@ -4,8 +4,8 @@ clear; clc; close all; rng('Shuffle');
 %% set environment
 
 useCluster = 0;
-sub = 2;
-ses = 1:2;
+sub = 3;
+ses = 1;
 models = {'Optimal','Suboptimal','Heuristic'};
 
 % set cores
@@ -82,7 +82,7 @@ for m = 1:numel(models)
     NLL                         = NaN(1, model.num_runs);
     estP                        = NaN(model.num_runs, Val.num_para);
 
-    for i                    = 1:model.num_runs
+    parfor i                    = 1:model.num_runs
 
         disp(i);
         tempModel            = model;

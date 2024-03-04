@@ -115,7 +115,7 @@ variance(2,2,post_C1<0.5)        = 1/(1/JV + 1/JP);
 variance(3,1,:)                 = JA;
 variance(3,2,:)                 = JV;
 
-conf_var = f_logit(variance);
-conf = conf_var > repmat(criterion, [1, 2, num_rep]);%  model, 2 modalities, num_rep
+% conf_var = f_logit(variance);
+conf = variance > repmat(criterion, [1, 2, num_rep]);%  model, 2 modalities, num_rep
 
 end
