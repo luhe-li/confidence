@@ -17,5 +17,6 @@ if sub_slc <= 4
 end
 deg_per_px  = rad2deg(atan(170 / 2 / ExpInfo.sittingDistance)) .* 2 / ScreenInfo.xaxis;
 err_deg = err .* deg_per_px;
-sigma_m = (err_deg - mean(err_deg)).^2/(numel(err_deg));
+sigma_m = sqrt(sum((err_deg - mean(err_deg)).^2/(numel(err_deg))));
+
 end
