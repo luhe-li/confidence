@@ -232,4 +232,4 @@ sortedResp = Resp(temp2);
 save(fullfile(outDir,outFileName),'Resp','sortedResp','ExpInfo','ScreenInfo','VSinfo');
 
 
-Screen('CloseAll');
+% Screen('CloseAll');
