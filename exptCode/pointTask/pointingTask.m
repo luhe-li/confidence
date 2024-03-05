@@ -32,6 +32,7 @@ if ~exist(outDir,'dir') mkdir(outDir); end
 addpath(genpath(PsychtoolboxRoot))
 
 % avoid rewriting data
+
 if exist(fullfile(outDir, [outFileName '.mat']), 'file')
     resp = input('Replace the existing file? Y/N', 's');
     if ~strcmp(resp,'Y')
