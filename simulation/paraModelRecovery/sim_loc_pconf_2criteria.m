@@ -1,4 +1,4 @@
-function [loc, conf, variance] = sim_loc_pconf(num_rep, sA, sV, aA, bA, sigA, sigV, sigP, pCommon, criterion, fixP)
+function [loc, conf, conf_var] = sim_loc_pconf(num_rep, sA, sV, aA, bA, sigA, sigV, sigP, pCommon, criterionA, criterionV, fixP)
 
 %sim_loc_pconf simulates localization responses, confidence judgements,
 %for a bimodal audiovisual stimulus.
@@ -45,12 +45,13 @@ function [loc, conf, variance] = sim_loc_pconf(num_rep, sA, sV, aA, bA, sigA, si
 %
 % Date: 24/03 Version: 3.0
 % norm_vector = @(v) v./sum(v,2);
-f_logit = @(x) 1 ./ (1 + exp(-x));
+f_logit = @(x) 1 ./ (1 + exp(-(x)/10));
 bounded = @(x, LB, UB) max(LB,min(x, UB)); 
 
 x                           = fixP.x;
 loc                         = NaN(3,2,num_rep);
 muP = 0;
+criterion = [criterionA', criterionV'];
 
 %simulate measurements, which are drawn from Gaussian distributions
 % stochasticity starts here
@@ -115,7 +116,14 @@ variance(2,2,post_C1<0.5)        = 1/(1/JV + 1/JP);
 variance(3,1,:)                 = JA;
 variance(3,2,:)                 = JV;
 
-% conf_var = f_logit(variance);
-conf = variance > repmat(criterion, [1, 2, num_rep]);%  model, 2 modalities, num_rep
+conf_var = f_logit(variance);
+conf = NaN(size(variance));
+for d = 1:3
+    for modality = 1:2
+        conf(d,modality,:) = conf_var(d,modality,:) < criterion(d,modality);
+    end
+end
+
+% conf = variance > repmat(criterion, [1, 2, num_rep]);%  model, 2 modalities, num_rep
 
 end

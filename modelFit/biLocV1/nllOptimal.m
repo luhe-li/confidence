@@ -15,17 +15,21 @@ switch model.mode
         paraH.delta_sigV2            = [1e-2,     5]; % degree
         paraH.sigP                   = [   1,    20]; % degree
         paraH.pC1                    = [1e-4,1-1e-4]; % weight
-        paraH.c                      = [1e-4,1-1e-4]; % weight
+
+        % find out the reasonable range for criterion
+        [c_lb, ~] = getCriterionRange(paraH.sigV1(1), paraH.sigV1(1)+paraH.delta_sigA(1), paraH.sigV1(1)+paraH.delta_sigV2(1), paraH.sigP(1), 'Optimal');
+        [~, c_ub] = getCriterionRange(paraH.sigV1(2), paraH.sigV1(2)+paraH.delta_sigA(2), paraH.sigV1(2)+paraH.delta_sigV2(2), paraH.sigP(2), 'Optimal');
+        paraH.c                      = [c_lb,  c_ub]; % weight
 
         % soft bounds, the range for PLB, PUB
         paraS.aA                     = [ 0.8,   1.2]; % degree
         paraS.bA                     = [  -4,     4]; % degree
         paraS.sigV1                  = [ 0.1,     1]; % degree
-        paraS.delta_sigA             = [ 0.5,     2]; % degree
-        paraS.delta_sigV2            = [ 0.5,     2]; % degree
+        paraS.delta_sigA             = [ 0.1,     2]; % degree
+        paraS.delta_sigV2            = [ 0.1,     2]; % degree
         paraS.sigP                   = [   1,    10]; % degree
         paraS.pC1                    = [ 0.4,   0.6]; % weight
-        paraS.c                      = [ 0.2,   0.5]; % weight
+        paraS.c                      = [c_lb,  c_ub]; % degree
 
         % reorganize parameter bounds to feed to bads
         fn                           = fieldnames(paraH);
@@ -52,7 +56,7 @@ switch model.mode
         c                            = freeParam(8);
 
         % logistic function that converts the confidence variable
-        f_logit                      = @(x) 1 ./ (1 + exp(-x));
+%         f_logit                      = @(x) 1 ./ (1 + exp(-x));
 
         % tentative parameters (can be fitted later)
         muP                          = 0;
@@ -144,8 +148,10 @@ switch model.mode
             var(:,:,2,:) = reshape(var_V, [num_a_stim, num_a_stim, num_rep]);
 
             % convert variance to confidence variable
-            conf = f_logit(var);
-            pred_conf = conf > c;
+%             conf = f_logit(var);
+
+            % report confidence if variance is smaller than a criterion
+            pred_conf = var < c;
 
             % likelihood
             p_loc = norm_dst(data_resp, loc, sigmaM, 1e-20);

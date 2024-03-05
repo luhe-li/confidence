@@ -83,6 +83,9 @@ else
 
     %% Free parameters
 
+    % criterion range differ by model
+    V_criteria = {[16,18], [4,6], [4,6]};
+
     % preallocate
     saveModel             = cell(1, num_model); % for each simulated model
     pred                  = cell(num_sample, num_model, num_model);
@@ -97,10 +100,8 @@ else
         GT.delta_sigV2        = [ 3, 5]; % degree
         GT.sigP               = [  10,    20]; % degree
         GT.pC1                = [ 0.6,   0.7]; % weight
-        % calculate criterion based on noise
-        [c_lb, ~]= getCriterionRange(GT.sigV1(1), (GT.sigV1(1)+GT.delta_sigA(1)), (GT.sigV1(1)+GT.delta_sigA(1)), GT.sigP(1), ds_conf{d});
-        [~, c_ub]= getCriterionRange(GT.sigV1(2), (GT.sigV1(2)+GT.delta_sigA(2)), (GT.sigV1(2)+GT.delta_sigA(2)), GT.sigP(2), ds_conf{d});
-        GT.criterion = [c_lb*2, c_ub];
+        GT.A_criterion        = [3,5];
+        GT.V_criterion        = V_criteria{d};
 
         fn                    = fieldnames(GT);
         num_para              = numel(fn);
@@ -110,7 +111,7 @@ else
             ub(:,k)               = GT.(fn{k})(2);
         end
 
-        % randomly sample from the range
+        % randomly sample frosm the range
         samples(d,:,:)               = lb + (ub - lb) .* rand(num_sample, num_para);
 
         %% Simulate data
@@ -131,7 +132,8 @@ else
             sigVs                 = [sigV1, sigV2];
             sigP                  = samples(d, i, 6);
             pCommon               = samples(d, i, 7);
-            criterion             = samples(d, i, 8);
+            criterionA             = samples(d, i, 8);
+            criterionV             = samples(d, i, 8);
 
             [loc, conf, variance] = deal(NaN(num_s,num_model, num_cue, numel(sigVs), num_rep));
             % num_s: stimulus location combination
@@ -143,7 +145,7 @@ else
             for j                 = 1:num_s
                 for v                 = 1:numel(sigVs)
                     [loc(j,:,:,v,:), conf(j,:,:,v,:), variance(j,:,:,v,:)] = sim_loc_pconf(num_rep, sAV(1,j),...
-                        sAV(2,j), aA, bA, sigA, sigVs(v), sigP, pCommon, criterion, fixP);
+                        sAV(2,j), aA, bA, sigA, sigVs(v), sigP, pCommon, criterionA, criterionV, fixP);
                 end
             end
 
