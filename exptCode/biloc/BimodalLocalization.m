@@ -280,4 +280,4 @@ ExpInfo.finish                       = sprintf('%04d/%02d/%02d_%02d:%02d:%02d',c
 % sortedResp                           = Resp(temp);
 save(fullfile(outDir,outFileName),'Resp','ExpInfo','ScreenInfo','VSinfo','AudInfo');
 
-Screen('CloseAll')
+% Screen('CloseAll')

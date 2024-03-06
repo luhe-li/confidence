@@ -3,7 +3,7 @@ clear; clc; close all;
 
 %% set up
 
-sub = 3;
+sub = 6;
 
 %% manage path
 
