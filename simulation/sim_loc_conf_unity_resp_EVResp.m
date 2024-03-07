@@ -146,8 +146,8 @@ pdf.MS_V(~slc,:)            = pdf.sHat_V_C2(~slc,:);
 % calculate posterior variance given each model
 
 
-variance(3,1,:)                 = post_C1'.* 1/(1/JA + 1/JP) + post_C2'.* 1/(1/JV + 1/JA + 1/JP) + post_C1'.* post_C2' .* (sHat_A_C2' - sHat_C1').^2;
-variance(3,2,:)                 = post_C1'.* 1/(1/JV + 1/JP) + post_C2'.* 1/(1/JV + 1/JA + 1/JP) + post_C1'.* post_C2' .* (sHat_V_C2' - sHat_C1').^2;
+variance(3,1,:)                 = post_C2'.* 1/(1/JA + 1/JP) + post_C1'.* 1/(1/JV + 1/JA + 1/JP) + post_C1'.* post_C2' .* (sHat_A_C2' - sHat_C1').^2;
+variance(3,2,:)                 = post_C2'.* 1/(1/JV + 1/JP) + post_C1'.* 1/(1/JV + 1/JA + 1/JP) + post_C1'.* post_C2' .* (sHat_V_C2' - sHat_C1').^2;
 
 variance(1,1,:)                 = repmat(JA,1,num_rep);
 variance(1,2,:)                 = repmat(JV,1,num_rep);
