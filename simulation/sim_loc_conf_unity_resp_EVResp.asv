@@ -1,4 +1,4 @@
-function [loc, unity, pdf, variance, p_conf] = sim_loc_conf_unity_resp_EVResp(pCommon, num_rep, sA, sV, aA, bA, sigA, sigV, muP, sigP, fixP, criterion, lapse)
+function [loc, unity, pdf, variance, p_conf] = sim_loc_conf_unity_resp_EVResp(pCommon, num_rep, sA, sV, aA, bA, sigA, sigV, muP, sigP, fixP, criterion)
 
 %SIM_LOC_CONF_UNITY_RESP Simulates localization responses, confidence judgements,
 %and unity judgements for a bimodal audiovisual stimulus.
@@ -50,7 +50,7 @@ norm_vector = @(v) v./sum(v,2);
 
 x                           = fixP.x;
 loc                         = NaN(4,2,num_rep);
-
+lapse                       = fix.lapse;
 %simulate measurements, which are drawn from Gaussian distributions
 % stochasticity starts here
 mA                          = randn(1, num_rep).*sigA + (sA * aA + bA);
@@ -158,10 +158,7 @@ variance(2,2,post_C1<0.5)        = 1/(1/JV + 1/JP);
 p_conf = NaN(3,2); % 3 model, 2 modalities
 for d = 1:3
     for modality = 1:2
-        vec_conf = variance(d,modality,:) < criterion(d,modality); % create a confident index. 1 = confident
-        vec_lapse = rand(num_rep,1) < lapse; % randomly assign 1 if this trial lapsed
-        vec_conf(vec_lapse) = ~vec_conf(vec_lapse); % flip the lapsed trials
-        p_conf(d,modality) = sum(vec_conf) ./ num_rep;
+        p_conf(d,modality) = sum( variance(d,modality,:) > criterion(d,modality) ) ./ num_rep;
     end
 end
 
