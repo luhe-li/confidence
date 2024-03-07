@@ -1,4 +1,4 @@
-function [loc, unity, pdf, variance, p_conf] = sim_loc_conf_unity_resp_EVResp(pCommon, num_rep, sA, sV, aA, bA, sigA, sigV, muP, sigP, fixP, criterion, lapse)
+function [loc, unity, pdf, variance, p_conf] = sim_model_specify(pCommon, num_rep, sA, sV, aA, bA, sigA, sigV, muP, sigP, fixP, criterion, lapse, model_ind)
 
 %SIM_LOC_CONF_UNITY_RESP Simulates localization responses, confidence judgements,
 %and unity judgements for a bimodal audiovisual stimulus.
@@ -28,13 +28,14 @@ function [loc, unity, pdf, variance, p_conf] = sim_loc_conf_unity_resp_EVResp(pC
 %                      mapping.
 %   fixP     (struct): Fixed parameters for the gain function
 %   criterion(matrix): Confidence criteria on variance of the posterior
-%                      distribution, 
+%                      distribution, 3 by 2 (3 models (heuristic,
+%                      suboptimal, and optimal, 2 modalities (Aud and Vis)
+%   model_ind(double): index for the specified model (1 = heuristic, 
+%                      2 = suboptimal, and 3 = optimal)
 %
 % Outputs:
 %   loc      (matrix): Simulated localization responses. This is a matrix
-%                      with dimensions 4 (decision strategies, MA has two 
-%                      possibilities: MAP & Expected Value) x 2 (modalities)
-%                      x nT (number of trials).
+%                      with dimensions: 2 (modalities) x nT (number of trials).
 %   conf     (matrix): Simulated confidence judgements for each trial. 
 %                      All using EV loc as estimate location. This
 %                      is a matrix with dimensions 3 (three models, 
@@ -45,7 +46,7 @@ function [loc, unity, pdf, variance, p_conf] = sim_loc_conf_unity_resp_EVResp(pC
 %   unity    (vector): Simulated unity judgements for each trial. This is a
 %                      vector of nT (number of trials).
 %
-% Date: 24/02 Version: 1.0
+% Date: 24/03/06 Version: 2.0
 norm_vector = @(v) v./sum(v,2);
 
 x                           = fixP.x;
@@ -97,36 +98,19 @@ sHat_C1                     = (mA./JA + mV./JV + muP/JP)./(1/JV + 1/JA + 1/JP);
 sHat_A_C2                   = (mA./JA + muP/JP)./(1/JA + 1/JP);
 sHat_V_C2                   = (mV./JV + muP/JP)./(1/JV + 1/JP);
 
-% initialize intermediate estimate pdfs
-pdf.sHat_C1                 = norm_vector(normpdf(repmat(x,num_rep,1),sHat_C1',1/sqrt(1/JV + 1/JA + 1/JP)));
-pdf.sHat_A_C2               = norm_vector(normpdf(repmat(x,num_rep,1),sHat_A_C2',1/sqrt(1/JA + 1/JP)));
-pdf.sHat_V_C2               = norm_vector(normpdf(repmat(x,num_rep,1),sHat_V_C2',1/sqrt(1/JV + 1/JP)));
-pdf.unisense_A              = norm_vector(normpdf(repmat(x,num_rep,1),mA',sigA));
-pdf.unisense_V              = norm_vector(normpdf(repmat(x,num_rep,1),mV',sigV));
-
 %compute the final location estimates if we assume model averaging.
 %Based on this strategy, the final location estimate is the sum of the
 %two intermediate location estimates, weighted by the corresponding
 %causal structure.
 %Eq. 4 in Wozny et al., 2010
-loc(1,1,:)                  = post_C1.* sHat_C1 + post_C2.* sHat_A_C2;
-loc(1,2,:)                  = post_C1.* sHat_C1 + post_C2.* sHat_V_C2;
+loc(1,:)                  = post_C1.* sHat_C1 + post_C2.* sHat_A_C2;
+loc(2,:)                  = post_C1.* sHat_C1 + post_C2.* sHat_V_C2;
 
-% The posterior for model averaging would be a Gaussian mixture, with its
-% expecte value equal to the weighted means of the two causal scenarios.
-% But its MAP will not necessarily be there.
-pdf.MA_A                    = norm_vector(post_C1'.* pdf.sHat_C1 + post_C2'.* pdf.sHat_A_C2);
-pdf.MA_V                    = norm_vector(post_C1'.* pdf.sHat_C1 + post_C2'.* pdf.sHat_V_C2);
-
-[~,loc(2,1,:)]              = max(pdf.MA_A,[],2);
-[~,loc(2,2,:)]              = max(pdf.MA_V,[],2);
 %compute the final location estimates if we assume model selection.
 %Based on this strategy, the final location estimate depends purely on
 %the causal structure that is more probable.
 %Eq. 5 in Wozny et al., 2010
-loc(3,1:2,:)                = repmat(sHat_C1,[2 1]);
-loc(3,1,post_C1<0.5)        = sHat_A_C2(post_C1<0.5);
-loc(3,2,post_C1<0.5)        = sHat_V_C2(post_C1<0.5);
+
 % select between intermediate estimated pdfs
 slc                         = ~(post_C1<0.5);
 pdf.MS_A(slc,:)             = pdf.sHat_C1(slc,:);

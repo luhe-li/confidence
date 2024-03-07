@@ -27,8 +27,9 @@ function [loc, unity, pdf, variance, p_conf] = sim_loc_conf_unity_resp_EVResp(pC
 %   x        (vector): The screen pixel space, used for simulation scaling or
 %                      mapping.
 %   fixP     (struct): Fixed parameters for the gain function
-%   criterion(double): Confidence criterion on variance of the posterior
-%                      distribution
+%   criterion(matrix): Confidence criteria on variance of the posterior
+%                      distribution, 3 by 2 (3 models (heuristic,
+%                      suboptimal, and optimal
 %
 % Outputs:
 %   loc      (matrix): Simulated localization responses. This is a matrix
