@@ -6,7 +6,7 @@ clear; close all;
 %% key model recovery parameters
 
 num_rep               = 12;
-num_runs              = 1;
+num_runs              = 7;
 num_sample            = 1;
 checkFakeData         = 1;
 
@@ -82,7 +82,7 @@ else
     GT = [zeros(1,9);...
         1, 0,   1,   4,10, 1e4, 0.01, 13.8, 13;...%Suboptimal
         1, 0, 0.7, 1.2, 1, 1e4, 0.57, 1.5, 0.55]; % Optimal
-    num_para         = size(GT, 1);
+    num_para         = size(GT, 2);
 
     % simulated model info
     ds_loc                = {'Model averaging'};
@@ -169,12 +169,12 @@ else
         model.sA              = sA;
         model.sV              = model.sA;
         model.num_rep         = num_rep;
-        model.num_SD                = 5;
-        model.numBins_A             = 10;
-        model.numBins_V             = 15;
-        model.modality              = {'A','V'};
-        model.num_rep               = num_rep;
-        model.strategy_loc          = 'MA';
+        model.num_SD          = 5;
+        model.numBins_A       = 15;
+        model.numBins_V       = 15;
+        model.modality        = {'A','V'};
+        model.num_rep         = num_rep;
+        model.strategy_loc    = 'MA';
 
         % set OPTIONS to tell bads that my objective function is noisy
         OPTIONS.UncertaintyHandling                            = 1;
@@ -200,10 +200,10 @@ else
         NLL                         = NaN(1, model.num_runs);
         estP                        = NaN(model.num_runs, Val.num_para);
 
-        p = [1, 0, 0.7, 1.2, 1, 1e4, 0.57, 1.5, 0.55] ;
-        test = currModel([], model, data);
+%         p = [1 3 0.01025390625 3.336669921875 2.504638671875 20 0.16669921875 33.0859835100118] ;
+%         test = currModel(p, model, data);
 
-        for n              = 1:model.num_runs
+        parfor n              = 1:model.num_runs
 
             tempModel             = model;
             tempVal               = Val;
