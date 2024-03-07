@@ -1,4 +1,4 @@
-function [loc, p_conf] = sim_model_specify(pCommon, num_rep, sA, sV, aA, bA, sigA, sigV, muP, sigP, fixP, criterion, lapse, model_ind)
+function [loc, matrix_conf] = sim_model_specify(pCommon, num_rep, sA, sV, aA, bA, sigA, sigV, muP, sigP, fixP, criterion, lapse, model_ind)
 
 %SIM_LOC_CONF_UNITY_RESP Simulates localization responses, confidence judgements,
 %and unity judgements for a bimodal audiovisual stimulus.
@@ -119,12 +119,12 @@ switch model_ind
         variance(2,:)                 = post_C1'.* 1/(1/JV + 1/JP) + post_C2'.* 1/(1/JV + 1/JA + 1/JP) + post_C1'.* post_C2' .* (sHat_V_C2' - sHat_C1').^2;
 end
 
-p_conf = NaN(1,2); % 2 modalities
+matrix_conf = NaN(2,:); % 2 modalities
 for modality = 1:2
     vec_conf = variance(modality,:) < criterion(modality); % create a confident index. 1 = confident
     vec_lapse = rand(num_rep,1) < lapse; % randomly assign 1 if this trial lapsed
     vec_conf(vec_lapse) = ~vec_conf(vec_lapse); % flip the lapsed trials
-    p_conf(modality) = sum(vec_conf) ./ num_rep;
+    matrix_conf(modality,:) = vec_conf;
 end
 
 
