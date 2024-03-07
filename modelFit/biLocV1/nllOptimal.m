@@ -97,7 +97,6 @@ switch model.mode
 
             JA                          = sigA^2;
             JP                          = sigP^2;
-
             JV                          = sigV^2;
             const1                      = JA*JV + JA*JP + JV*JP;
             constA                      = JA + JP;
@@ -152,6 +151,14 @@ switch model.mode
 
             % report confidence if variance is smaller than a criterion
             pred_conf = var < c;
+
+            % check pred_conf
+            p_conf = mean(pred_conf,4);
+            figure; hold on
+            subplot(1,2,1)
+            
+
+            subplot(1,2,2)
 
             % likelihood
             p_loc = norm_dst(data_resp, loc, sigmaM, 1e-20);
