@@ -79,9 +79,9 @@ else
 
     % choose a reasonble set of parameter set. See variable name below.
 
-    GT = [1, 0, 0.7, 1.2, 1, 1e4, 0.57, 1.5, 0.55;... % Optimal
+    GT = [zeros(1,9);...
         1, 0,   1,   4,10, 1e4, 0.01, 13.8, 13;...%Suboptimal
-        ];
+        1, 0, 0.7, 1.2, 1, 1e4, 0.57, 1.5, 0.55]; % Optimal
     num_para         = size(GT, 1);
 
     % simulated model info
@@ -94,7 +94,7 @@ else
 
     %% Simulate data
 
-    for d = 1:num_model
+    for d = 3:-1:1
 
         aA                    = GT(d,1);
         bA                    = GT(d,2);
@@ -109,7 +109,7 @@ else
         lapse = 0.05;
         muP = 0;
 
-        [loc, conf, variance] = deal(NaN(num_s,num_model, num_cue, numel(sigVs), num_rep));
+        [loc, conf] = deal(NaN(num_s, num_cue, numel(sigVs), num_rep));
         % num_s: stimulus location combination
         % 3 confidence decision strategies
         % 2 modalities(1 = aud, 2 = vis)
@@ -118,32 +118,23 @@ else
 
         for j                 = 1:num_s
             for v                 = 1:numel(sigVs)
-                [loc(j,:,:,v,:), conf(j,:,:,v,:), variance(j,:,:,v,:)] = sim_loc_pconf_2criteria(pCommon,...
-                    num_rep, sAV(1,j), sAV(2,j), aA, bA, sigA, sigVs(v), muP, sigP, fixP, repmat([cA, cV],[3,1]), lapse);
+                [loc(j,:,v,:), conf(j,:,v,:)] = sim_loc_conf_2criteria(pCommon,...
+                    num_rep, sAV(1,j), sAV(2,j), aA, bA, sigA, sigVs(v), muP, sigP, fixP, [cA, cV], lapse, d);
             end
         end
 
         %% Organize data
 
-        [org_resp, org_conf, org_var]  = deal(NaN(numel(ds_loc),numel(sA), numel(sV), num_cue, numel(sigVs), num_rep));
-
-        d_resp                = squeeze(loc(:,d,:,:,:));
-        org_resp(d,:,:,:,:,:) = reshape(d_resp, [numel(sA), numel(sV), num_cue, numel(sigVs), num_rep]);
-
-        d_conf                = squeeze(conf(:,d,:,:,:));
-        org_conf(d,:,:,:,:,:) = reshape(d_conf, [numel(sA), numel(sV), num_cue, numel(sigVs), num_rep]);
-
-        d_var                = squeeze(variance(:,d,:,:,:));
-        org_var(d,:,:,:,:,:) = reshape(d_var, [numel(sA), numel(sV), num_cue, numel(sigVs), num_rep]);
+        org_resp              = reshape(loc, [numel(sA), numel(sV), num_cue, numel(sigVs), num_rep]);
+        org_conf              = reshape(conf, [numel(sA), numel(sV), num_cue, numel(sigVs), num_rep]);
 
         %% check fake data
         if checkFakeData
 
             %{diff} cue x reliability x rep
-            [conf_by_diff, all_diffs] = org_by_diffs(squeeze(org_conf(d,:,:,:,:,:)), sA);
+            [conf_by_diff, all_diffs] = org_by_diffs(org_conf, sA);
 
             figure; hold on
-
             t = tiledlayout(2, 1);
             title(t,sprintf('%s, rep: %i', ds_conf{d}, num_rep))
             xlabel(t, 'Audiovisual discrepancy (deg)');
@@ -168,7 +159,6 @@ else
                 end
                 xticks(diff_locs)
             end
-
         end
 
         %% Model fitting
@@ -183,62 +173,65 @@ else
         model.numBins_A             = 10;
         model.numBins_V             = 15;
         model.modality              = {'A','V'};
-        model.num_rep               = size(data.org_resp, 5);
+        model.num_rep               = num_rep;
         model.strategy_loc          = 'MA';
 
         % set OPTIONS to tell bads that my objective function is noisy
         OPTIONS.UncertaintyHandling                            = 1;
 
         % fit by the corresponding model
-            data.org_resp         = squeeze(org_resp(d,:,:,:,:,:));
-            data.org_conf         = squeeze(org_conf(d,:,:,:,:,:));
-            data.sigM             = 1.36; % emperical motor noise averaged from first four participants
+        data.org_resp         = org_resp;
+        data.org_conf         = org_conf;
+        data.sigM             = 1.36; % emperical motor noise averaged from first four participants
 
-            % fit by generating model
+        % fit by generating model
 
-            currModel = str2func('nllBimodal');
+        currModel = str2func('nllBimodal');
 
-            % switch confidence strategies
-            model.strategy_conf         = ds_conf{m};
+        % switch confidence strategies
+        model.strategy_conf         = ds_conf{d};
 
-            % initiate
-            model.mode                  = 'initiate';
-            Val = currModel([], model, data);
+        % initiate
+        model.mode                  = 'initiate';
+        Val = currModel([], model, data);
 
-            % optimize
-            model.mode                  = 'optimize';
-            NLL                         = NaN(1, model.num_runs);
-            estP                        = NaN(model.num_runs, Val.num_para);
+        % optimize
+        model.mode                  = 'optimize';
+        NLL                         = NaN(1, model.num_runs);
+        estP                        = NaN(model.num_runs, Val.num_para);
 
-            for n              = 1:model.num_runs
+        p = [1, 0, 0.7, 1.2, 1, 1e4, 0.57, 1.5, 0.55] ;
+        test = currModel([], model, data);
 
-                tempModel             = model;
-                tempVal               = Val;
-                tempFunc              = currModel;
+        for n              = 1:model.num_runs
 
-                [estP(n,:),NLL(n)]    = bads(@(p) tempFunc(p, model, data),...
-                    Val.init(n,:), Val.lb,...
-                    Val.ub, Val.plb, Val.pub, [], OPTIONS);
+            tempModel             = model;
+            tempVal               = Val;
+            tempFunc              = currModel;
 
-                disp(estP(n,:))
+            [estP(n,:),NLL(n)]    = bads(@(p) tempFunc(p, model, data),...
+                Val.init(n,:), Val.lb,...
+                Val.ub, Val.plb, Val.pub, [], OPTIONS);
 
-            end
+            disp(estP(n,:))
 
-            % find the parameter with the least NLL
-            [minNLL, best_idx]    = min(NLL);
-            bestP                 = estP(best_idx, :);
+        end
 
-            % save all fitting results
-            saveModel{d}.estP(i,:,:) = estP;
-            saveModel{d}.NLL(i,:) = NLL;
-            saveModel{d}.bestP(i,:) = bestP;
-            saveModel{d}.minNLL(i)= minNLL;
+        % find the parameter with the least NLL
+        [minNLL, best_idx]    = min(NLL);
+        bestP                 = estP(best_idx, :);
 
-            % predict using the best-fitting parameter
-            model.mode            = 'predict';
-            tmpPred               = currModel(bestP, model, data);
-            tmpPred.bestP         = bestP;
-            pred{i, d}         = tmpPred;
+        % save all fitting results
+        saveModel{d}.estP(i,:,:) = estP;
+        saveModel{d}.NLL(i,:) = NLL;
+        saveModel{d}.bestP(i,:) = bestP;
+        saveModel{d}.minNLL(i)= minNLL;
+
+        % predict using the best-fitting parameter
+        model.mode            = 'predict';
+        tmpPred               = currModel(bestP, model, data);
+        tmpPred.bestP         = bestP;
+        pred{i, d}         = tmpPred;
 
     end
 
@@ -247,46 +240,46 @@ else
 end
 
 %% Plot parameters (predicted vs. ground-truth)
-
-fn                    = fieldnames(GT);
-num_para              = numel(fn);
-
-for d                = 1:num_model
-
-    figure;
-    set(gcf, 'Position', get(0, 'Screensize'));
-    t                     = tiledlayout(2, 4);
-    title(t, sprintf('%s, rep: %i', ds_conf{dd}, num_rep),'FontSize',15);
-
-    % Loop through each parameter
-    for jj                = 1:num_para
-
-        nexttile;
-        hold on
-
-        % Scatter plot of the i-th predicted parameters against its ground-truth
-        scatter(samples(:,jj)', saveModel{d}.bestP(:,jj), 'k','filled');
-        xlabel('Ground Truth');
-        ylabel('Predicted');
-        axis square; % Make the plot square
-        axis equal
-
-        % plot identity line
-        minVal = min([samples(:,jj)', saveModel{d}.bestP(:,jj)]);
-        maxVal = max([samples(:,jj)', saveModel{d}.bestP(:,jj)]);
-        plot([minVal, maxVal], [minVal, maxVal], '--', 'LineWidth', 1);
-
-        % Calculate the Pearson correlation coefficient and p-value
-        [R, P]                = corrcoef(samples(:,jj)', saveModel{d}.bestP(dd,:,jj));
-
-        % Extract the correlation coefficient and p-value
-        r                     = R(1,2);
-        p_value               = P(1,2);
-
-        % Label the r and p in the title
-        title(sprintf('Param %s: r= %.2f, p=%.3f', fn{jj}, r, p_value));
-    end
-
-end
-
+%
+% fn                    = fieldnames(GT);
+% num_para              = numel(fn);
+%
+% for d                = 1:num_model
+%
+%     figure;
+%     set(gcf, 'Position', get(0, 'Screensize'));
+%     t                     = tiledlayout(2, 4);
+%     title(t, sprintf('%s, rep: %i', ds_conf{dd}, num_rep),'FontSize',15);
+%
+%     % Loop through each parameter
+%     for jj                = 1:num_para
+%
+%         nexttile;
+%         hold on
+%
+%         % Scatter plot of the i-th predicted parameters against its ground-truth
+%         scatter(samples(:,jj)', saveModel{d}.bestP(:,jj), 'k','filled');
+%         xlabel('Ground Truth');
+%         ylabel('Predicted');
+%         axis square; % Make the plot square
+%         axis equal
+%
+%         % plot identity line
+%         minVal = min([samples(:,jj)', saveModel{d}.bestP(:,jj)]);
+%         maxVal = max([samples(:,jj)', saveModel{d}.bestP(:,jj)]);
+%         plot([minVal, maxVal], [minVal, maxVal], '--', 'LineWidth', 1);
+%
+%         % Calculate the Pearson correlation coefficient and p-value
+%         [R, P]                = corrcoef(samples(:,jj)', saveModel{d}.bestP(dd,:,jj));
+%
+%         % Extract the correlation coefficient and p-value
+%         r                     = R(1,2);
+%         p_value               = P(1,2);
+%
+%         % Label the r and p in the title
+%         title(sprintf('Param %s: r= %.2f, p=%.3f', fn{jj}, r, p_value));
+%     end
+%
+% end
+%
 
