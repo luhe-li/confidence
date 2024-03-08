@@ -9,7 +9,7 @@ clt = [repmat(125, 1, 3); % blue
 %     251, 154, 153]./255; % light red
 %%
 cur_dir                          = pwd;
-[project_dir, ~]                 = fileparts(cur_dir);
+[project_dir, ~]                 = fileparts(fileparts(cur_dir));
 
 addpath(genpath(fullfile(project_dir,'simulation')))
 addpath(genpath(fullfile(project_dir,'func')))
@@ -60,11 +60,13 @@ disc_locs   = unique(abs(diffs));
 
 
 %% simulation
-figure; hold on
+figure;
+set(gcf, 'Position', [0 0 800 400]);
+hold on
 
 t = tiledlayout(2, 3);
 
-xlabel(t, 'Spatial discrepancy (deg)');
+xlabel(t, 'Audiovisual spatial discrepancy (deg)');
 ylabel(t, 'Proportion of reporting confident');
 title(t,'Model Simulation')
 t.TileSpacing = 'compact';
@@ -74,21 +76,21 @@ model_label = {"Heuristic","Suboptimal","Optimal"};
 for model_ind = 1:numel(model_label)
 
 bA                 = 0;
-sigA               = [1.2;4;1.2];
-sigVs              = [0.7,1;1,10;0.7,1];
+sigA               = [1.2;4;1];
+sigVs              = [0.7,1;1,10;0.5,0.7];
 muP                = 0;
 sigP               = 10000; % arbitarily using screen width here
 pCommon            = [0.57;0.01;0.57]; % only 1/4 of the trials are common cause so I assume this here
-criterion = [1.45,0.5;13.8,13;1.5,0.55]; % eyeballed arbitary criterion 
+criterion = [1.45,0.5;13.8,13;1.05,0.3]; % eyeballed arbitary criterion 
 lapse = 0.05;
 indVar = "p"; 
 % derivative info
 num_rep            = 100;
 ds_loc             = {'Model averaging E[V]','Model averaging MAP', 'Model selection','Probability Matching'};
 ds_conf            = {'M1','M2','M3'};
-cue_label   = {'Post-cue: A','Post-cue: V'};
+cue_label   = {'Auditory confidence','Visual confidence'};
+rel_label   = {'High vis reliability','Low vis reliability'};
 num_cue            = numel(cue_label);
-rel_label   = {'High reliability','Low reliability'};
 
 loc                = NaN(num_s,numel(ds_loc), num_cue, numel(rel_label), num_rep);
 % num_s: stimulus location combination
@@ -146,7 +148,7 @@ end
             ylabel(cue_label{cue})
         end
         if cue == 1
-            title([model_label{model_ind} ' participant'])
+            title([model_label{model_ind} ' model'])
         end
         for rel = 1:numel(rel_label)
                 plot(disc_locs, squeeze(mean_iv(model_ind,:,cue,rel)),'-o', ...
@@ -163,7 +165,8 @@ end
     % saveas(gca, fullfile(out_dir, sprintf('conf_%s',  ds_conf{d})), 'png')
 
 end
-
+lgd = legend();
+lgd.Layout.Tile = 'east';
 %% data
 ses_slc_struct(1).ses_slc = 1:3;
 ses_slc_struct(2).ses_slc = 1:2;
@@ -171,12 +174,14 @@ ses_slc_struct(3).ses_slc = 1:2;
 sub_slc_vector = [2,6,4];
 
 figure; 
+set(gcf, 'Position', [0 0 800 400]);
 hold on 
 
 t = tiledlayout(2, 3);
 
-xlabel(t, 'Spatial discrepancy (deg)');
+xlabel(t, 'Audiovisual spatial discrepancy (deg)');
 ylabel(t, 'Proportion of reporting confident');
+title(t,'Preliminary Data')
 t.TileSpacing = 'compact';
 t.Padding = 'compact';
 tileIndices = [1 2 3; 4 5 6];
@@ -205,8 +210,8 @@ cueIdx      = ExpInfo.cueIdx;
 visReliIdx  = ExpInfo.visReliIdx;
 num_rep     = ExpInfo.nRep;
 deg_per_px  = rad2deg(atan(170 / 2 / ExpInfo.sittingDistance)) .* 2 / ScreenInfo.xaxis;
-cue_label   = {'Auditory Confidence','Visual Confidence'};
-rel_label   = {'High vis','Low vis'};
+% cue_label   = {'Auditory Confidence','Visual Confidence'};
+% rel_label   = {'High vis','Low vis'};
 aud_locs    = ExpInfo.speakerLocVA(ExpInfo.audIdx);
 remapped_vis_locs = ExpInfo.targetPixel .* deg_per_px;
 
@@ -269,7 +274,7 @@ for cue = 1:numel(cueIdx)
             yline(uni_pconf(1),'--','Color',clt(1,:),'LineWidth',lw,'DisplayName','Aud unimodal')
             
         else
-            yline(uni_pconf(rel+1),'--','Color',clt(rel+1,:),'LineWidth',lw,'DisplayName',[rel_label{rel} ' unimodal'])
+            yline(uni_pconf(rel+1),'--','Color',clt(rel+1,:),'LineWidth',lw,'DisplayName',[rel_label{rel}])
         end
         
         ylim([0, 1])

@@ -4,7 +4,7 @@ function [org_resp, org_conf, org_err, ExpInfo, org_sigVs, ScreenInfo] = org_dat
 
 % manage path
 cur_dir      = pwd;
-[project_dir, ~]= (fileparts(cur_dir));
+[project_dir, ~]= fileparts(fileparts(cur_dir));
 data_dir     = fullfile(project_dir, 'data', exp);
 
 % organize data
