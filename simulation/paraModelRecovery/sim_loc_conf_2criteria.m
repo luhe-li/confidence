@@ -1,7 +1,7 @@
-function [loc, conf, conf_var] = sim_loc_pconf(num_rep, sA, sV, aA, bA, sigA, sigV, sigP, pCommon, criterionA, criterionV, fixP)
+function [loc, matrix_conf] = sim_loc_conf_2criteria(pCommon, num_rep, sA, sV, aA, bA, sigA, sigV, muP, sigP, fixP, criterion, lapse, model_ind)
 
-%sim_loc_pconf simulates localization responses, confidence judgements,
-%for a bimodal audiovisual stimulus.
+%SIM_LOC_CONF_UNITY_RESP Simulates localization responses, confidence judgements,
+%and unity judgements for a bimodal audiovisual stimulus.
 %
 % This function models and simulates the outcomes of an experiment where
 % subjects are presented with bimodal audiovisual stimuli and are asked to
@@ -27,31 +27,29 @@ function [loc, conf, conf_var] = sim_loc_pconf(num_rep, sA, sV, aA, bA, sigA, si
 %   x        (vector): The screen pixel space, used for simulation scaling or
 %                      mapping.
 %   fixP     (struct): Fixed parameters for the gain function
-%   criterion(double): Confidence criterion on variance of the posterior
-%                      distribution
+%   criterion(matrix): Confidence criteria on variance of the posterior
+%                      distribution, 3 by 2 (3 models (heuristic,
+%                      suboptimal, and optimal, 2 modalities (Aud and Vis)
+%   model_ind(double): index for the specified model (1 = heuristic,
+%                      2 = suboptimal, and 3 = optimal)
 %
 % Outputs:
 %   loc      (matrix): Simulated localization responses. This is a matrix
-%                      with dimensions 4 (decision strategies, MA has two 
-%                      possibilities: MAP & Expected Value) x 2 (modalities)
-%                      x nT (number of trials).
-%   conf     (matrix): Simulated confidence judgements for each trial. 
+%                      with dimensions: 2 (modalities) x nT (number of trials).
+%   conf     (matrix): Simulated confidence judgements for each trial.
 %                      All using EV loc as estimate location. This
-%                      is a matrix with dimensions 3 (three models, 
-%                      m1 = using unisensory uncertainty, 
-%                      m2 = using a selected intermediate uncertainty, 
-%                      m3 = using the full mixture posterior) 
+%                      is a matrix with dimensions 3 (three models,
+%                      m1 = using unisensory uncertainty,
+%                      m2 = using a selected intermediate uncertainty,
+%                      m3 = using the full mixture posterior)
 %                      x 2 (modalities) x nT (number of trials).
+%   unity    (vector): Simulated unity judgements for each trial. This is a
+%                      vector of nT (number of trials).
 %
-% Date: 24/03 Version: 3.0
-% norm_vector = @(v) v./sum(v,2);
-f_logit = @(x) 1 ./ (1 + exp(-(x)/10));
-bounded = @(x, LB, UB) max(LB,min(x, UB)); 
+% Date: 24/03/06 Version: 2.0
 
 x                           = fixP.x;
-loc                         = NaN(3,2,num_rep);
-muP = 0;
-criterion = [criterionA', criterionV'];
+loc                         = NaN(2,num_rep);
 
 %simulate measurements, which are drawn from Gaussian distributions
 % stochasticity starts here
@@ -84,6 +82,7 @@ post_C1                     = pCommon.*L_C1./(pCommon.*L_C1 + (1-pCommon).*L_C2)
 %posterior of separate causes = 1 - post_C1
 post_C2                     = 1 - post_C1;
 
+
 %compute the two intermediate location estimates
 %An integrated intermediate estimate is the sum of mA, mV and muP with
 %each weighted by their relative reliabilities
@@ -102,28 +101,46 @@ sHat_V_C2                   = (mV./JV + muP/JP)./(1/JV + 1/JP);
 %two intermediate location estimates, weighted by the corresponding
 %causal structure.
 %Eq. 4 in Wozny et al., 2010
-loc(1,1,:)                  = post_C1.* sHat_C1 + post_C2.* sHat_A_C2;
-loc(1,2,:)                  = post_C1.* sHat_C1 + post_C2.* sHat_V_C2;
+loc(1,:)                  = post_C1.* sHat_C1 + post_C2.* sHat_A_C2;
+loc(2,:)                  = post_C1.* sHat_C1 + post_C2.* sHat_V_C2;
 
 % calculate posterior variance given each model
-variance(1,1,:)                 = post_C1'.* 1/(1/JA + 1/JP) + post_C2'.* 1/(1/JV + 1/JA + 1/JP) + post_C1'.* post_C2' .* (sHat_A_C2' - sHat_C1').^2;
-variance(1,2,:)                 = post_C1'.* 1/(1/JV + 1/JP) + post_C2'.* 1/(1/JV + 1/JA + 1/JP) + post_C1'.* post_C2' .* (sHat_V_C2' - sHat_C1').^2;
 
-variance(2,1:2,:)                = 1/(1/JV + 1/JA + 1/JP);
-variance(2,1,post_C1<0.5)        = 1/(1/JA + 1/JP);
-variance(2,2,post_C1<0.5)        = 1/(1/JV + 1/JP);
-
-variance(3,1,:)                 = JA;
-variance(3,2,:)                 = JV;
-
-conf_var = f_logit(variance);
-conf = NaN(size(variance));
-for d = 1:3
-    for modality = 1:2
-        conf(d,modality,:) = conf_var(d,modality,:) < criterion(d,modality);
-    end
+switch model_ind
+    case 1
+        variance(1,:)                 = repmat(JA, [1, num_rep]);
+        variance(2,:)                 = repmat(JV, [1, num_rep]);
+    case 2
+        variance(1:2,:)                = 1/(1/JV + 1/JA + 1/JP);
+        variance(1,post_C1<0.5)        = 1/(1/JA + 1/JP);
+        variance(2,post_C1<0.5)        = 1/(1/JV + 1/JP);
+    case 3
+        variance(1,:)                 = post_C1'.* 1/(1/JA + 1/JP) + post_C2'.* 1/(1/JV + 1/JA + 1/JP) + post_C1'.* post_C2' .* (sHat_A_C2' - sHat_C1').^2;
+        variance(2,:)                 = post_C1'.* 1/(1/JV + 1/JP) + post_C2'.* 1/(1/JV + 1/JA + 1/JP) + post_C1'.* post_C2' .* (sHat_V_C2' - sHat_C1').^2;
 end
 
-% conf = variance > repmat(criterion, [1, 2, num_rep]);%  model, 2 modalities, num_rep
+matrix_conf = NaN(size(loc)); % 2 modalities
+for modality = 1:2
+    vec_conf = variance(modality,:) < criterion(modality); % create a confident index. 1 = confident
+    vec_lapse = rand(num_rep,1) < lapse; % randomly assign 1 if this trial lapsed
+    vec_conf(vec_lapse) = ~vec_conf(vec_lapse); % flip the lapsed trials
+    matrix_conf(modality,:) = vec_conf;
+end
+
+
+
+% conf(3,1,:)                 = eGain(pdf.PM_select_A, round(loc(3,1,:)), fixP.maxPoint, fixP.minPoint, fixP.elbow, fixP.screenX);
+% conf(3,2,:)                 = eGain(pdf.PM_select_V, round(loc(3,2,:)), fixP.maxPoint, fixP.minPoint, fixP.elbow, fixP.screenX);
+% conf(4,1,:)                 = eGain(pdf.PM_match_A, round(loc(3,1,:)), fixP.maxPoint, fixP.minPoint, fixP.elbow, fixP.screenX);
+% conf(4,2,:)                 = eGain(pdf.PM_match_V, round(loc(3,2,:)), fixP.maxPoint, fixP.minPoint, fixP.elbow, fixP.screenX);
+
+%% unility function
+% function v_normed           = norm_vector(v)
+%     v_normed                    = v ./ sum(v,2);
+% end
+
+    function x = bounded(x,LB,UB)
+        x = max(LB,min(x, UB));
+    end
 
 end
