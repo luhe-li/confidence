@@ -60,7 +60,7 @@ switch model.mode
         sigP                         = freeParam(6);
         pC1                          = freeParam(7);
         cA                           = freeParam(8);
-        cV                           = freeParam(8);
+        cV                           = freeParam(9);
         sigA = sigV1 + delta_sigA;
         sigVs = [sigV1, sigV1 + delta_sigV2];
         num_sigVs = numel(sigVs);

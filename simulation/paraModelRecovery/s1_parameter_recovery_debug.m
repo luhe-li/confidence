@@ -80,8 +80,8 @@ else
     % choose a reasonble set of parameter set. See variable name below.
 
     GT = [zeros(1,9);...
-        1, 0,   1,   4,10, 1e4, 0.01, 13.8, 13;...%Suboptimal
-        1, 0, 0.7, 1.2, 1, 1e4, 0.57, 1.5, 0.55]; % Optimal
+        1, 0,   1,   4,10, 15, 0.01, 13.8, 13;...%Suboptimal
+        1, 0, 0.7, 1.2, 1, 15, 0.57, 1.5, 0.55]; % Optimal
     num_para         = size(GT, 2);
 
     % simulated model info
@@ -94,7 +94,7 @@ else
 
     %% Simulate data
 
-    for d = 3:-1:1
+    for d = 3%:-1:1
 
         aA                    = GT(d,1);
         bA                    = GT(d,2);
@@ -200,10 +200,10 @@ else
         NLL                         = NaN(1, model.num_runs);
         estP                        = NaN(model.num_runs, Val.num_para);
 
-%         p = [1 3 0.01025390625 3.336669921875 2.504638671875 20 0.16669921875 33.0859835100118] ;
-%         test = currModel(p, model, data);
+        p = GT(d,:);
+        test = currModel(p, model, data);
 
-        parfor n              = 1:model.num_runs
+        for n              = 1:model.num_runs
 
             tempModel             = model;
             tempVal               = Val;

@@ -10,12 +10,10 @@ clt = [repmat(125, 1, 3); % blue
 %%
 cur_dir                          = pwd;
 [project_dir, ~]                 = fileparts(fileparts(cur_dir));
-
 addpath(genpath(fullfile(project_dir,'simulation')))
 addpath(genpath(fullfile(project_dir,'func')))
-
-% out_dir                          = fullfile(cur_dir, 'n2Fig');
-% if ~exist(out_dir,'dir') mkdir(out_dir); end
+out_dir                          = fullfile(cur_dir, 'IMRFabstractFigure');
+if ~exist(out_dir,'dir') mkdir(out_dir); end
 
 
 % fix parameters for the experiment info
@@ -89,7 +87,7 @@ num_rep            = 100;
 ds_loc             = {'Model averaging E[V]','Model averaging MAP', 'Model selection','Probability Matching'};
 ds_conf            = {'M1','M2','M3'};
 cue_label   = {'Auditory confidence','Visual confidence'};
-rel_label   = {'High vis reliability','Low vis reliability'};
+rel_label   = {'High visual reliability','Low visual reliability'};
 num_cue            = numel(cue_label);
 
 loc                = NaN(num_s,numel(ds_loc), num_cue, numel(rel_label), num_rep);
@@ -167,6 +165,9 @@ end
 end
 lgd = legend();
 lgd.Layout.Tile = 'east';
+
+saveas(gcf,fullfile(out_dir,'model'),'pdf');
+
 %% data
 ses_slc_struct(1).ses_slc = 1:3;
 ses_slc_struct(2).ses_slc = 1:2;
@@ -186,6 +187,8 @@ t.TileSpacing = 'compact';
 t.Padding = 'compact';
 tileIndices = [1 2 3; 4 5 6];
 model_label = {"Heuristic","Suboptimal","Optimal"};
+uni_rel_label = {'Unimodal (high vis)','Unimodal (low vis)'};
+
 for model_ind = 1:3
     sub_slc = sub_slc_vector(model_ind);
     ses_slc     = [ses_slc_struct(model_ind).ses_slc];
@@ -264,17 +267,16 @@ for cue = 1:numel(cueIdx)
             mean_p(diff) = p;
             sd_p(diff) = sqrt((p*(1-p))/numel(est));
         end
-        plot(diff_locs, mean_p,'-o', 'Color',[clt(rel+1,:), 0.4],'LineWidth',lw,'DisplayName',rel_label{rel},'MarkerFaceColor',clt(rel+1,:),'MarkerSize',3)
+        l_bi(rel) = plot(diff_locs, mean_p,'-o', 'Color',[clt(rel+1,:), 0.4],'LineWidth',lw,'DisplayName',rel_label{rel},'MarkerFaceColor',clt(rel+1,:),'MarkerSize',3);
         patch([diff_locs, fliplr(diff_locs)], ...
             [mean_p - sd_p, fliplr(mean_p + sd_p)], ...
             clt(rel+1,:),'EdgeColor','none','FaceAlpha',0.1, ...
             'HandleVisibility', 'off')
         
         if cue == 1
-            yline(uni_pconf(1),'--','Color',clt(1,:),'LineWidth',lw,'DisplayName','Aud unimodal')
-            
+            l_uni_a = yline(uni_pconf(1),'--','Color',clt(1,:),'LineWidth',lw,'DisplayName','Unimodal (aud)');
         else
-            yline(uni_pconf(rel+1),'--','Color',clt(rel+1,:),'LineWidth',lw,'DisplayName',[rel_label{rel}])
+            l_uni_v(rel) = yline(uni_pconf(rel+1),'--','Color',clt(rel+1,:),'LineWidth',lw,'DisplayName',[uni_rel_label{rel}]);
         end
         
         ylim([0, 1])
@@ -286,5 +288,7 @@ end
 
 end
 
-lgd = legend();
+lgd = legend([l_bi(:); l_uni_a(:); l_uni_v(:)]);
 lgd.Layout.Tile = 'east';
+
+saveas(gcf,fullfile(out_dir,'data'),'pdf');
