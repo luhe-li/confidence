@@ -5,7 +5,7 @@ clear; close all;
 
 %% key model recovery parameters
 
-num_rep               = 12;
+num_rep               = 1000;
 num_runs              = 7;
 num_sample            = 1;
 checkFakeData         = 1;
@@ -14,7 +14,7 @@ checkFakeData         = 1;
 
 cur_dir               = pwd;
 [project_dir, ~]      = fileparts(fileparts(cur_dir));
-out_dir               = fullfile(cur_dir, 's1_parameter_recovery');
+out_dir               = fullfile(cur_dir, 's1_model_recovery');
 if ~exist(out_dir,'dir') mkdir(out_dir); end
 addpath(genpath(fullfile(project_dir, 'func')))
 addpath(genpath(fullfile(project_dir, 'bads')))
@@ -79,9 +79,9 @@ else
 
     % choose a reasonble set of parameter set. See variable name below.
 
-    GT = [zeros(1,9);...
-        1, 0,   1,   4,10, 15, 0.01, 13.8, 13;...%Suboptimal
-        1, 0, 0.7, 1.2, 1, 15, 0.57, 1.5, 0.55]; % Optimal
+    GT = [1,  0, 0.7, 1.2, 1.5,  15, 0.57,  0.5, 50, 100;...
+          1,  0, 0.7, 1.2, 1.5,  15, 0.57,  0.5, 50, 100;...% Suboptimal
+          1,  0, 0.7, 1.2, 1.5,  15, 0.57,  0.5, 50, 70]; % Optimal
     num_para         = size(GT, 2);
 
     % simulated model info
@@ -94,7 +94,7 @@ else
 
     %% Simulate data
 
-    for d = 3%:-1:1
+    for d = 3:-1:1
 
         aA                    = GT(d,1);
         bA                    = GT(d,2);
@@ -104,9 +104,10 @@ else
         sigVs                 = [sigV1, sigV2];
         sigP                  = GT(d,6);
         pCommon               = GT(d,7);
-        cA                    = GT(d,8);
-        cV                    = GT(d,9);
-        lapse = 0.05;
+        sigM                  = GT(d,8);
+        cA                    = GT(d,9);
+        cV                    = GT(d,10);
+        lapse = 0.02;
         muP = 0;
 
         [loc, conf] = deal(NaN(num_s, num_cue, numel(sigVs), num_rep));
@@ -118,12 +119,12 @@ else
 
         for j                 = 1:num_s
             for v                 = 1:numel(sigVs)
-                [loc(j,:,v,:), conf(j,:,v,:)] = sim_loc_conf_2criteria(pCommon,...
-                    num_rep, sAV(1,j), sAV(2,j), aA, bA, sigA, sigVs(v), muP, sigP, fixP, [cA, cV], lapse, d);
+                [loc(j,:,v,:), conf(j,:,v,:)] = sim_loc_conf_v1(num_rep, sAV(1,j), sAV(2,j),...
+                    aA, bA, sigA, sigVs(v), muP, sigP, pCommon, sigM, cA, cV, lapse,  fixP, d);
             end
         end
 
-        %% Organize data
+        %% organize data
 
         org_resp              = reshape(loc, [numel(sA), numel(sV), num_cue, numel(sigVs), num_rep]);
         org_conf              = reshape(conf, [numel(sA), numel(sV), num_cue, numel(sigVs), num_rep]);
@@ -185,7 +186,6 @@ else
         data.sigM             = 1.36; % emperical motor noise averaged from first four participants
 
         % fit by generating model
-
         currModel = str2func('nllBimodal');
 
         % switch confidence strategies

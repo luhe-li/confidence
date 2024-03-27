@@ -4,7 +4,7 @@ switch model.mode
 
     case 'initiate'
 
-        out.paraID                   = {'aA','bA','\sigma_{V1}','\sigma_{A} - \sigma_{V1}','\sigma_{V2} - \sigma_{V1}','\sigma_{P}','p_{common}','\sigma_{M}','criterion_{A}','criterion_{V}'};
+        out.paraID                   = {'aA','bA','\sigma_{V1}','\sigma_{A} - \sigma_{V1}','\sigma_{V2} - \sigma_{V1}','\sigma_{P}','p_{common}','criterion_{A}','criterion_{V}'};
         out.num_para                 = length(out.paraID);
 
         % hard bounds, the range for LB, UB, larger than soft bounds
@@ -58,14 +58,13 @@ switch model.mode
         delta_sigA                   = freeParam(4);
         delta_sigV2                  = freeParam(5);
         sigP                         = freeParam(6);
-        pCommon                      = freeParam(7);
-        sigM                         = freeParam(8);
-        cA                           = freeParam(9);
-        cV                           = freeParam(10);
+        pC1                          = freeParam(7);
+        cA                           = freeParam(8);
+        cV                           = freeParam(9);
         sigA = sigV1 + delta_sigA;
         sigVs = [sigV1, sigV1 + delta_sigV2];
         num_sigVs = numel(sigVs);
-        sigMotor = data.sigM;
+        sigmaM = data.sigM;
 
         R = cell(1, num_sigVs);
         nLL_bimodal = NaN(1, num_sigVs);
@@ -73,7 +72,6 @@ switch model.mode
         for ii = 1:num_sigVs
 
             sigV = sigVs(ii);
-
             % constants
             CI.J_A            = sigA^2;
             CI.J_V            = sigV^2;
@@ -91,8 +89,8 @@ switch model.mode
             data_conf = squeeze(data.org_conf(:,:,:,ii,:));
 
             [nLL_bimodal(ii), R{ii}] = calculateNLL_bimodal(...
-                aA, bA, aV, bV, sigA, sigV, pCommon, cA, cV,...
-                CI, mu_P, sigMotor, lapse, data_resp, data_conf, model);
+                aA, bA, aV, bV, sigA, sigV, pC1, cA, cV,...
+                CI, mu_P, sigmaM, lapse, data_resp, data_conf, model);
 
         end
 
@@ -179,7 +177,6 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
             var(2,:,:) = CI.J_V;
         end
     
-        measured_var = 
         pred_conf(1,:,:) = var(1,:,:)<cA;
         pred_conf(2,:,:) = var(2,:,:)<cV;
         p_conf                 = NaN(size(pred_conf));
