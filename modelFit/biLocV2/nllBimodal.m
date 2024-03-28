@@ -15,6 +15,7 @@ switch model.mode
         paraH.delta_sigV2            = [1e-2,     5]; % degree
         paraH.sigP                   = [  10,    20]; % degrees
         paraH.pC1                    = [1e-4,1-1e-4]; % weight
+        paraH.sigM                   = [1e-2,     1]; % measurement noise of confidence
 
         % find out the reasonable range for criterion
         [c_lb, ~] = getCriterionRange(paraH.sigV1(1), paraH.sigV1(1)+paraH.delta_sigA(1), paraH.sigV1(1)+paraH.delta_sigV2(1), paraH.sigP(1), 'Optimal');
@@ -30,8 +31,9 @@ switch model.mode
         paraS.delta_sigV2            = [ 0.5,     2]; % degree
         paraS.sigP                   = [  15,    20]; % degree
         paraS.pC1                    = [ 0.4,   0.6]; % weight
-        paraS.cA                      = [c_lb,  c_ub]; % degree
-        paraS.cV                      = [c_lb,  c_ub]; % degree
+        paraS.sigM                   = [ 0.4,   0.6]; % measurement noise of confidence
+        paraS.cA                     = [c_lb,  c_ub]; % degree
+        paraS.cV                     = [c_lb,  c_ub]; % degree
 
         % reorganize parameter bounds to feed to bads
         fn                           = fieldnames(paraH);
@@ -91,7 +93,7 @@ switch model.mode
             data_conf = squeeze(data.org_conf(:,:,:,ii,:));
 
             [nLL_bimodal(ii), R{ii}] = calculateNLL_bimodal(...
-                aA, bA, aV, bV, sigA, sigV, pCommon, cA, cV,...
+                aA, bA, aV, bV, sigA, sigV, sigM, pCommon, cA, cV,...
                 CI, mu_P, sigMotor, lapse, data_resp, data_conf, model);
 
         end
@@ -111,7 +113,7 @@ end
 end
 
 function [nLL_bimodal, R] = calculateNLL_bimodal(...
-    aA, bA, aV, bV, sigA, sigV, pC1, cA, cV,...
+    aA, bA, aV, bV, sigA, sigV, sigM, pC1, cA, cV,...
     CI, mu_P, sigmaM, lapse, data_resp, data_conf, model)
 
 nLL_bimodal = 0;
@@ -162,40 +164,46 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
         if strcmp(model.strategy_conf,'Optimal')
 
             var(1,:,:) = Post_C1 .* (1/CI.constC1_shat) + ...
-                Post_C2 .* (1/CI.constC2_1) + ...
+                Post_C2 .* (1/CI.constC2_1_shat) + ...
                 Post_C1 .* Post_C2 .* (squeeze(shat_C2(1,:,:)) - shat_C1).^2;
             var(2,:,:) = Post_C1 .* (1/CI.constC1_shat) + ...
-                Post_C2 .* (1/CI.constC2_2) + ...
+                Post_C2 .* (1/CI.constC2_2_shat) + ...
                 Post_C1 .* Post_C2 .* (squeeze(shat_C2(2,:,:)) - shat_C1).^2;
 
         elseif strcmp(model.strategy_conf, 'Suboptimal')
 
-            var(1,:,:) = 1/CI.constC2_1;
-            var(2,:,:) = 1/CI.constC2_2;
+            var(1,:,:) = 1/CI.constC2_1_shat;
+            var(2,:,:) = 1/CI.constC2_2_shat;
 
         elseif strcmp(model.strategy_conf, 'Heuristic')
 
             var(1,:,:) = CI.J_A;
             var(2,:,:) = CI.J_V;
+
         end
     
-        measured_var = 
-        pred_conf(1,:,:) = var(1,:,:)<cA;
-        pred_conf(2,:,:) = var(2,:,:)<cV;
-        p_conf                 = NaN(size(pred_conf));
-        p_conf(pred_conf == 1) = 1-lapse;
-        p_conf(pred_conf == 0) = lapse;
+        % probability of reporting confidence is the value of lognormal
+        % cumulative distribution with a mean of confidence variabel (var)
+        % and an S.D. of measurement noise (sigM), evaluated at auditory
+        % and visual criteria.
+        temp_p_conf(1,:,:) = logncdf(cA, var(1,:,:), sigM);
+        temp_p_conf(2,:,:) = logncdf(cV, var(2,:,:), sigM);
+        
+        % add lapse
+        p_conf = lapse./2 + (1-lapse) .* temp_p_conf;
 
         %----------------------- Compute likelihood -----------------------
+        % For each same sA, sV combination, the data are organized by
+        % response modality (A, V), repeititon of trials.
         % First half trials are A loc resps, second half trials are V loc
         % resps, from the same sA, sV combination
         locResp_A_V = [squeeze(data_resp(p,q,1,:))'; squeeze(data_resp(p,q,2,:))'];
         confResp_A_V = [squeeze(data_conf(p,q,1,:))'; squeeze(data_conf(p,q,2,:))'];
-        [num_modality, num_loc] = size(locResp_A_V);
+        [num_modality, num_rep] = size(locResp_A_V);
 
         if strcmp(model.strategy_loc,'MA') %Model averaging
             for mm = 1:num_modality
-                for kk = 1:num_loc
+                for kk = 1:num_rep
                     p_r_given_MAP = norm_dst(locResp_A_V(mm, kk),squeeze(MAP_MA(mm,:,:)),...
                         sigmaM,1e-20);
                     if confResp_A_V(mm, kk) == 1; p_conf_given_m = squeeze(p_conf(mm,:,:));
@@ -206,7 +214,7 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
             end
         elseif strcmp(model.strategy_loc,'MS') %Model selection
             for mm = 1:num_modality
-                for kk = 1:num_loc
+                for kk = 1:num_rep
                     if Post_C1(mm,kk) > 0.5
                         p_r_given_MAP = norm_dst(locResp_A_V(mm, kk),shat_C1,sigmaM,1e-20);
                     else
@@ -228,7 +236,7 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
             R.p_mAmV_given_sAsV(p,q,:,:) = p_mAmV_given_sAsV;
             %save predictions on the confidence judgment
             for mm = 1:length(model.modality)
-                R.p_conf_given_sAsV(p,q,mm) = sum(sum(squeeze(p_conf(mm,:,:)).*p_mAmV_given_sAsV));
+                R.p_conf_given_sAsV(p,q,mm) = sum(sum(squeeze(temp_p_conf(mm,:,:)).*p_mAmV_given_sAsV));
             end
             %save predictions on localization responses
             if strcmp(model.strategy_loc,'MA')
