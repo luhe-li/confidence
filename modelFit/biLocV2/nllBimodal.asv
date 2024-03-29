@@ -4,35 +4,23 @@ switch model.mode
 
     case 'initiate'
 
-        out.paraID                   = {'aA','bA','\sigma_{V1}','\sigma_{A} - \sigma_{V1}','\sigma_{V2} - \sigma_{V1}','\sigma_{P}','p_{common}','\sigma_{M}','criterion_{A}','criterion_{V}'};
+        out.paraID                   = {'aA','bA','\sigma_{V1}','\sigma_{A} - \sigma_{V1}','\sigma_{V2} - \sigma_{V1}','\sigma_{P}','p_{common}','\sigma_{M}'};
         out.num_para                 = length(out.paraID);
 
         % hard bounds, the range for LB, UB, larger than soft bounds
-        paraH.aA                     = [ 0.8,     2]; % degree
-        paraH.bA                     = [  -3,     3]; % degree
-        paraH.sigV1                  = [1e-2,     2]; % degree
-        paraH.delta_sigA             = [1e-2,     5]; % degree
-        paraH.delta_sigV2            = [1e-2,     5]; % degree
-        paraH.sigP                   = [  10,    20]; % degrees
-        paraH.pC1                    = [1e-4,1-1e-4]; % weight
-        paraH.sigM                   = [1e-2,     1]; % measure
-
-        % find out the reasonable range for criterion
-        [c_lb, ~] = getCriterionRange(paraH.sigV1(1), paraH.sigV1(1)+paraH.delta_sigA(1), paraH.sigV1(1)+paraH.delta_sigV2(1), paraH.sigP(1), 'Optimal');
-        [~, c_ub] = getCriterionRange(paraH.sigV1(2), paraH.sigV1(2)+paraH.delta_sigA(2), paraH.sigV1(2)+paraH.delta_sigV2(2), paraH.sigP(2), 'Optimal');
-        paraH.cA                      = [c_lb,  c_ub]; % weight
-        paraH.cV                      = [c_lb,  c_ub]; % weight
+        paraH.aA                     = [ 0.8,     1]; % degree
+        paraH.bA                     = [-0.5,   0.5]; % degree
+        paraH.sigV1                  = [ 0.6,   0.8]; % degree
+        paraH.delta_sigA             = [ 1.3,   1.5]; % degree
+        paraH.delta_sigV2            = [ 1.5,   1.7]; % degree
+        paraH.sigP                   = [  14,    16]; % degrees
+        paraH.pC1                    = [1e-3,1-1e-3]; % weight
+        paraH.sigM                   = [ 0.3,     1]; % measurement noise of confidence
+%         paraH.cA                     = [ 48,  52]; % weight
+%         paraH.cV                     = [ 68,  72]; % weight
 
         % soft bounds, the range for PLB, PUB
-        paraS.aA                     = [   1,   1.2]; % degree
-        paraS.bA                     = [  -1,     1]; % degree
-        paraS.sigV1                  = [   1,     2]; % degree
-        paraS.delta_sigA             = [ 0.5,     2]; % degree
-        paraS.delta_sigV2            = [ 0.5,     2]; % degree
-        paraS.sigP                   = [  15,    20]; % degree
-        paraS.pC1                    = [ 0.4,   0.6]; % weight
-        paraS.cA                      = [c_lb,  c_ub]; % degree
-        paraS.cV                      = [c_lb,  c_ub]; % degree
+        paraS = paraH;
 
         % reorganize parameter bounds to feed to bads
         fn                           = fieldnames(paraH);
@@ -50,7 +38,7 @@ switch model.mode
     case {'optimize','predict'}
 
         % fixed parameter values
-        mu_P = 0; aV = 1; bV = 0; lapse = 0.05;
+        mu_P = 0; aV = 1; bV = 0; lapse = 0.02; cA = 50; cV = 70;
 
         % free parameters
         aA                           = freeParam(1);
@@ -60,9 +48,9 @@ switch model.mode
         delta_sigV2                  = freeParam(5);
         sigP                         = freeParam(6);
         pCommon                      = freeParam(7);
-        sigM                         = freeParam(8);
-        cA                           = freeParam(9);
-        cV                           = freeParam(10);
+%         sigM                         = freeParam(8);
+%         cA                           = freeParam(9);
+%         cV                           = freeParam(10);
         sigA = sigV1 + delta_sigA;
         sigVs = [sigV1, sigV1 + delta_sigV2];
         num_sigVs = numel(sigVs);
@@ -162,17 +150,17 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
         % the confidence variable
         if strcmp(model.strategy_conf,'Optimal')
 
-            var(1,:,:) = Post_C1 .* (1/CI.constC1_shat) + ...
-                Post_C2 .* (1/CI.constC2_1) + ...
+            var(1,:,:) = Post_C1 ./CI.constC1_shat + ...
+                Post_C2 ./CI.constC2_1_shat + ...
                 Post_C1 .* Post_C2 .* (squeeze(shat_C2(1,:,:)) - shat_C1).^2;
-            var(2,:,:) = Post_C1 .* (1/CI.constC1_shat) + ...
-                Post_C2 .* (1/CI.constC2_2) + ...
+            var(2,:,:) = Post_C1 ./CI.constC1_shat + ...
+                Post_C2 ./CI.constC2_2_shat + ...
                 Post_C1 .* Post_C2 .* (squeeze(shat_C2(2,:,:)) - shat_C1).^2;
 
         elseif strcmp(model.strategy_conf, 'Suboptimal')
 
-            var(1,:,:) = 1/CI.constC2_1;
-            var(2,:,:) = 1/CI.constC2_2;
+            var(1,:,:) = 1/CI.constC2_1_shat;
+            var(2,:,:) = 1/CI.constC2_2_shat;
 
         elseif strcmp(model.strategy_conf, 'Heuristic')
 
@@ -189,7 +177,7 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
         temp_p_conf(2,:,:) = logncdf(cV, var(2,:,:), sigM);
         
         % add lapse
-        p_conf = lapse./2 + (1-lapse) .* temp_p_conf;
+        p_conf = lapse./2 + (1-lapse) .* temp_p_conf + 1e-20;
 
         %----------------------- Compute likelihood -----------------------
         % For each same sA, sV combination, the data are organized by

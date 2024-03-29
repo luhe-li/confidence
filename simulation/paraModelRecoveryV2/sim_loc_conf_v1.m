@@ -117,7 +117,7 @@ switch model_ind
         variance(2,:)                 = post_C1'.* 1/(1/JV + 1/JA + 1/JP) + post_C2'.* 1/(1/JV + 1/JP) + post_C1'.* post_C2' .* (sHat_V_C2' - sHat_C1').^2;
 end
 
-% make noisy measurements of variance/uncertainty for each modality
+% % make noisy measurements of variance/uncertainty for each modality
 conf_var(1,:) = lognrnd(variance(1,:), repmat(sigM, size(variance(1,:))));
 conf_var(2,:) = lognrnd(variance(2,:), repmat(sigM, size(variance(2,:))));
 

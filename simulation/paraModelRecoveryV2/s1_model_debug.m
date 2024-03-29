@@ -6,7 +6,7 @@ clear; close all;
 %% key model recovery parameters
 
 num_rep               = 1000;
-num_runs              = 7;
+num_runs              = 1;
 num_sample            = 1;
 checkFakeData         = 1;
 
@@ -166,6 +166,7 @@ else
 
         % general setting for all models
         model.num_runs        = num_runs;
+        model.num_sec         = 10; % number of samples in the parameter space, must be larger than num_runs
         model.x               = (-512:1:512) * deg_per_px;
         model.sA              = sA;
         model.sV              = model.sA;
@@ -174,11 +175,11 @@ else
         model.numBins_A       = 15;
         model.numBins_V       = 15;
         model.modality        = {'A','V'};
-        model.num_rep         = num_rep;
         model.strategy_loc    = 'MA';
 
         % set OPTIONS to tell bads that my objective function is noisy
-        OPTIONS.UncertaintyHandling     = 1;
+%         OPTIONS.UncertaintyHandling     = 0;
+        OPTIONS.TolMesh = 1e-4;
 
         % fit by the corresponding model
         data.org_resp         = org_resp;
@@ -200,8 +201,11 @@ else
         NLL                         = NaN(1, model.num_runs);
         estP                        = NaN(model.num_runs, Val.num_para);
 
-        p = GT(d,:);
-        test = currModel(p, model, data);
+%         p = GT(d,:);
+%         test = currModel(p, model, data);
+% 
+%         p2 = [    0.9991   -0.0020    0.6000    1.3000    1.5757   14.0000    0.5125    0.4240   48.0000   68.0000];
+%         test2 = currModel(p2, model, data);
 
         for n              = 1:model.num_runs
 
@@ -209,7 +213,7 @@ else
             tempVal               = Val;
             tempFunc              = currModel;
 
-            [estP(n,:),NLL(n)]    = bads(@(p) tempFunc(p, model, data),...
+            [estP(n,:),NLL(n),~,~,traj(n)]    = bads(@(p) tempFunc(p, model, data),...
                 Val.init(n,:), Val.lb,...
                 Val.ub, Val.plb, Val.pub, [], OPTIONS);
 
@@ -230,8 +234,7 @@ else
         % predict using the best-fitting parameter
         model.mode            = 'predict';
         tmpPred               = currModel(bestP, model, data);
-        tmpPred.bestP         = bestP;
-        pred{i, d}         = tmpPred;
+        pred{i, d}            = tmpPred;
 
     end
 
