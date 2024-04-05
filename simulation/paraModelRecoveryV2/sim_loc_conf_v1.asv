@@ -47,7 +47,6 @@ function [loc, conf] = sim_loc_conf_v1(num_rep, sA, sV, aA, bA, sigA, sigV, muP,
 %                      vector of nT (number of trials).
 %
 % Date: 24/03/06 
-sigMotor = 1.36;
 x                           = fixP.x;
 loc                         = NaN(2,num_rep);
 

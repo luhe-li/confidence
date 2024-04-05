@@ -4,18 +4,18 @@ switch model.mode
 
     case 'initiate'
 
-        out.paraID                   = {'\sigma_{V1}','\sigma_{A} - \sigma_{V1}','\sigma_{V2} - \sigma_{V1}','\sigma_{P}','p_{common}','\sigma_{M}'};
+        out.paraID                   = {'\sigma_{V1}','\sigma_{A} - \sigma_{V1}','\sigma_{V2} - \sigma_{V1}','p_{common}'};
         out.num_para                 = length(out.paraID);
 
         % hard bounds, the range for LB, UB, larger than soft bounds
 %         paraH.aA                     = [ 0.8,     1]; % degree
 %         paraH.bA                     = [-0.5,   0.5]; % degree
-        paraH.sigV1                  = [ 0.6,   0.8]; % degree
-        paraH.delta_sigA             = [ 1.3,   1.5]; % degree
-        paraH.delta_sigV2            = [ 1.5,   1.7]; % degree
-        paraH.sigP                   = [  14,    16]; % degrees
+        paraH.sigV1                  = [ 0.5,   0.9]; % degree
+        paraH.delta_sigA             = [   1,   1.5]; % degree
+        paraH.delta_sigV2            = [ 1.3,   1.7]; % degree
+        %paraH.sigP                   = [  14,    16]; % degrees
         paraH.pC1                    = [1e-3,1-1e-3]; % weight
-        paraH.sigM                   = [ 0.3,     1]; % measurement noise of confidence
+%        paraH.sigM                   = [ 0.3,     1]; % measurement noise of confidence
 %         paraH.cA                     = [ 48,  52]; % weight
 %         paraH.cV                     = [ 68,  72]; % weight
 
@@ -33,14 +33,19 @@ switch model.mode
         out.paraS                    = paraS; out.paraH = paraH;
 
         % get grid initializations
-        out.init                     = getInit(out.lb, out.ub, model.num_runs, model.num_runs);
+        out.init                     = getInit(out.lb, out.ub, model.num_sec, model.num_runs);
 
     case {'optimize','predict'}
 
         % fixed parameter values
-        mu_P = 0; aV = 1; bV = 0; lapse = 0.02; cA = 50; cV = 70;
-        aA = 1;
-        bA = 0;
+        mu_P = 0; 
+        lapse = 0.02;
+        aV = 1; bV = 0; 
+        aA = 1; bA = 0;
+        sigM = 0.5;
+        cA = 3;
+        cV = 3;
+        sigP = 15;
 
         % free parameters
 %         aA                           = freeParam(1);
@@ -57,14 +62,13 @@ switch model.mode
         sigV1                        = freeParam(1);
         delta_sigA                   = freeParam(2);
         delta_sigV2                  = freeParam(3);
-        sigP                         = freeParam(4);
-        pCommon                      = freeParam(5);
-        sigM                         = freeParam(6);
+%         sigP                         = freeParam(4);
+        pCommon                      = freeParam(4);
 
         sigA = sigV1 + delta_sigA;
         sigVs = [sigV1, sigV1 + delta_sigV2];
         num_sigVs = numel(sigVs);
-        sigMotor = data.sigM;
+        sigMotor = data.sigMotor;
 
         R = cell(1, num_sigVs);
         nLL_bimodal = NaN(1, num_sigVs);
@@ -109,9 +113,10 @@ end
 
 end
 
+
 function [nLL_bimodal, R] = calculateNLL_bimodal(...
     aA, bA, aV, bV, sigA, sigV, sigM, pC1, cA, cV,...
-    CI, mu_P, sigmaM, lapse, data_resp, data_conf, model)
+    CI, mu_P, sigMotor, lapse, data_resp, data_conf, model)
 
 nLL_bimodal = 0;
 sA_prime   = model.sA.*aA + bA; %the mean of biased auditory measurements
@@ -174,8 +179,8 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
 
         elseif strcmp(model.strategy_conf, 'Heuristic')
 
-            var(1,:,:) = CI.J_A;
-            var(2,:,:) = CI.J_V;
+            var(1,:,:) = 1/CI.J_A;
+            var(2,:,:) = 1/CI.J_V;
 
         end
     
@@ -183,11 +188,11 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
         % cumulative distribution with a mean of confidence variabel (var)
         % and an S.D. of measurement noise (sigM), evaluated at auditory
         % and visual criteria.
-        temp_p_conf(1,:,:) = logncdf(cA, var(1,:,:), sigM);
-        temp_p_conf(2,:,:) = logncdf(cV, var(2,:,:), sigM);
+        temp_p_conf(1,:,:) = logncdf(cA, log(var(1,:,:)), sigM);
+        temp_p_conf(2,:,:) = logncdf(cV, log(var(2,:,:)), sigM);
         
         % add lapse
-        p_conf = lapse./2 + (1-lapse) .* temp_p_conf + 1e-20;
+        p_conf = lapse./2 + (1-lapse) .* temp_p_conf;
 
         %----------------------- Compute likelihood -----------------------
         % For each same sA, sV combination, the data are organized by
@@ -202,7 +207,7 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
             for mm = 1:num_modality
                 for kk = 1:num_rep
                     p_r_given_MAP = norm_dst(locResp_A_V(mm, kk),squeeze(MAP_MA(mm,:,:)),...
-                        sigmaM,1e-20);
+                        sigMotor,1e-20);
                     if confResp_A_V(mm, kk) == 1; p_conf_given_m = squeeze(p_conf(mm,:,:));
                     else; p_conf_given_m = 1-squeeze(p_conf(mm,:,:)); end
                     nLL_bimodal = nLL_bimodal - log(sum(sum(p_r_given_MAP.*...
@@ -213,9 +218,9 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
             for mm = 1:num_modality
                 for kk = 1:num_rep
                     if Post_C1(mm,kk) > 0.5
-                        p_r_given_MAP = norm_dst(locResp_A_V(mm, kk),shat_C1,sigmaM,1e-20);
+                        p_r_given_MAP = norm_dst(locResp_A_V(mm, kk),shat_C1,sigMotor,1e-20);
                     else
-                        p_r_given_MAP = norm_dst(locResp_A_V(mm, kk),squeeze(shat_C2(mm,:,:)),sigmaM,1e-20);
+                        p_r_given_MAP = norm_dst(locResp_A_V(mm, kk),squeeze(shat_C2(mm,:,:)),sigMotor,1e-20);
                     end
                     if confResp_A_V(mm, kk) == 1; p_conf_given_m = squeeze(p_conf(mm,:,:));
                     else; p_conf_given_m = 1-squeeze(p_conf(mm,:,:)); end

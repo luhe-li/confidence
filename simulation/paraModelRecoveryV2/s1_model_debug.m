@@ -6,7 +6,7 @@ clear; close all;
 %% key model recovery parameters
 
 num_rep               = 1000;
-num_runs              = 1;
+num_runs              = 3;
 num_sample            = 1;
 checkFakeData         = 1;
 
@@ -14,7 +14,7 @@ checkFakeData         = 1;
 
 cur_dir               = pwd;
 [project_dir, ~]      = fileparts(fileparts(cur_dir));
-out_dir               = fullfile(cur_dir, 's1_model_recovery');
+out_dir               = fullfile(cur_dir, mfilename);
 if ~exist(out_dir,'dir') mkdir(out_dir); end
 addpath(genpath(fullfile(project_dir, 'func')))
 addpath(genpath(fullfile(project_dir, 'bads')))
@@ -82,6 +82,7 @@ else
           [1,  0,  0.7,   1.2,    1.5,   15, 0.57,  0.5, 3, 3],...% Suboptimal
           [1,  0,  0.7,   1.2,    1.5,   15, 0.57,  0.5, 3, 3]}; % Optimal
     
+      
     % simulated model info
     ds_loc                = {'Model averaging'};
     ds_conf               = {'Heuristic','Suboptimal','Optimal'};
@@ -144,8 +145,8 @@ else
             uni_loc(:,:,1,2,:) = uni_loc(:,:,1,1,:);
             uni_loc(:,:,2,2,:) = uni_loc(:,:,2,1,:);
             
-            % loc at bi minus loc at uni
-            ve = mean(org_loc,5) - mean(uni_loc, 5);
+            % loc at uni minus loc at bi
+            ve =  mean(uni_loc, 5) - mean(org_loc,5);
             
             % diff x cue x reliability
             [v2_by_raw_diff, all_raw_diffs] = org_by_raw_diffs_4D(ve, sA);
@@ -156,7 +157,7 @@ else
             t = tiledlayout(2, 1);
             title(t,sprintf('%s, rep: %i', ds_conf{d}, num_rep))
             xlabel(t, 'Audiovisual discrepancy (deg)');
-            ylabel(t, 'Proportion of confidence report');
+            ylabel(t, 'Shift of localization');
             t.TileSpacing = 'compact';
             t.Padding = 'compact';
 
@@ -164,13 +165,12 @@ else
                 nexttile
                 title(cue_label{cue})
                 axis equal
-                
                 hold on
+                
                 for rel = 1: numel(sigVs)
                     
                     i_ve = squeeze(v2_by_raw_diff(:, cue, rel));
                     plot(all_raw_diffs, i_ve, 'Color',clt(rel+1,:))
-                    
                     
                 end
                 xticks(all_raw_diffs)
@@ -230,7 +230,7 @@ else
         % fit by the corresponding model
         data.org_resp         = org_loc;
         data.org_conf         = org_conf;
-        data.sigM             = 1.36; % emperical motor noise averaged from first four participants
+        data.sigMotor         = 1.36; % emperical motor noise averaged from first four participants
 
         % fit by generating model
         currModel = str2func('nllBimodal');
@@ -246,11 +246,11 @@ else
         model.mode                  = 'optimize';
         NLL                         = NaN(1, model.num_runs);
         estP                        = NaN(model.num_runs, Val.num_para);
-
-%         p = GT{d}(:);
-%         test = currModel(p, model, data);
 % 
-%         p2 = [    0.9991   -0.0020    0.6000    1.3000    1.5757   14.0000    0.5125    0.4240   48.0000   68.0000];
+        p = [GT{d}(3:5),GT{d}(7)];
+        test = currModel(p, model, data);
+% 
+%         p2 = [   0.5000    1.3973    1.7000   15.9196    0.4861];
 %         test2 = currModel(p2, model, data);
 
         for n              = 1:model.num_runs
@@ -280,7 +280,7 @@ else
         % predict using the best-fitting parameter
         model.mode            = 'predict';
         tmpPred               = currModel(bestP, model, data);
-        pred{i, d}            = tmpPred;
+        pred{d}               = tmpPred;
 
     end
 
