@@ -46,8 +46,7 @@ function [loc, conf] = sim_loc_conf_v1(num_rep, sA, sV, aA, bA, sigA, sigV, muP,
 %   unity    (vector): Simulated unity judgements for each trial. This is a
 %                      vector of nT (number of trials).
 %
-% Date: 24/03/06 Version: 2.0
-
+% Date: 24/03/06 
 x                           = fixP.x;
 loc                         = NaN(2,num_rep);
 
@@ -106,20 +105,22 @@ loc(2,:)                  = post_C1.* sHat_C1 + post_C2.* sHat_V_C2;
 % calculate posterior variance given each model
 switch model_ind
     case 1
-        variance(1,:)                 = repmat(JA, [1, num_rep]);
-        variance(2,:)                 = repmat(JV, [1, num_rep]);
+        variance(1,:)                 = repmat(1/JA, [1, num_rep]);
+        variance(2,:)                 = repmat(1/JV, [1, num_rep]);
     case 2
         variance(1:2,:)               = 1/(1/JV + 1/JA + 1/JP);
         variance(1,post_C1<0.5)       = 1/(1/JA + 1/JP);
         variance(2,post_C1<0.5)       = 1/(1/JV + 1/JP);
     case 3
-        variance(1,:)                 = post_C1'.* 1/(1/JV + 1/JA + 1/JP) + post_C2'.* 1/(1/JA + 1/JP) + post_C1'.* post_C2' .* (sHat_A_C2' - sHat_C1').^2;
-        variance(2,:)                 = post_C1'.* 1/(1/JV + 1/JA + 1/JP) + post_C2'.* 1/(1/JV + 1/JP) + post_C1'.* post_C2' .* (sHat_V_C2' - sHat_C1').^2;
+        %         variance(1,:)                 = post_C1'./(1/JV + 1/JA + 1/JP) + post_C2'.* 1/(1/JA + 1/JP) + post_C1'.* post_C2' .* (sHat_A_C2' - sHat_C1').^2;
+        %         variance(2,:)                 = post_C1'./(1/JV + 1/JA + 1/JP) + post_C2'.* 1/(1/JV + 1/JP) + post_C1'.* post_C2' .* (sHat_V_C2' - sHat_C1').^2;
+        variance(1,:)                 = post_C1./(1/JV + 1/JA + 1/JP) + post_C2.* 1/(1/JA + 1/JP) + post_C1.* post_C2 .* (sHat_A_C2 - sHat_C1).^2;
+        variance(2,:)                 = post_C1./(1/JV + 1/JA + 1/JP) + post_C2.* 1/(1/JV + 1/JP) + post_C1.* post_C2 .* (sHat_V_C2 - sHat_C1).^2;
 end
 
 % % make noisy measurements of variance/uncertainty for each modality
-conf_var(1,:) = lognrnd(variance(1,:), repmat(sigM, size(variance(1,:))));
-conf_var(2,:) = lognrnd(variance(2,:), repmat(sigM, size(variance(2,:))));
+conf_var(1,:) = lognrnd(log(variance(1,:)), repmat(sigM, size(variance(1,:))));
+conf_var(2,:) = lognrnd(log(variance(2,:)), repmat(sigM, size(variance(2,:))));
 
 % compare confidence variable to criterion
 conf(1,:) = conf_var(1,:) < cA; % create a confident index, 1 = confident

@@ -168,7 +168,7 @@ ExpInfo.randAVIdx                    = ExpInfo.avIdx(:,ExpInfo.randIdx);
 VSinfo.SD_blob                       = ExpInfo.randAVIdx(4,:);
 
 % location of speakers in CM, visual angle, and pixel
-ExpInfo.sittingDistance              = 113.0; %cm
+ExpInfo.sittingDistance              = 113; %cm
 ExpInfo.numSpeaker                   = 16;
 ExpInfo.LRmostSpeakers2center        = 65.5; %cm
 ExpInfo.LRmostVisualAngle            = (180/pi) * atan(ExpInfo.LRmostSpeakers2center / ...

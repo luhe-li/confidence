@@ -144,11 +144,10 @@ else
             uni_loc(:,:,1,2,:) = uni_loc(:,:,1,1,:);
             uni_loc(:,:,2,2,:) = uni_loc(:,:,2,1,:);
             
-            % loc at bi minus loc at uni
-            ve = mean(org_loc,5) - mean(uni_loc, 5);
+            ve = 
             
             % diff x cue x reliability
-            [v2_by_raw_diff, all_raw_diffs] = org_by_raw_diffs_4D(ve, sA);
+            [loc_by_raw_diff, all_raw_diffs] = org_by_raw_diffs_4D(mean(org_loc,5), sA);
 
             % assume participants localized perfectly in the unisensory
             % condition
@@ -163,17 +162,14 @@ else
             for cue = 1:num_cue
                 nexttile
                 title(cue_label{cue})
-                axis equal
-                
                 hold on
                 for rel = 1: numel(sigVs)
                     
-                    i_ve = squeeze(v2_by_raw_diff(:, cue, rel));
-                    plot(all_raw_diffs, i_ve, 'Color',clt(rel+1,:))
+                    bi_loc = squeeze(loc_by_raw_diff(:, cue, rel));
                     
                     
                 end
-                xticks(all_raw_diffs)
+                xticks(diff_locs)
             end
             
             %% check confidence data
