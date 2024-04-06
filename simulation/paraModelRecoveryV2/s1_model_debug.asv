@@ -82,7 +82,6 @@ else
           [1,  0,  0.7,   1.2,    1.5,   15, 0.57,  0.5, 3, 3],...% Suboptimal
           [1,  0,  0.7,   1.2,    1.5,   15, 0.57,  0.5, 3, 3]}; % Optimal
     
-      
     % simulated model info
     ds_loc                = {'Model averaging'};
     ds_conf               = {'Heuristic','Suboptimal','Optimal'};
@@ -225,7 +224,7 @@ else
 
         % set OPTIONS to tell bads that my objective function is noisy
 %         OPTIONS.UncertaintyHandling     = 0;
-        OPTIONS.TolMesh = 1e-4;
+        OPTIONS.TolMesh = 1e-3;
 
         % fit by the corresponding model
         data.org_resp         = org_loc;
@@ -247,13 +246,13 @@ else
         NLL                         = NaN(1, model.num_runs);
         estP                        = NaN(model.num_runs, Val.num_para);
 % 
-        p = GT{d}(3:7);
+        p = GT{d};
         test = currModel(p, model, data);
 % 
 %         p2 = [   0.5000    1.3973    1.7000   15.9196    0.4861];
 %         test2 = currModel(p2, model, data);
 
-        parfor n              = 1:model.num_runs
+      parfor n              = 1:model.num_runs
 
             tempModel             = model;
             tempVal               = Val;

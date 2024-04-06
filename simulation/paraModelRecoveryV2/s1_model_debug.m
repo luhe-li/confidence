@@ -5,7 +5,7 @@ clear; close all;
 
 %% key model recovery parameters
 
-num_rep               = 1000;
+num_rep               = 100;
 num_runs              = 3;
 num_sample            = 1;
 checkFakeData         = 1;
@@ -35,13 +35,13 @@ clt = [30, 120, 180; % blue
 flnm = sprintf('recoveryResults_rep%i_sample%i_run%i', num_rep, num_sample, num_runs);
 
 if exist(flnm,'file')
-
+    
     load(flnm);
-
+    
 else
-
+    
     %% Experimental info
-
+    
     % fix parameters for the experiment info
     speaker_span          = 65.5 * 2; % cm
     sitting_dist          = 113; % cm
@@ -55,15 +55,15 @@ else
     aud_level             = [6 8 9 11];
     aud_VA                = -30:4:30;
     deg_per_px            = screenXdeg / screenX;
-
+    
     fixP.screenX          = screenXdeg;
     fixP.x                = -screenXdeg /2 : deg_per_px : screenXdeg/2; % the screen deg space
-
+    
     sA                    = aud_VA(aud_level); % in deg. 8.5 being middle point
     sV                    = sA;
     sAV                   = combvec(sA, sV);
     num_s                 = size(sAV,2); % number of conditions
-
+    
     aud_locs              = sA;
     vis_locs              = sV;
     diffs                 = zeros(length(aud_locs), length(vis_locs));
@@ -73,16 +73,15 @@ else
         end
     end
     diff_locs             = unique(abs(diffs))';
-
+    
     %% Free parameters
-
+    
     % choose a reasonble set of parameter set. See variable name below.
     %    aA, bA, sigV1, dsigA, dsigV2, sigP,  pCC, sigM, cA, cV
-    GT = {[1,  0,  0.7,   1.2,    1.5,   15, 0.57,  0.5, 0.3, 3],...% Heuristic
-          [1,  0,  0.7,   1.2,    1.5,   15, 0.57,  0.5, 3, 3],...% Suboptimal
-          [1,  0,  0.7,   1.2,    1.5,   15, 0.57,  0.5, 3, 3]}; % Optimal
+    GT = {[1,  0,  0.7,   1.2,    1.5,   15, 0.57,  0.3, 3, 3],...% Heuristic
+        [1,  0,  0.7,   1.2,    1.5,   15,  0.57,  0.3, 3, 3],...% Suboptimal
+        [1,  0,  0.7,   1.2,    1.5,   15,  0.57,  0.3, 3, 3]}; % Optimal
     
-      
     % simulated model info
     ds_loc                = {'Model averaging'};
     ds_conf               = {'Heuristic','Suboptimal','Optimal'};
@@ -90,202 +89,204 @@ else
     cue_label             = {'Post-cue: A','Post-cue: V'};
     num_cue               = numel(cue_label);
     rel_label             = {'High reliability','Low reliability'};
-
+    
     %% Simulate data
-
-    for d = 3:-1:1
-
-        num_para              = length(GT{d});
-        aA                    = GT{d}(1);
-        bA                    = GT{d}(2);
-        sigV1                 = GT{d}(3);
-        sigA                  = GT{d}(4) + sigV1;
-        sigV2                 = GT{d}(5) + sigV1;
-        sigVs                 = [sigV1, sigV2];
-        sigP                  = GT{d}(6);
-        pCommon               = GT{d}(7);
-        sigM                  = GT{d}(8);
-        cA                    = GT{d}(9);
-        cV                    = GT{d}(10);
-        lapse                 = 0.02;
-        muP                   = 0;
-
-        [loc, conf] = deal(NaN(num_s, num_cue, numel(sigVs), num_rep));
-        % num_s: stimulus location combination
-        % 3 confidence decision strategies
-        % 2 modalities(1 = aud, 2 = vis)
-        % 2 visual reliabilities
-        % num_rep
-
-        for j                 = 1:num_s
-            for v                 = 1:numel(sigVs)
-                [loc(j,:,v,:), conf(j,:,v,:)] = sim_loc_conf_v1(num_rep, sAV(1,j), sAV(2,j),...
-                    aA, bA, sigA, sigVs(v), muP, sigP, pCommon, sigM, cA, cV, lapse,  fixP, d);
+    
+    for ii = 1%:10
+        for d = 1:3
+            
+            num_para              = length(GT{d});
+            aA                    = GT{d}(1);
+            bA                    = GT{d}(2);
+            sigV1                 = GT{d}(3);
+            sigA                  = GT{d}(4) + sigV1;
+            sigV2                 = GT{d}(5) + sigV1;
+            sigVs                 = [sigV1, sigV2];
+            sigP                  = GT{d}(6);
+            pCommon               = GT{d}(7);
+            sigM                  = GT{d}(8);
+            cA                    = GT{d}(9);
+            cV                    = GT{d}(10);
+            lapse                 = 0.02;
+            muP                   = 0;
+            
+            [loc, conf] = deal(NaN(num_s, num_cue, numel(sigVs), num_rep));
+            % num_s: stimulus location combination
+            % 3 confidence decision strategies
+            % 2 modalities(1 = aud, 2 = vis)
+            % 2 visual reliabilities
+            % num_rep
+            
+            for j                 = 1:num_s
+                for v                 = 1:numel(sigVs)
+                    [loc(j,:,v,:), conf(j,:,v,:)] = sim_loc_conf_v1(num_rep, sAV(1,j), sAV(2,j),...
+                        aA, bA, sigA, sigVs(v), muP, sigP, pCommon, sigM, cA, cV, lapse,  fixP, d);
+                end
             end
-        end
-
-        %% organize data
-
-        org_loc               = reshape(loc, [numel(sA), numel(sV), num_cue, numel(sigVs), num_rep]);
-        org_conf              = reshape(conf, [numel(sA), numel(sV), num_cue, numel(sigVs), num_rep]);
-
-        %% check fake data
-        if checkFakeData
-
-            %% check localization data
             
-            uni_loc = zeros(size(org_loc));
+            %% organize data
             
-            loc_a = repmat(sA',[1,numel(sV)]);
-            loc_v = repmat(sV,[numel(sA),1]);
+            org_loc               = reshape(loc, [numel(sA), numel(sV), num_cue, numel(sigVs), num_rep]);
+            org_conf              = reshape(conf, [numel(sA), numel(sV), num_cue, numel(sigVs), num_rep]);
             
-            uni_loc(:,:,1,1,:) = repmat(loc_a, [1, 1, 1, 1, num_rep]);
-            uni_loc(:,:,2,1,:) = repmat(loc_v, [1, 1, 1, 1, num_rep]);
-            
-            uni_loc(:,:,1,2,:) = uni_loc(:,:,1,1,:);
-            uni_loc(:,:,2,2,:) = uni_loc(:,:,2,1,:);
-            
-            % loc at uni minus loc at bi
-            ve =  mean(uni_loc, 5) - mean(org_loc,5);
-            
-            % diff x cue x reliability
-            [v2_by_raw_diff, all_raw_diffs] = org_by_raw_diffs_4D(ve, sA);
-
-            % assume participants localized perfectly in the unisensory
-            % condition
-            figure; hold on
-            t = tiledlayout(2, 1);
-            title(t,sprintf('%s, rep: %i', ds_conf{d}, num_rep))
-            xlabel(t, 'Audiovisual discrepancy (deg)');
-            ylabel(t, 'Shift of localization');
-            t.TileSpacing = 'compact';
-            t.Padding = 'compact';
-
-            for cue = 1:num_cue
-                nexttile
-                title(cue_label{cue})
-                axis equal
-                hold on
+            %% check fake data
+            if checkFakeData
                 
-                for rel = 1: numel(sigVs)
+                %% check localization data
+                
+                uni_loc = zeros(size(org_loc));
+                
+                loc_a = repmat(sA',[1,numel(sV)]);
+                loc_v = repmat(sV,[numel(sA),1]);
+                
+                uni_loc(:,:,1,1,:) = repmat(loc_a, [1, 1, 1, 1, num_rep]);
+                uni_loc(:,:,2,1,:) = repmat(loc_v, [1, 1, 1, 1, num_rep]);
+                
+                uni_loc(:,:,1,2,:) = uni_loc(:,:,1,1,:);
+                uni_loc(:,:,2,2,:) = uni_loc(:,:,2,1,:);
+                
+                % loc at uni minus loc at bi
+                ve =  mean(uni_loc, 5) - mean(org_loc,5);
+                
+                % diff x cue x reliability
+                [v2_by_raw_diff, all_raw_diffs] = org_by_raw_diffs_4D(ve, sA);
+                
+                % assume participants localized perfectly in the unisensory
+                % condition
+                figure; hold on
+                t = tiledlayout(2, 1);
+                title(t,sprintf('%s, rep: %i', ds_conf{d}, num_rep))
+                xlabel(t, 'Audiovisual discrepancy (deg)');
+                ylabel(t, 'Shift of localization');
+                t.TileSpacing = 'compact';
+                t.Padding = 'compact';
+                
+                for cue = 1:num_cue
+                    nexttile
+                    title(cue_label{cue})
+                    axis equal
+                    hold on
                     
-                    i_ve = squeeze(v2_by_raw_diff(:, cue, rel));
-                    plot(all_raw_diffs, i_ve, 'Color',clt(rel+1,:))
-                    
-                end
-                xticks(all_raw_diffs)
-            end
-            
-            %% check confidence data
-            
-            % organize localization data: {diff} cue x reliability x rep
-            [conf_by_diff, all_diffs] = org_by_diffs(org_conf, sA); 
-
-            figure; hold on
-            t = tiledlayout(2, 1);
-            title(t,sprintf('%s, rep: %i', ds_conf{d}, num_rep))
-            xlabel(t, 'Absolute audiovisual discrepancy (deg)');
-            ylabel(t, 'Proportion of confidence report');
-            t.TileSpacing = 'compact';
-            t.Padding = 'compact';
-
-            for cue = 1:num_cue
-                nexttile
-                title(cue_label{cue})
-                hold on
-                for rel = 1: numel(sigVs)
-                    [p_conf, se_conf] = deal(NaN(1, numel(diff_locs)));
-                    for diff = 1:numel(diff_locs)
-                        i_conf = squeeze(conf_by_diff{diff}(cue, rel, :))';
-                        p = sum(i_conf)/numel(i_conf);
-                        p_conf(diff) = p;
-                        se_conf(diff) = sqrt((p*(1-p))/numel(i_conf));
+                    for rel = 1: numel(sigVs)
+                        
+                        i_ve = squeeze(v2_by_raw_diff(:, cue, rel));
+                        plot(all_raw_diffs, i_ve, 'Color',clt(rel+1,:))
+                        
                     end
-                    plot(diff_locs, p_conf, 'Color',clt(rel+1,:));
-                    ylim([-0.1, 1.1])
+                    xticks(all_raw_diffs)
                 end
-                xticks(diff_locs)
+                
+                %% check confidence data
+                
+                % organize localization data: {diff} cue x reliability x rep
+                [conf_by_diff, all_diffs] = org_by_diffs(org_conf, sA);
+                
+                figure; hold on
+                t = tiledlayout(2, 1);
+                title(t,sprintf('%s, rep: %i', ds_conf{d}, num_rep))
+                xlabel(t, 'Absolute audiovisual discrepancy (deg)');
+                ylabel(t, 'Proportion of confidence report');
+                t.TileSpacing = 'compact';
+                t.Padding = 'compact';
+                
+                for cue = 1:num_cue
+                    nexttile
+                    title(cue_label{cue})
+                    hold on
+                    for rel = 1: numel(sigVs)
+                        [p_conf, se_conf] = deal(NaN(1, numel(diff_locs)));
+                        for diff = 1:numel(diff_locs)
+                            i_conf = squeeze(conf_by_diff{diff}(cue, rel, :))';
+                            p = sum(i_conf)/numel(i_conf);
+                            p_conf(diff) = p;
+                            se_conf(diff) = sqrt((p*(1-p))/numel(i_conf));
+                        end
+                        plot(diff_locs, p_conf, 'Color',clt(rel+1,:));
+                        ylim([-0.1, 1.1])
+                    end
+                    xticks(diff_locs)
+                end
             end
+            
+            %% Model fitting
+            
+            % general setting for all models
+            model.num_runs        = num_runs;
+            model.num_sec         = 10; % number of samples in the parameter space, must be larger than num_runs
+            model.x               = (-512:1:512) * deg_per_px;
+            model.sA              = sA;
+            model.sV              = model.sA;
+            model.num_rep         = num_rep;
+            model.num_SD          = 5;
+            model.numBins_A       = 15;
+            model.numBins_V       = 15;
+            model.modality        = {'A','V'};
+            model.strategy_loc    = 'MA';
+            
+            % set OPTIONS to tell bads that my objective function is noisy
+            %         OPTIONS.UncertaintyHandling     = 0;
+            OPTIONS.TolMesh = 1e-3;
+            
+            % fit by the corresponding model
+            data.org_resp         = org_loc;
+            data.org_conf         = org_conf;
+            data.sigMotor         = 1.36; % emperical motor noise averaged from first four participants
+            
+            % fit by generating model
+            currModel = str2func('nllBimodal');
+            
+            % switch confidence strategies
+            model.strategy_conf         = ds_conf{d};
+            
+            % initiate
+            model.mode                  = 'initiate';
+            Val = currModel([], model, data);
+            
+            % optimize
+            model.mode                  = 'optimize';
+            NLL                         = NaN(1, model.num_runs);
+            estP                        = NaN(model.num_runs, Val.num_para);
+            %
+            p = GT{d};
+            test = currModel(p, model, data);
+            %
+            %         p2 = [   0.5000    1.3973    1.7000   15.9196    0.4861];
+            %         test2 = currModel(p2, model, data);
+            
+            for n              = 1:model.num_runs
+                
+                tempModel             = model;
+                tempVal               = Val;
+                tempFunc              = currModel;
+                
+                [estP(n,:),NLL(n),~,~,traj(n)]    = bads(@(p) tempFunc(p, model, data),...
+                    Val.init(n,:), Val.lb,...
+                    Val.ub, Val.plb, Val.pub, [], OPTIONS);
+                
+                disp(estP(n,:))
+                
+            end
+            
+            % find the parameter with the least NLL
+            [minNLL, best_idx]    = min(NLL);
+            bestP                 = estP(best_idx, :);
+            
+            % save all fitting results
+            saveModel{d}.estP(ii,:,:) = estP;
+            saveModel{d}.NLL(ii,:) = NLL;
+            saveModel{d}.bestP(ii,:) = bestP;
+            saveModel{d}.minNLL(ii)= minNLL;
+            
+            % predict using the best-fitting parameter
+            model.mode            = 'predict';
+            tmpPred               = currModel(bestP, model, data);
+            pred{d}               = tmpPred;
+            
         end
-
-        %% Model fitting
-
-        % general setting for all models
-        model.num_runs        = num_runs;
-        model.num_sec         = 10; % number of samples in the parameter space, must be larger than num_runs
-        model.x               = (-512:1:512) * deg_per_px;
-        model.sA              = sA;
-        model.sV              = model.sA;
-        model.num_rep         = num_rep;
-        model.num_SD          = 5;
-        model.numBins_A       = 15;
-        model.numBins_V       = 15;
-        model.modality        = {'A','V'};
-        model.strategy_loc    = 'MA';
-
-        % set OPTIONS to tell bads that my objective function is noisy
-%         OPTIONS.UncertaintyHandling     = 0;
-        OPTIONS.TolMesh = 1e-4;
-
-        % fit by the corresponding model
-        data.org_resp         = org_loc;
-        data.org_conf         = org_conf;
-        data.sigMotor         = 1.36; % emperical motor noise averaged from first four participants
-
-        % fit by generating model
-        currModel = str2func('nllBimodal');
-
-        % switch confidence strategies
-        model.strategy_conf         = ds_conf{d};
-
-        % initiate
-        model.mode                  = 'initiate';
-        Val = currModel([], model, data);
-
-        % optimize
-        model.mode                  = 'optimize';
-        NLL                         = NaN(1, model.num_runs);
-        estP                        = NaN(model.num_runs, Val.num_para);
-% 
-        p = [GT{d}(3:5),GT{d}(7)];
-        test = currModel(p, model, data);
-% 
-%         p2 = [   0.5000    1.3973    1.7000   15.9196    0.4861];
-%         test2 = currModel(p2, model, data);
-
-        for n              = 1:model.num_runs
-
-            tempModel             = model;
-            tempVal               = Val;
-            tempFunc              = currModel;
-
-            [estP(n,:),NLL(n),~,~,traj(n)]    = bads(@(p) tempFunc(p, model, data),...
-                Val.init(n,:), Val.lb,...
-                Val.ub, Val.plb, Val.pub, [], OPTIONS);
-
-            disp(estP(n,:))
-
-        end
-
-        % find the parameter with the least NLL
-        [minNLL, best_idx]    = min(NLL);
-        bestP                 = estP(best_idx, :);
-
-        % save all fitting results
-        saveModel{d}.estP(i,:,:) = estP;
-        saveModel{d}.NLL(i,:) = NLL;
-        saveModel{d}.bestP(i,:) = bestP;
-        saveModel{d}.minNLL(i)= minNLL;
-
-        % predict using the best-fitting parameter
-        model.mode            = 'predict';
-        tmpPred               = currModel(bestP, model, data);
-        pred{d}               = tmpPred;
-
     end
-
+    
     save(flnm)
-
+    
 end
 
 %% Plot parameters (predicted vs. ground-truth)

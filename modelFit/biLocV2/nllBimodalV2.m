@@ -4,23 +4,34 @@ switch model.mode
 
     case 'initiate'
 
-        out.paraID                   = {'\sigma_{V1}','\sigma_{A} - \sigma_{V1}','\sigma_{V2} - \sigma_{V1}','p_{common}'};
+        out.paraID                   = {'aA','bA','\sigma_{V1}','\sigma_{A} - \sigma_{V1}','\sigma_{V2} - \sigma_{V1}','\sigma_{P}','p_{common}','criterion_{A}','criterion_{V}'};
         out.num_para                 = length(out.paraID);
 
         % hard bounds, the range for LB, UB, larger than soft bounds
-        paraH.aA                     = [ 0.8,     1]; % degree
-        paraH.bA                     = [-0.5,   0.5]; % degree
-        paraH.sigV1                  = [ 0.5,   0.9]; % degree
-        paraH.delta_sigA             = [   1,   1.5]; % degree
-        paraH.delta_sigV2            = [ 1.3,   1.7]; % degree
-        paraH.sigP                   = [  14,    16]; % degrees
-        paraH.pC1                    = [1e-3,1-1e-3]; % weight
-        paraH.sigM                   = [ 0.3,     1]; % measurement noise of confidence
-        paraH.cA                     = [ 0.1,    10]; % weight
-        paraH.cV                     = [ 0.1,    10]; % weight
+        paraH.aA                     = [ 0.8,     2]; % degree
+        paraH.bA                     = [  -3,     3]; % degree
+        paraH.sigV1                  = [1e-2,     2]; % degree
+        paraH.delta_sigA             = [1e-2,     5]; % degree
+        paraH.delta_sigV2            = [1e-2,     5]; % degree
+        paraH.sigP                   = [  10,    20]; % degrees
+        paraH.pC1                    = [1e-4,1-1e-4]; % weight
+
+        % find out the reasonable range for criterion
+        [c_lb, ~] = getCriterionRange(paraH.sigV1(1), paraH.sigV1(1)+paraH.delta_sigA(1), paraH.sigV1(1)+paraH.delta_sigV2(1), paraH.sigP(1), 'Optimal');
+        [~, c_ub] = getCriterionRange(paraH.sigV1(2), paraH.sigV1(2)+paraH.delta_sigA(2), paraH.sigV1(2)+paraH.delta_sigV2(2), paraH.sigP(2), 'Optimal');
+        paraH.cA                      = [c_lb,  c_ub]; % weight
+        paraH.cV                      = [c_lb,  c_ub]; % weight
 
         % soft bounds, the range for PLB, PUB
-        paraS = paraH;
+        paraS.aA                     = [   1,   1.2]; % degree
+        paraS.bA                     = [  -1,     1]; % degree
+        paraS.sigV1                  = [   1,     2]; % degree
+        paraS.delta_sigA             = [ 0.5,     2]; % degree
+        paraS.delta_sigV2            = [ 0.5,     2]; % degree
+        paraS.sigP                   = [  15,    20]; % degree
+        paraS.pC1                    = [ 0.4,   0.6]; % weight
+        paraS.cA                      = [c_lb,  c_ub]; % degree
+        paraS.cV                      = [c_lb,  c_ub]; % degree
 
         % reorganize parameter bounds to feed to bads
         fn                           = fieldnames(paraH);
@@ -33,19 +44,12 @@ switch model.mode
         out.paraS                    = paraS; out.paraH = paraH;
 
         % get grid initializations
-        out.init                     = getInit(out.lb, out.ub, model.num_sec, model.num_runs);
+        out.init                     = getInit(out.lb, out.ub, model.num_runs, model.num_runs);
 
     case {'optimize','predict'}
 
         % fixed parameter values
-        mu_P = 0; 
-        lapse = 0.02;
-        aV = 1; bV = 0; 
-        aA = 1; bA = 0;
-        sigM = 0.5;
-        cA = 3;
-        cV = 3;
-        sigP = 15;
+        mu_P = 0; aV = 1; bV = 0; lapse = 0.05;
 
         % free parameters
         aA                           = freeParam(1);
@@ -54,21 +58,13 @@ switch model.mode
         delta_sigA                   = freeParam(4);
         delta_sigV2                  = freeParam(5);
         sigP                         = freeParam(6);
-        pCommon                      = freeParam(7);
-        sigM                         = freeParam(8);
-        cA                           = freeParam(9);
-        cV                           = freeParam(10);
-
-%         sigV1                        = freeParam(1);
-%         delta_sigA                   = freeParam(2);
-%         delta_sigV2                  = freeParam(3);
-% %         sigP                         = freeParam(4);
-%         pCommon                      = freeParam(4);
-
+        pC1                          = freeParam(7);
+        cA                           = freeParam(8);
+        cV                           = freeParam(9);
         sigA = sigV1 + delta_sigA;
         sigVs = [sigV1, sigV1 + delta_sigV2];
         num_sigVs = numel(sigVs);
-        sigMotor = data.sigMotor;
+        sigmaM = data.sigM;
 
         R = cell(1, num_sigVs);
         nLL_bimodal = NaN(1, num_sigVs);
@@ -76,7 +72,6 @@ switch model.mode
         for ii = 1:num_sigVs
 
             sigV = sigVs(ii);
-
             % constants
             CI.J_A            = sigA^2;
             CI.J_V            = sigV^2;
@@ -94,8 +89,8 @@ switch model.mode
             data_conf = squeeze(data.org_conf(:,:,:,ii,:));
 
             [nLL_bimodal(ii), R{ii}] = calculateNLL_bimodal(...
-                aA, bA, aV, bV, sigA, sigV, sigM, pCommon, cA, cV,...
-                CI, mu_P, sigMotor, lapse, data_resp, data_conf, model);
+                aA, bA, aV, bV, sigA, sigV, pC1, cA, cV,...
+                CI, mu_P, sigmaM, lapse, data_resp, data_conf, model);
 
         end
 
@@ -113,10 +108,9 @@ end
 
 end
 
-
 function [nLL_bimodal, R] = calculateNLL_bimodal(...
-    aA, bA, aV, bV, sigA, sigV, sigM, pC1, cA, cV,...
-    CI, mu_P, sigMotor, lapse, data_resp, data_conf, model)
+    aA, bA, aV, bV, sigA, sigV, pC1, cA, cV,...
+    CI, mu_P, sigmaM, lapse, data_resp, data_conf, model)
 
 nLL_bimodal = 0;
 sA_prime   = model.sA.*aA + bA; %the mean of biased auditory measurements
@@ -165,49 +159,42 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
         % the confidence variable
         if strcmp(model.strategy_conf,'Optimal')
 
-            var(1,:,:) = Post_C1 ./CI.constC1_shat + ...
-                Post_C2 ./CI.constC2_1_shat + ...
+            var(1,:,:) = Post_C1 .* (1/CI.constC1_shat) + ...
+                Post_C2 .* (1/CI.constC2_1) + ...
                 Post_C1 .* Post_C2 .* (squeeze(shat_C2(1,:,:)) - shat_C1).^2;
-            var(2,:,:) = Post_C1 ./CI.constC1_shat + ...
-                Post_C2 ./CI.constC2_2_shat + ...
+            var(2,:,:) = Post_C1 .* (1/CI.constC1_shat) + ...
+                Post_C2 .* (1/CI.constC2_2) + ...
                 Post_C1 .* Post_C2 .* (squeeze(shat_C2(2,:,:)) - shat_C1).^2;
 
         elseif strcmp(model.strategy_conf, 'Suboptimal')
 
-            var(1,:,:) = 1/CI.constC2_1_shat;
-            var(2,:,:) = 1/CI.constC2_2_shat;
+            var(1,:,:) = 1/CI.constC2_1;
+            var(2,:,:) = 1/CI.constC2_2;
 
         elseif strcmp(model.strategy_conf, 'Heuristic')
 
-            var(1,:,:) = 1/CI.J_A;
-            var(2,:,:) = 1/CI.J_V;
-
+            var(1,:,:) = CI.J_A;
+            var(2,:,:) = CI.J_V;
         end
     
-        % probability of reporting confidence is the value of lognormal
-        % cumulative distribution with a mean of confidence variabel (var)
-        % and an S.D. of measurement noise (sigM), evaluated at auditory
-        % and visual criteria.
-        temp_p_conf(1,:,:) = logncdf(cA, log(var(1,:,:)), sigM);
-        temp_p_conf(2,:,:) = logncdf(cV, log(var(2,:,:)), sigM);
-        
-        % add lapse
-        p_conf = lapse./2 + (1-lapse) .* temp_p_conf;
+        pred_conf(1,:,:) = var(1,:,:)<cA;
+        pred_conf(2,:,:) = var(2,:,:)<cV;
+        p_conf                 = NaN(size(pred_conf));
+        p_conf(pred_conf == 1) = 1-lapse;
+        p_conf(pred_conf == 0) = lapse;
 
         %----------------------- Compute likelihood -----------------------
-        % For each same sA, sV combination, the data are organized by
-        % response modality (A, V), repeititon of trials.
         % First half trials are A loc resps, second half trials are V loc
         % resps, from the same sA, sV combination
         locResp_A_V = [squeeze(data_resp(p,q,1,:))'; squeeze(data_resp(p,q,2,:))'];
         confResp_A_V = [squeeze(data_conf(p,q,1,:))'; squeeze(data_conf(p,q,2,:))'];
-        [num_modality, num_rep] = size(locResp_A_V);
+        [num_modality, num_loc] = size(locResp_A_V);
 
         if strcmp(model.strategy_loc,'MA') %Model averaging
             for mm = 1:num_modality
-                for kk = 1:num_rep
+                for kk = 1:num_loc
                     p_r_given_MAP = norm_dst(locResp_A_V(mm, kk),squeeze(MAP_MA(mm,:,:)),...
-                        sigMotor,1e-20);
+                        sigmaM,1e-20);
                     if confResp_A_V(mm, kk) == 1; p_conf_given_m = squeeze(p_conf(mm,:,:));
                     else; p_conf_given_m = 1-squeeze(p_conf(mm,:,:)); end
                     nLL_bimodal = nLL_bimodal - log(sum(sum(p_r_given_MAP.*...
@@ -216,11 +203,11 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
             end
         elseif strcmp(model.strategy_loc,'MS') %Model selection
             for mm = 1:num_modality
-                for kk = 1:num_rep
+                for kk = 1:num_loc
                     if Post_C1(mm,kk) > 0.5
-                        p_r_given_MAP = norm_dst(locResp_A_V(mm, kk),shat_C1,sigMotor,1e-20);
+                        p_r_given_MAP = norm_dst(locResp_A_V(mm, kk),shat_C1,sigmaM,1e-20);
                     else
-                        p_r_given_MAP = norm_dst(locResp_A_V(mm, kk),squeeze(shat_C2(mm,:,:)),sigMotor,1e-20);
+                        p_r_given_MAP = norm_dst(locResp_A_V(mm, kk),squeeze(shat_C2(mm,:,:)),sigmaM,1e-20);
                     end
                     if confResp_A_V(mm, kk) == 1; p_conf_given_m = squeeze(p_conf(mm,:,:));
                     else; p_conf_given_m = 1-squeeze(p_conf(mm,:,:)); end
@@ -238,7 +225,7 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
             R.p_mAmV_given_sAsV(p,q,:,:) = p_mAmV_given_sAsV;
             %save predictions on the confidence judgment
             for mm = 1:length(model.modality)
-                R.p_conf_given_sAsV(p,q,mm) = sum(sum(squeeze(temp_p_conf(mm,:,:)).*p_mAmV_given_sAsV));
+                R.p_conf_given_sAsV(p,q,mm) = sum(sum(squeeze(p_conf(mm,:,:)).*p_mAmV_given_sAsV));
             end
             %save predictions on localization responses
             if strcmp(model.strategy_loc,'MA')
