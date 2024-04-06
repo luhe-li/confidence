@@ -93,7 +93,7 @@ else
     %% Simulate data
     
     for ii = 1%:10
-        for d = 1:3
+        for d = 1%:3
             
             num_para              = length(GT{d});
             aA                    = GT{d}(1);
@@ -253,7 +253,7 @@ else
             %         p2 = [   0.5000    1.3973    1.7000   15.9196    0.4861];
             %         test2 = currModel(p2, model, data);
             
-            for n              = 1:model.num_runs
+            parfor n              = 1:model.num_runs
                 
                 tempModel             = model;
                 tempVal               = Val;
