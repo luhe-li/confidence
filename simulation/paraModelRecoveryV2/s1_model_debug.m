@@ -8,7 +8,7 @@ clear; close all;
 num_rep               = 100;
 num_runs              = 3;
 num_sample            = 1;
-checkFakeData         = 1;
+checkFakeData         = 0;
 
 %% Manage path
 
@@ -78,9 +78,9 @@ else
     
     % choose a reasonble set of parameter set. See variable name below.
     %    aA, bA, sigV1, dsigA, dsigV2, sigP,  pCC, sigC, cA, cV
-    GT = {[1,  0,  0.3,   1.2,    1.5,   8, 0.57,  0.3, 2],...% Heuristic
-        [1,  0,  0.7,   1.2,    1.5,   15,  0.57,  0.3, 3],...% Suboptimal
-        [1,  0,  0.3,   1.2,    1.5,   8,  0.57,  0.4, 2]}; % Optimal
+    GT = {[1,  0,  0.3,   1.2,    1.5,   8, 0.57,  0.3, 1],...% Heuristic
+        [1,  0,  0.3,   1.2,    1.5,   8,  0.57,  0.3, 1],...% Suboptimal
+        [1,  0,  0.3,   1.2,    1.5,   8,  0.57,  0.3, 2]}; % Optimal
     
     % simulated model info
     ds_loc                = {'Model averaging'};
@@ -246,12 +246,10 @@ else
             model.mode                  = 'optimize';
             NLL                         = NaN(1, model.num_runs);
             estP                        = NaN(model.num_runs, Val.num_para);
-            %
+            
+            % test using ground truth parameters
             p = GT{d};
             test = currModel(p, model, data);
-            %
-            %         p2 = [   0.5000    1.3973    1.7000   15.9196    0.4861];
-            %         test2 = currModel(p2, model, data);
             
             parfor n              = 1:model.num_runs
                 
