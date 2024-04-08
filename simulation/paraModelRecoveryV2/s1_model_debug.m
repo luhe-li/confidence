@@ -77,10 +77,10 @@ else
     %% Free parameters
     
     % choose a reasonble set of parameter set. See variable name below.
-    %    aA, bA, sigV1, dsigA, dsigV2, sigP,  pCC, sigM, cA, cV
-    GT = {[1,  0,  0.7,   1.2,    1.5,   15, 0.57,  0.3, 3, 3],...% Heuristic
-        [1,  0,  0.7,   1.2,    1.5,   15,  0.57,  0.3, 3, 3],...% Suboptimal
-        [1,  0,  0.7,   1.2,    1.5,   15,  0.57,  0.3, 3, 3]}; % Optimal
+    %    aA, bA, sigV1, dsigA, dsigV2, sigP,  pCC, sigC, cA, cV
+    GT = {[1,  0,  0.3,   1.2,    1.5,   8, 0.57,  0.3, 2],...% Heuristic
+        [1,  0,  0.7,   1.2,    1.5,   15,  0.57,  0.3, 3],...% Suboptimal
+        [1,  0,  0.3,   1.2,    1.5,   8,  0.57,  0.4, 2]}; % Optimal
     
     % simulated model info
     ds_loc                = {'Model averaging'};
@@ -93,20 +93,20 @@ else
     %% Simulate data
     
     for ii = 1%:10
-        for d = 1%:3
+        for d = 3
             
             num_para              = length(GT{d});
             aA                    = GT{d}(1);
             bA                    = GT{d}(2);
             sigV1                 = GT{d}(3);
-            sigA                  = GT{d}(4) + sigV1;
-            sigV2                 = GT{d}(5) + sigV1;
+            sigA                  = GT{d}(4);
+            sigV2                 = GT{d}(5);
             sigVs                 = [sigV1, sigV2];
             sigP                  = GT{d}(6);
             pCommon               = GT{d}(7);
             sigM                  = GT{d}(8);
-            cA                    = GT{d}(9);
-            cV                    = GT{d}(10);
+            c                    = GT{d}(9);
+            
             lapse                 = 0.02;
             muP                   = 0;
             
@@ -120,7 +120,7 @@ else
             for j                 = 1:num_s
                 for v                 = 1:numel(sigVs)
                     [loc(j,:,v,:), conf(j,:,v,:)] = sim_loc_conf_v1(num_rep, sAV(1,j), sAV(2,j),...
-                        aA, bA, sigA, sigVs(v), muP, sigP, pCommon, sigM, cA, cV, lapse,  fixP, d);
+                        aA, bA, sigA, sigVs(v), muP, sigP, pCommon, sigM, c, c, lapse,  fixP, d);
                 end
             end
             

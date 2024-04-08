@@ -47,16 +47,17 @@ function [loc, conf] = sim_loc_conf_v1(num_rep, sA, sV, aA, bA, sigA, sigV, muP,
 %                      vector of nT (number of trials).
 %
 % Date: 24/03/06 
+sigMotor = 1.36;
 x                           = fixP.x;
-loc                         = NaN(2,num_rep);
+% loc                         = NaN(2,num_rep);
 
 %simulate measurements, which are drawn from Gaussian distributions
 % stochasticity starts here
 mA                          = randn(1, num_rep).*sigA + (sA * aA + bA);
 mV                          = randn(1, num_rep).*sigV + sV;
 
-mA                          = bounded(mA,min(x),max(x));
-mV                          = bounded(mV,min(x),max(x));
+% mA                          = bounded(mA,min(x),max(x));
+% mV                          = bounded(mV,min(x),max(x));
 
 %compute constants (these will come in handy when writing the equations
 %for the likelihood/posterior of a common cause and separate causes.
@@ -108,25 +109,26 @@ loc = randn(size(shat)).*sigMotor + shat;
 % calculate posterior variance given each model
 switch model_ind
     case 1
-        variance(1,:)                 = repmat(1/JA, [1, num_rep]);
-        variance(2,:)                 = repmat(1/JV, [1, num_rep]);
+        variance(1,:)                 = repmat(JA, [1, num_rep]);
+        variance(2,:)                 = repmat(JV, [1, num_rep]);
     case 2
-        variance(1:2,:)               = 1/(1/JV + 1/JA + 1/JP);
+        variance(1:2,:)               = repmat(1/(1/JV + 1/JA + 1/JP), [2, num_rep]);
         variance(1,post_C1<0.5)       = 1/(1/JA + 1/JP);
         variance(2,post_C1<0.5)       = 1/(1/JV + 1/JP);
     case 3
-        %         variance(1,:)                 = post_C1'./(1/JV + 1/JA + 1/JP) + post_C2'.* 1/(1/JA + 1/JP) + post_C1'.* post_C2' .* (sHat_A_C2' - sHat_C1').^2;
-        %         variance(2,:)                 = post_C1'./(1/JV + 1/JA + 1/JP) + post_C2'.* 1/(1/JV + 1/JP) + post_C1'.* post_C2' .* (sHat_V_C2' - sHat_C1').^2;
-        variance(1,:)                 = post_C1./(1/JV + 1/JA + 1/JP) + post_C2.* 1/(1/JA + 1/JP) + post_C1.* post_C2 .* (sHat_A_C2 - sHat_C1).^2;
-        variance(2,:)                 = post_C1./(1/JV + 1/JA + 1/JP) + post_C2.* 1/(1/JV + 1/JP) + post_C1.* post_C2 .* (sHat_V_C2 - sHat_C1).^2;
+        variance(1,:)                 = post_C1./(1/JV + 1/JA + 1/JP) + post_C2./(1/JA + 1/JP) + post_C1.* post_C2 .* (sHat_A_C2 - sHat_C1).^2;
+        variance(2,:)                 = post_C1./(1/JV + 1/JA + 1/JP) + post_C2./(1/JV + 1/JP) + post_C1.* post_C2 .* (sHat_V_C2 - sHat_C1).^2;
 end
 
 % % make noisy measurements of variance/uncertainty for each modality
-conf_var(1,:) = lognrnd(log(variance(1,:)), repmat(sigM, size(variance(1,:))));
-conf_var(2,:) = lognrnd(log(variance(2,:)), repmat(sigM, size(variance(2,:))));
+m = variance;
+v = sigM;
+mu = log(m^2
+
+conf_var = lognrnd(log(variance), sigM);
 
 % compare confidence variable to criterion
-conf(1,:) = conf_var(1,:) < cA; % create a confident index, 1 = confident
+conf(1,:) = conf_var(1,:) < cA; % report confident (1) if variance is smaller than a criterion
 conf(2,:) = conf_var(2,:) < cV;
 
 % add lapse

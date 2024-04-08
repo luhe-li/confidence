@@ -56,8 +56,8 @@ x                           = fixP.x;
 mA                          = randn(1, num_rep).*sigA + (sA * aA + bA);
 mV                          = randn(1, num_rep).*sigV + sV;
 
-mA                          = bounded(mA,min(x),max(x));
-mV                          = bounded(mV,min(x),max(x));
+% mA                          = bounded(mA,min(x),max(x));
+% mV                          = bounded(mV,min(x),max(x));
 
 %compute constants (these will come in handy when writing the equations
 %for the likelihood/posterior of a common cause and separate causes.
@@ -121,11 +121,14 @@ switch model_ind
 end
 
 % % make noisy measurements of variance/uncertainty for each modality
-conf_var(1,:) = lognrnd(log(variance(1,:)), repmat(sigM, size(variance(1,:))));
-conf_var(2,:) = lognrnd(log(variance(2,:)), repmat(sigM, size(variance(2,:))));
+m = variance;
+v = sigM;
+mu = log((m.^2)./sqrt(v+m.^2));
+sigma = sqrt(log(v./(m.^2)+1));
+conf_var = lognrnd(mu, sigma);
 
 % compare confidence variable to criterion
-conf(1,:) = conf_var(1,:) < cA; % create a confident index, 1 = confident
+conf(1,:) = conf_var(1,:) < cA; % report confident (1) if variance is smaller than a criterion
 conf(2,:) = conf_var(2,:) < cV;
 
 % add lapse
