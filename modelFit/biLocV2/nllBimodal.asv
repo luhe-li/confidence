@@ -4,20 +4,20 @@ switch model.mode
 
     case 'initiate'
 
-        out.paraID                   = {'aA','bA','\sigma_{V1}','\sigma_{A} - \sigma_{V1}','\sigma_{V2} - \sigma_{V1}','\sigma_{P}','p_{common}','\sig_{c}','criterion'};
+        out.paraID                   = {'aA','bA','\sigma_{V1}','\sigma_{A}','\sigma_{V2}','\sigma_{P}','p_{common}','\sig_{c}','c_{A}','c_{V}'};
         out.num_para                 = length(out.paraID);
 
         % hard bounds, the range for LB, UB, larger than soft bounds
         paraH.aA                     = [ 0.8,     2]; % degree
-        paraH.bA                     = [  -2,     2]; % degree
+        paraH.bA                     = [  -1,     1]; % degree
         paraH.sigV1                  = [1e-2,     1]; % degree
         paraH.sigA                   = [1e-1,     2]; % degree
         paraH.sigV2                  = [1e-1,     2]; % degree
-        paraH.sigP                   = [  1,    10]; % degrees
+        paraH.sigP                   = [   5,    10]; % degrees
         paraH.pC1                    = [1e-3,1-1e-3]; % weight
         paraH.sigC                   = [ 0.1,     1]; % measurement noise of confidence
-        paraH.c                      = [ 0.1,    10]; % 
-%         paraH.cV                     = [ 0.1,    10]; % 
+        paraH.cA                     = [ 0.1,     5]; % 
+        paraH.cV                     = [ 0.1,     5];
 
         % soft bounds, the range for PLB, PUB
         paraS = paraH;
@@ -51,8 +51,8 @@ switch model.mode
         sigP                         = freeParam(6);
         pCommon                      = freeParam(7);
         sigC                         = freeParam(8);
-        c                            = freeParam(9);
-%         cV                           = freeParam(10);
+        cA                            = freeParam(9);
+        cV                            = freeParam(10);
 
 %         sigA = sigV1 + delta_sigA;
 %         sigVs = [sigV1, sigV1 + delta_sigV2];
@@ -84,7 +84,7 @@ switch model.mode
             data_conf = squeeze(data.org_conf(:,:,:,ii,:));
 
             [nLL_bimodal(ii), R{ii}] = calculateNLL_bimodal(...
-                aA, bA, aV, bV, sigA, sigV, sigC, pCommon, c, c,...
+                aA, bA, aV, bV, sigA, sigV, sigC, pCommon, cA, cV,...
                 CI, mu_P, sigMotor, lapse, data_resp, data_conf, model);
 
         end
@@ -164,8 +164,9 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
         elseif strcmp(model.strategy_conf, 'Suboptimal')
 
             var = repmat(1/CI.constC1_shat, [2, size(Post_C1)]);
-            var(1,:,:) = 1/CI.constC2_1_shat;
-            var(2,:,:) = 1/CI.constC2_2_shat;
+            indices = (Post_C1 >= 0.5);
+            var(1,indices) = 1/CI.constC2_1_shat;
+            var(2,indices) = 1/CI.constC2_2_shat;
 
         elseif strcmp(model.strategy_conf, 'Heuristic')
 
@@ -174,17 +175,19 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
 
         end
     
-        % probability of reporting confidence is the value of lognormal
+        % probability of reporting confidence is the value of 1 - lognormal
         % cumulative distribution with a mean of confidence variable (var)
-        % and an S.D. of measurement noise (sigC), evaluated at auditory
-        % and visual criteria.
-        m = var;
-        v = sigC;
-        ryan_mu = log((m.^2)./sqrt(v+m.^2));
-        ryan_sigma = sqrt(log(v./(m.^2)+1));
-        
-        temp_p_conf(1,:,:) = logncdf(cA, squeeze(ryan_mu(1,:,:)), squeeze(ryan_sigma(1,:,:)));
-        temp_p_conf(2,:,:) = logncdf(cV, squeeze(ryan_mu(2,:,:)), squeeze(ryan_sigma(2,:,:)));
+        % and an S.D. of confidence measurement noise (sigC), evaluated at 
+        % auditory and visual criteria.
+%         m = 1./var;
+%         v = sigC;
+%         ryan_mu = log((m.^2)./sqrt(v+m.^2));
+%         ryan_sigma = sqrt(log(v./(m.^2)+1));
+%
+        mu = log(1./var);
+        sigma = sigC;
+        temp_p_conf(1,:,:) = 1 - normcdf(log(cA), squeeze(mu(1,:,:)), squeeze(sigma(1,:,:)));
+        temp_p_conf(2,:,:) = 1 - normcdf(log(cV), squeeze(mu(2,:,:)), squeeze(sigma(2,:,:)));
         
         % add lapse
         p_conf = lapse./2 + (1-lapse) .* temp_p_conf;

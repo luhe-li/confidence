@@ -4,7 +4,7 @@ switch model.mode
 
     case 'initiate'
 
-        out.paraID                   = {'aA','bA','\sigma_{V1}','\sigma_{A} - \sigma_{V1}','\sigma_{V2} - \sigma_{V1}','\sigma_{P}','p_{common}','\sig_{c}','criterion'};
+        out.paraID                   = {'aA','bA','\sigma_{V1}','\sigma_{A}','\sigma_{V2}','\sigma_{P}','p_{common}','\sig_{c}','criterion'};
         out.num_para                 = length(out.paraID);
 
         % hard bounds, the range for LB, UB, larger than soft bounds
@@ -15,8 +15,8 @@ switch model.mode
         paraH.sigV2                  = [1e-1,     2]; % degree
         paraH.sigP                   = [   5,    10]; % degrees
         paraH.pC1                    = [1e-3,1-1e-3]; % weight
-        paraH.sigC                   = [ 0.1,     1]; % measurement noise of confidence
-        paraH.c                      = [ 0.1,     5]; % 
+        paraH.sigC                   = [ 0.1,     2]; % measurement noise of confidence
+        paraH.c                      = [0.01,     5]; % 
 
         % soft bounds, the range for PLB, PUB
         paraS = paraH;
@@ -173,17 +173,18 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
 
         end
     
-        % probability of reporting confidence is the value of lognormal
+        % probability of reporting confidence is the value of 1 - lognormal
         % cumulative distribution with a mean of confidence variable (var)
-        % and an S.D. of measurement noise (sigC), evaluated at auditory
-        % and visual criteria.
-        m = var;
-        v = sigC;
-        ryan_mu = log((m.^2)./sqrt(v+m.^2));
-        ryan_sigma = sqrt(log(v./(m.^2)+1));
-        
-        temp_p_conf(1,:,:) = logncdf(cA, squeeze(ryan_mu(1,:,:)), squeeze(ryan_sigma(1,:,:)));
-        temp_p_conf(2,:,:) = logncdf(cV, squeeze(ryan_mu(2,:,:)), squeeze(ryan_sigma(2,:,:)));
+        % and an S.D. of confidence measurement noise (sigC), evaluated at 
+        % auditory and visual criteria.
+%         m = 1./var;
+%         v = sigC;
+%         ryan_mu = log((m.^2)./sqrt(v+m.^2));
+%         ryan_sigma = sqrt(log(v./(m.^2)+1));
+%
+        mu = log(1./var);
+        temp_p_conf(1,:,:) = 1 - normcdf(log(cA), squeeze(mu(1,:,:)), sigC);
+        temp_p_conf(2,:,:) = 1 - normcdf(log(cV), squeeze(mu(2,:,:)), sigC);
         
         % add lapse
         p_conf = lapse./2 + (1-lapse) .* temp_p_conf;

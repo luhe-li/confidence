@@ -6,10 +6,10 @@ clear; close all;
 %% key model recovery parameters
 
 num_rep               = 100;
-num_runs              = 7;
-num_sample            = 100;
-checkFakeData         = 0;
-
+num_runs              = 3;
+num_sample            = 1;
+checkFakeData         = 1;
+    
 %% Manage path
 
 cur_dir               = pwd;
@@ -78,9 +78,9 @@ else
     
     % choose a reasonble set of parameter set. See variable name below.
     %    aA, bA, sigV1, dsigA, dsigV2, sigP,  pCC, sigC, cA, cV
-    GT = {[1,  0.1,  0.3,   1.2,    1.5,   8, 0.57,  0.3, 1],...% Heuristic
-        [1,  0.1,  0.3,   1.2,    1.5,   8,  0.57,  0.3, 1],...% Suboptimal
-        [1,  0.1,  0.3,   1.2,    1.5,   8,  0.57,  0.3, 2]}; % Optimal
+    GT = {[1,  0.1,  0.3,   1.2,    1.5,   8, 0.57,  7, 3],...% Heuristic
+        [1,  0.1,  0.3,   1.2,    1.5,   8,  0.57,  7, 4],...% Suboptimal
+        [1,  0.1,  1,   1.5,    1.8,   8,  0.57,  0.1, 0.48]}; % Optimal
     
     % simulated model info
     ds_loc                = {'Model averaging'};
@@ -96,7 +96,8 @@ else
     
     for i = 1:num_sample
 
-        for d = 3:-1:1
+        for d = 3%:-1:1
+ 
 
             % jitter each parameters a little
             j_gt = addRandomJitter(GT{d});
@@ -126,7 +127,7 @@ else
             
             for j                 = 1:num_s
                 for v                 = 1:numel(sigVs)
-                    [loc(j,:,v,:), conf(j,:,v,:)] = sim_loc_conf(num_rep, sAV(1,j), sAV(2,j),...
+                    [loc(j,:,v,:), conf(j,:,v,:)] = sim_loc_conf_v2_confVar(num_rep, sAV(1,j), sAV(2,j),...
                         aA, bA, sigA, sigVs(v), muP, sigP, pCommon, sigM, c, c, lapse,  fixP, d);
                 end
             end
@@ -259,8 +260,8 @@ else
             estP                        = NaN(model.num_runs, Val.num_para);
             
             % % test using ground truth parameters
-            % p = GT{d};
-            % test = currModel(p, model, data);
+%             p = GT{d};
+%             test = currModel(p, model, data);
             
             parfor n              = 1:model.num_runs
                 
@@ -346,7 +347,7 @@ end
 
 function newValue = addRandomJitter(originalValue)
     % Calculate 10% of the original value
-    jitterPercent = 0.10; % 10%
+    jitterPercent = 0.01; % 10%
     jitterAmount = originalValue * jitterPercent;
 
     % Randomly choose to add or subtract the jitter
