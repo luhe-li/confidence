@@ -78,8 +78,8 @@ else
     
     % choose a reasonble set of parameter set. See variable name below.
     %    aA, bA, sigV1, dsigA, dsigV2, sigP,  pCC, sigC, cA, cV
-    GT = {[1,  0.1,  0.3,   1.2,    1.5,   8, 0.57,  7, 3],...% Heuristic
-        [1,  0.1,  0.3,   1.2,    1.5,   8,  0.57,  7, 4],...% Suboptimal
+    GT = {[1,  0.1,  1,   1.2,    1.5,   8, 0.57,  0.3, 0.5,0,5],...% Heuristic
+        [1,  0.1,  1,   1.2,    1.5,   8,  0.57,  0.3, 0.5, 0.5],...% Suboptimal
         [1,  0.1,  1,   1.5,    1.8,   8,  0.57,  0.5, 0.48, 0.6]}; % Optimal
     
     % simulated model info
@@ -96,7 +96,7 @@ else
     
     for i = 1:num_sample
 
-        for d = 3:-1:1
+        for d = 1
  
 
             % jitter each parameters a little
