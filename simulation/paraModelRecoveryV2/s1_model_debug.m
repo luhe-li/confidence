@@ -6,8 +6,8 @@ clear; close all;
 %% key model recovery parameters
 
 num_rep               = 100;
-num_runs              = 3;
-num_sample            = 1;
+num_runs              = 7;
+num_sample            = 100;
 checkFakeData         = 0;
 
 %% Manage path
@@ -67,9 +67,9 @@ else
     aud_locs              = sA;
     vis_locs              = sV;
     diffs                 = zeros(length(aud_locs), length(vis_locs));
-    for i                 = 1:length(aud_locs)
+    for ii                 = 1:length(aud_locs)
         for j                 = 1:length(vis_locs)
-            diffs(i, j)           = aud_locs(i) - vis_locs(j);
+            diffs(ii, j)           = aud_locs(ii) - vis_locs(j);
         end
     end
     diff_locs             = unique(abs(diffs))';
@@ -78,9 +78,9 @@ else
     
     % choose a reasonble set of parameter set. See variable name below.
     %    aA, bA, sigV1, dsigA, dsigV2, sigP,  pCC, sigC, cA, cV
-    GT = {[1,  0,  0.3,   1.2,    1.5,   8, 0.57,  0.3, 1],...% Heuristic
-        [1,  0,  0.3,   1.2,    1.5,   8,  0.57,  0.3, 1],...% Suboptimal
-        [1,  0,  0.3,   1.2,    1.5,   8,  0.57,  0.3, 2]}; % Optimal
+    GT = {[1,  0.1,  0.3,   1.2,    1.5,   8, 0.57,  0.3, 1],...% Heuristic
+        [1,  0.1,  0.3,   1.2,    1.5,   8,  0.57,  0.3, 1],...% Suboptimal
+        [1,  0.1,  0.3,   1.2,    1.5,   8,  0.57,  0.3, 2]}; % Optimal
     
     % simulated model info
     ds_loc                = {'Model averaging'};
@@ -92,20 +92,27 @@ else
     
     %% Simulate data
     
-    for ii = 1%:10
-        for d = 3
-            
-            num_para              = length(GT{d});
-            aA                    = GT{d}(1);
-            bA                    = GT{d}(2);
-            sigV1                 = GT{d}(3);
-            sigA                  = GT{d}(4);
-            sigV2                 = GT{d}(5);
+    [fake_data, saveModel, pred] = deal(cell(num_model, num_sample));
+    
+    for i = 1:num_sample
+
+        for d = 3:-1:1
+
+            % jitter each parameters a little
+            j_gt = addRandomJitter(GT{d});
+
+            % assign simulation parameters
+            num_para              = length(j_gt);
+            aA                    = j_gt(1);
+            bA                    = j_gt(2);
+            sigV1                 = j_gt(3);
+            sigA                  = j_gt(4);
+            sigV2                 = j_gt(5);
             sigVs                 = [sigV1, sigV2];
-            sigP                  = GT{d}(6);
-            pCommon               = GT{d}(7);
-            sigM                  = GT{d}(8);
-            c                    = GT{d}(9);
+            sigP                  = j_gt(6);
+            pCommon               = j_gt(7);
+            sigM                  = j_gt(8);
+            c                     = j_gt(9);
             
             lapse                 = 0.02;
             muP                   = 0;
@@ -119,7 +126,7 @@ else
             
             for j                 = 1:num_s
                 for v                 = 1:numel(sigVs)
-                    [loc(j,:,v,:), conf(j,:,v,:)] = sim_loc_conf_v1(num_rep, sAV(1,j), sAV(2,j),...
+                    [loc(j,:,v,:), conf(j,:,v,:)] = sim_loc_conf(num_rep, sAV(1,j), sAV(2,j),...
                         aA, bA, sigA, sigVs(v), muP, sigP, pCommon, sigM, c, c, lapse,  fixP, d);
                 end
             end
@@ -129,6 +136,10 @@ else
             org_loc               = reshape(loc, [numel(sA), numel(sV), num_cue, numel(sigVs), num_rep]);
             org_conf              = reshape(conf, [numel(sA), numel(sV), num_cue, numel(sigVs), num_rep]);
             
+            fake_data{d,i}.org_loc = org_loc;
+            fake_data{d,i}.org_conf = org_conf;
+            fake_data{d,i}.gt = j_gt;
+
             %% check fake data
             if checkFakeData
                 
@@ -247,9 +258,9 @@ else
             NLL                         = NaN(1, model.num_runs);
             estP                        = NaN(model.num_runs, Val.num_para);
             
-            % test using ground truth parameters
-            p = GT{d};
-            test = currModel(p, model, data);
+            % % test using ground truth parameters
+            % p = GT{d};
+            % test = currModel(p, model, data);
             
             parfor n              = 1:model.num_runs
                 
@@ -270,20 +281,20 @@ else
             bestP                 = estP(best_idx, :);
             
             % save all fitting results
-            saveModel{d}.estP(ii,:,:) = estP;
-            saveModel{d}.NLL(ii,:) = NLL;
-            saveModel{d}.bestP(ii,:) = bestP;
-            saveModel{d}.minNLL(ii)= minNLL;
+            saveModel{d,i}.estP = estP;
+            saveModel{d,i}.NLL = NLL;
+            saveModel{d,i}.bestP = bestP;
+            saveModel{d,i}.minNLL = minNLL;
             
             % predict using the best-fitting parameter
             model.mode            = 'predict';
             tmpPred               = currModel(bestP, model, data);
-            pred{d}               = tmpPred;
+            pred{d,i}               = tmpPred;
             
         end
     end
     
-    save(flnm)
+    save(flnm, 'saveModel','pred','data')
     
 end
 
@@ -330,4 +341,22 @@ end
 %
 % end
 %
+
+%% function section
+
+function newValue = addRandomJitter(originalValue)
+    % Calculate 10% of the original value
+    jitterPercent = 0.10; % 10%
+    jitterAmount = originalValue * jitterPercent;
+
+    % Randomly choose to add or subtract the jitter
+    if rand() < 0.5
+        % Add jitter
+        newValue = originalValue + jitterAmount;
+    else
+        % Subtract jitter
+        newValue = originalValue - jitterAmount;
+    end
+end
+
 

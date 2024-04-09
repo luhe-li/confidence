@@ -1,4 +1,4 @@
-function [loc, conf] = sim_loc_conf_v1(num_rep, sA, sV, aA, bA, sigA, sigV, muP, sigP, pCommon, sigM, cA, cV, lapse, fixP, model_ind)
+function [loc, conf] = sim_loc_conf(num_rep, sA, sV, aA, bA, sigA, sigV, muP, sigP, pCommon, sigM, cA, cV, lapse, fixP, model_ind)
 
 %SIM_LOC_CONF_UNITY_RESP Simulates localization responses, confidence judgements,
 %and unity judgements for a bimodal audiovisual stimulus.
@@ -48,7 +48,7 @@ function [loc, conf] = sim_loc_conf_v1(num_rep, sA, sV, aA, bA, sigA, sigV, muP,
 %
 % Date: 24/03/06 
 sigMotor = 1.36;
-x                           = fixP.x;
+% x                           = fixP.x;
 % loc                         = NaN(2,num_rep);
 
 %simulate measurements, which are drawn from Gaussian distributions
@@ -123,13 +123,13 @@ end
 % % make noisy measurements of variance/uncertainty for each modality
 m = variance;
 v = sigM;
-mu = log(m^2
-
-conf_var = lognrnd(log(variance), sigM);
+mu = log((m.^2)./sqrt(v+m.^2));
+sigma = sqrt(log(v./(m.^2)+1));
+est_var = lognrnd(mu, sigma);
 
 % compare confidence variable to criterion
-conf(1,:) = conf_var(1,:) < cA; % report confident (1) if variance is smaller than a criterion
-conf(2,:) = conf_var(2,:) < cV;
+conf(1,:) = est_var(1,:) < cA; % report confident (1) if variance is smaller than a criterion
+conf(2,:) = est_var(2,:) < cV;
 
 % add lapse
 lapse_trial = rand(size(loc))<lapse;

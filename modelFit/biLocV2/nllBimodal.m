@@ -9,15 +9,14 @@ switch model.mode
 
         % hard bounds, the range for LB, UB, larger than soft bounds
         paraH.aA                     = [ 0.8,     2]; % degree
-        paraH.bA                     = [  -2,     2]; % degree
+        paraH.bA                     = [  -1,     1]; % degree
         paraH.sigV1                  = [1e-2,     1]; % degree
         paraH.sigA                   = [1e-1,     2]; % degree
         paraH.sigV2                  = [1e-1,     2]; % degree
-        paraH.sigP                   = [  1,    10]; % degrees
+        paraH.sigP                   = [   5,    10]; % degrees
         paraH.pC1                    = [1e-3,1-1e-3]; % weight
         paraH.sigC                   = [ 0.1,     1]; % measurement noise of confidence
-        paraH.c                      = [ 0.1,    10]; % 
-%         paraH.cV                     = [ 0.1,    10]; % 
+        paraH.c                      = [ 0.1,     5]; % 
 
         % soft bounds, the range for PLB, PUB
         paraS = paraH;
@@ -52,7 +51,6 @@ switch model.mode
         pCommon                      = freeParam(7);
         sigC                         = freeParam(8);
         c                            = freeParam(9);
-%         cV                           = freeParam(10);
 
 %         sigA = sigV1 + delta_sigA;
 %         sigVs = [sigV1, sigV1 + delta_sigV2];
