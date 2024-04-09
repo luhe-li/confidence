@@ -7,8 +7,8 @@ clear; close all;
 
 num_rep               = 100;
 num_runs              = 3;
-num_sample            = 1;
-checkFakeData         = 1;
+num_sample            = 100;
+checkFakeData         = 0;
     
 %% Manage path
 
@@ -80,7 +80,7 @@ else
     %    aA, bA, sigV1, dsigA, dsigV2, sigP,  pCC, sigC, cA, cV
     GT = {[1,  0.1,  0.3,   1.2,    1.5,   8, 0.57,  7, 3],...% Heuristic
         [1,  0.1,  0.3,   1.2,    1.5,   8,  0.57,  7, 4],...% Suboptimal
-        [1,  0.1,  1,   1.5,    1.8,   8,  0.57,  0.1, 0.48]}; % Optimal
+        [1,  0.1,  1,   1.5,    1.8,   8,  0.57,  0.5, 0.48, 0.6]}; % Optimal
     
     % simulated model info
     ds_loc                = {'Model averaging'};
@@ -96,7 +96,7 @@ else
     
     for i = 1:num_sample
 
-        for d = 3%:-1:1
+        for d = 3:-1:1
  
 
             % jitter each parameters a little
@@ -113,8 +113,8 @@ else
             sigP                  = j_gt(6);
             pCommon               = j_gt(7);
             sigM                  = j_gt(8);
-            c                     = j_gt(9);
-            
+            cA                     = j_gt(9);
+            cV                     = j_gt(10);
             lapse                 = 0.02;
             muP                   = 0;
             
@@ -128,7 +128,7 @@ else
             for j                 = 1:num_s
                 for v                 = 1:numel(sigVs)
                     [loc(j,:,v,:), conf(j,:,v,:)] = sim_loc_conf_v2_confVar(num_rep, sAV(1,j), sAV(2,j),...
-                        aA, bA, sigA, sigVs(v), muP, sigP, pCommon, sigM, c, c, lapse,  fixP, d);
+                        aA, bA, sigA, sigVs(v), muP, sigP, pCommon, sigM, cA, cV, lapse,  fixP, d);
                 end
             end
             

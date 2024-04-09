@@ -4,7 +4,7 @@ switch model.mode
 
     case 'initiate'
 
-        out.paraID                   = {'aA','bA','\sigma_{V1}','\sigma_{A}','\sigma_{V2}','\sigma_{P}','p_{common}','\sig_{c}','criterion'};
+        out.paraID                   = {'aA','bA','\sigma_{V1}','\sigma_{A}','\sigma_{V2}','\sigma_{P}','p_{common}','\sig_{c}','c_A','c_V'};
         out.num_para                 = length(out.paraID);
 
         % hard bounds, the range for LB, UB, larger than soft bounds
@@ -16,8 +16,8 @@ switch model.mode
         paraH.sigP                   = [   5,    10]; % degrees
         paraH.pC1                    = [1e-3,1-1e-3]; % weight
         paraH.sigC                   = [ 0.1,     2]; % measurement noise of confidence
-        paraH.c                      = [0.01,     5]; % 
-
+        paraH.cA                      = [0.01,     5]; % 
+paraH.cV                      = [0.01,     5]; % 
         % soft bounds, the range for PLB, PUB
         paraS = paraH;
 
@@ -50,8 +50,8 @@ switch model.mode
         sigP                         = freeParam(6);
         pCommon                      = freeParam(7);
         sigC                         = freeParam(8);
-        c                            = freeParam(9);
-
+        cA                            = freeParam(9);
+cV                            = freeParam(10);
 %         sigA = sigV1 + delta_sigA;
 %         sigVs = [sigV1, sigV1 + delta_sigV2];
         sigVs = [sigV1, sigV2];
@@ -82,7 +82,7 @@ switch model.mode
             data_conf = squeeze(data.org_conf(:,:,:,ii,:));
 
             [nLL_bimodal(ii), R{ii}] = calculateNLL_bimodal(...
-                aA, bA, aV, bV, sigA, sigV, sigC, pCommon, c, c,...
+                aA, bA, aV, bV, sigA, sigV, sigC, pCommon, cA, cV,...
                 CI, mu_P, sigMotor, lapse, data_resp, data_conf, model);
 
         end
