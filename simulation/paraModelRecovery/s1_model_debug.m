@@ -7,8 +7,8 @@ clear; close all;
 
 num_rep               = 100;
 num_runs              = 4;
-num_sample            = 100;
-checkFakeData         = 0;
+num_sample            = 1;
+checkFakeData         = 1;
 
 %% Manage path
 
@@ -78,8 +78,8 @@ else
 
     % choose a reasonble set of parameter set. See variable name below.
     %    aA, bA, sigV1, dsigA, dsigV2, sigP,  pCC, sigC, cA, cV
-    GT = {[1,  0.1,  1,   1.2,    1.5,   8, 0.57,  0.3, 0.5,0,5],...% Heuristic
-        [1,  0.1,  1,   1.2,    1.5,   8,  0.57,  0.3, 0.5, 0.5],...% Suboptimal
+    GT = {[1,  0.1,  1,   1.2,    1.5,   8, 0.57,  0.3, 0.5, 0,5],...% Heuristic
+        [1,  0.1,  0.5,   1.5,    1.8,   8,  0.8, 0.5, 0.48, 0.6],...% Suboptimal
         [1,  0.1,  1,   1.5,    1.8,   8,  0.57,  0.5, 0.48, 0.6]}; % Optimal
 
     % simulated model info
@@ -96,7 +96,7 @@ else
 
     for i = 1:num_sample
 
-        for d = 3:-1:1
+        for d = 2%3:-1:1
 
 
             % jitter each parameters a little
@@ -162,7 +162,7 @@ else
                 ve =  mean(uni_loc, 5) - mean(org_loc,5);
 
                 % diff x cue x reliability
-                [v2_by_raw_diff, all_raw_diffs] = org_by_raw_diffs_4D(ve, sA);
+                [ve_by_raw_diff, all_raw_diffs] = org_by_raw_diffs_4D(ve, sA);
 
                 % assume participants localized perfectly in the unisensory
                 % condition
@@ -182,7 +182,7 @@ else
 
                     for rel = 1: numel(sigVs)
 
-                        i_ve = squeeze(v2_by_raw_diff(:, cue, rel));
+                        i_ve = squeeze(ve_by_raw_diff(:, cue, rel));
                         plot(all_raw_diffs, i_ve, 'Color',clt(rel+1,:))
 
                     end
@@ -370,8 +370,8 @@ for d                = 1:num_model
 
     end
 
-
-    saveas(fullfile(out_dir, printf('%s, rep: %i', ds_conf{d}, num_rep)))
+    saveas(gca, fullfile(pwd, 's1_model_debug', sprintf('recovery_model-%s_rep-%i', ds_conf{d}, num_rep)), 'png')
+    
 end
 
 

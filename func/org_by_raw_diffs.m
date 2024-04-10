@@ -1,3 +1,5 @@
+% This function sorts the 5D data by raw discrepancies.
+
 function [conf_by_diff, all_diffs] = org_by_raw_diffs(org_data, sA)
 
 sV = sA;

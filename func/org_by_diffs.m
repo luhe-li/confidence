@@ -1,3 +1,6 @@
+% This function sorts the 5D data by absolute discrepancies. Usually used
+% when organizing bimodal confidence data.
+
 function [conf_by_diff, all_diffs] = org_by_diffs(org_data, sA)
 
 sV = sA;
