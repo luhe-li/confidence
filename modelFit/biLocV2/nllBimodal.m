@@ -4,13 +4,13 @@ switch model.mode
 
     case 'initiate'
 
-        out.paraID                   = {'aA','bA','\sigma_{V1}','\sigma_{A}','\sigma_{V2}','\sigma_{P}','p_{common}','\sig_{c}','c_A','c_V'};
+        out.paraID                   = {'aA','bA','\sigma_{V1}','\sigma_{A}','\sigma_{V2}','\sigma_{P}','p_{common}','\sigma_{c}','c_A','c_V'};
         out.num_para                 = length(out.paraID);
 
         % hard bounds, the range for LB, UB, larger than soft bounds
         paraH.aA                     = [ 0.8,     2]; % degree
         paraH.bA                     = [  -1,     1]; % degree
-        paraH.sigV1                  = [1e-2,     1]; % degree
+        paraH.sigV1                  = [1e-2,     2]; % degree
         paraH.sigA                   = [1e-1,     2]; % degree
         paraH.sigV2                  = [1e-1,     2]; % degree
         paraH.sigP                   = [   5,    10]; % degrees

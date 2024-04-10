@@ -6,7 +6,7 @@ clear; close all;
 %% key model recovery parameters
 
 num_rep               = 100;
-num_runs              = 3;
+num_runs              = 4;
 num_sample            = 100;
 checkFakeData         = 0;
 
@@ -137,9 +137,10 @@ else
             org_loc               = reshape(loc, [numel(sA), numel(sV), num_cue, numel(sigVs), num_rep]);
             org_conf              = reshape(conf, [numel(sA), numel(sV), num_cue, numel(sigVs), num_rep]);
 
-            fake_data{d,i}.org_loc = org_loc;
-            fake_data{d,i}.org_conf = org_conf;
-            fake_data{d,i}.gt = j_gt;
+            data{d,i}.org_loc = org_loc;
+            data{d,i}.org_conf = org_conf;
+            data{d,i}.gt = j_gt;
+            data{d,i}.sigMotor         = 1.36; % emperical motor noise averaged from first four participants
 
             %% check fake data
             if checkFakeData
@@ -290,7 +291,7 @@ else
             % predict using the best-fitting parameter
             model.mode            = 'predict';
             tmpPred               = currModel(bestP, model, data);
-            pred{d,i}               = tmpPred;
+            pred{d,i}             = tmpPred;
 
         end
     end
@@ -300,48 +301,79 @@ else
 end
 
 %% Plot parameters (predicted vs. ground-truth)
-%
-% fn                    = fieldnames(GT);
-% num_para              = numel(fn);
-%
-% for d                = 1:num_model
-%
-%     figure;
-%     set(gcf, 'Position', get(0, 'Screensize'));
-%     t                     = tiledlayout(2, 4);
-%     title(t, sprintf('%s, rep: %i', ds_conf{dd}, num_rep),'FontSize',15);
-%
-%     % Loop through each parameter
-%     for jj                = 1:num_para
-%
-%         nexttile;
-%         hold on
-%
-%         % Scatter plot of the i-th predicted parameters against its ground-truth
-%         scatter(samples(:,jj)', saveModel{d}.bestP(:,jj), 'k','filled');
-%         xlabel('Ground Truth');
-%         ylabel('Predicted');
-%         axis square; % Make the plot square
-%         axis equal
-%
-%         % plot identity line
-%         minVal = min([samples(:,jj)', saveModel{d}.bestP(:,jj)]);
-%         maxVal = max([samples(:,jj)', saveModel{d}.bestP(:,jj)]);
-%         plot([minVal, maxVal], [minVal, maxVal], '--', 'LineWidth', 1);
-%
-%         % Calculate the Pearson correlation coefficient and p-value
-%         [R, P]                = corrcoef(samples(:,jj)', saveModel{d}.bestP(dd,:,jj));
-%
-%         % Extract the correlation coefficient and p-value
-%         r                     = R(1,2);
-%         p_value               = P(1,2);
-%
-%         % Label the r and p in the title
-%         title(sprintf('Param %s: r= %.2f, p=%.3f', fn{jj}, r, p_value));
-%     end
-%
-% end
-%
+
+% load data
+
+% set other info
+model.num_runs        = 10;
+model.num_sec         = 10; 
+ds_conf               = {'Heuristic','Suboptimal','Optimal'};
+num_model             = numel(ds_conf);
+num_rep               = 100;
+num_sample            = 100;
+
+currModel = str2func('nllBimodal');
+model.mode                  = 'initiate';
+init = currModel([], model, data);
+
+num_para              = init.num_para;
+paraID                = init.paraID;
+
+for d                = 1:num_model
+
+    figure;
+    set(gcf, 'Position', [1 188 1920 789]);
+    t  = tiledlayout(2, 5);
+    title(t, sprintf('%s, rep: %i', ds_conf{d}, num_rep),'FontSize',15);
+    xlabel(t, 'Ground Truth');
+    ylabel(t, 'Predicted');
+
+    % Loop through each parameter
+    for jj                = 1:num_para
+
+        nexttile;
+        hold on
+
+        for i = 1:num_sample
+
+            % extract
+            gt = data{d,i}.gt(jj);
+            pr = saveModel{d,i}.bestP(jj);
+
+            % save in a matrix for correlation
+            all_gt(i, jj) = gt;
+            all_pr(i, jj) = pr;
+
+            if i == num_sample
+
+                % Scatter plot of the i-th predicted parameters against its ground-truth
+                scatter(all_gt(:, jj), all_pr(:, jj), 50,'k','filled','MarkerEdgeColor','none','MarkerFaceAlpha',0.5);
+                axis square; % Make the plot square
+                axis equal
+
+                % identity line
+                plot([init.lb(jj), init.ub(jj)], [init.lb(jj), init.ub(jj)], 'k--', 'LineWidth', 1);
+
+                % Calculate the Pearson correlation coefficient and p-value
+                [R, P]                = corrcoef(all_gt(:, jj), all_pr(:, jj));
+
+                % Extract the correlation coefficient and p-value
+                r                     = R(1,2);
+                p_value               = P(1,2);
+
+                % Label the r and p in the title
+                xlabel(sprintf('%s: r= %.2f, p=%.3f', paraID{jj}, r, p_value));
+
+            end
+
+        end
+
+    end
+
+    saveas(gca, fullfile(pwd, 's1_model_debug', sprintf('recovery_model-%s_rep-%i', ds_conf{d}, num_rep)), 'png')
+    
+end
+
 
 %% function section
 
@@ -358,5 +390,3 @@ newValue(~~randInd) = originalValue(~~randInd) + jitterAmount(~~randInd);
 newValue(~randInd) = originalValue(~randInd) - jitterAmount(~randInd);
 
 end
-
-
