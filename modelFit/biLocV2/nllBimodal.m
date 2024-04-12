@@ -234,6 +234,7 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
             %save predictions on the confidence judgment
             for mm = 1:length(model.modality)
                 R.p_conf_given_sAsV(p,q,mm) = sum(sum(squeeze(temp_p_conf(mm,:,:)).*p_mAmV_given_sAsV));
+                R.conf(p,q,mm,:,:) = 
             end
             %save predictions on localization responses
             if strcmp(model.strategy_loc,'MA')
