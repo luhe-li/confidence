@@ -1,4 +1,4 @@
-function [loc, conf] = sim_loc_conf_v2_confVar(num_rep, sA, sV, aA, bA, sigA, sigV, muP, sigP, pCommon, sigC, cA, cV, lapse, fixP, model_ind)
+function [loc, conf] = sim_loc_conf(num_rep, sA, sV, aA, bA, sigA, sigV, muP, sigP, pCommon, sigC, cA, cV, lapse, fixP, model_ind)
 
 %SIM_LOC_CONF_UNITY_RESP Simulates localization responses, confidence judgements,
 %and unity judgements for a bimodal audiovisual stimulus.
@@ -121,8 +121,6 @@ switch model_ind
 end
 
 % make noisy measurements of variance/uncertainty for each modality
-
-
 mu = log(1./variance);
 conf_var = normrnd(mu,sigC);
 

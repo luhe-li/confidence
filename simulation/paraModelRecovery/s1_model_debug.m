@@ -127,8 +127,8 @@ else
 
             for j                 = 1:num_s
                 for v                 = 1:numel(sigVs)
-                    [loc(j,:,v,:), conf(j,:,v,:)] = sim_loc_conf_v2_confVar(num_rep, sAV(1,j), sAV(2,j),...
-                        aA, bA, sigA, sigVs(v), muP, sigP, pCommon, sigM, cA, cV, lapse,  fixP, d);
+                    [loc(j,:,v,:), conf(j,:,v,:)] = sim_loc_conf(num_rep, sAV(1,j), sAV(2,j),...
+                        aA, bA, sigA, sigVs(v), muP, sigP, pCommon, sigM, cA, cV, lapse, fixP, d);
                 end
             end
 

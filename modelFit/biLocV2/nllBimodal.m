@@ -181,7 +181,6 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
 %         v = sigC;
 %         ryan_mu = log((m.^2)./sqrt(v+m.^2));
 %         ryan_sigma = sqrt(log(v./(m.^2)+1));
-%
         mu = log(1./var);
         temp_p_conf(1,:,:) = 1 - normcdf(log(cA), squeeze(mu(1,:,:)), sigC);
         temp_p_conf(2,:,:) = 1 - normcdf(log(cV), squeeze(mu(2,:,:)), sigC);
@@ -229,14 +228,15 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
         %----------------------- Save if predicted -----------------------
         R = [];
         if strcmp(model.mode,'predict')
+            
             %save the joint likelihood
             R.p_mAmV_given_sAsV(p,q,:,:) = p_mAmV_given_sAsV;
-            %save predictions on the confidence judgment
+            % save the probability of confidence report
             for mm = 1:length(model.modality)
                 R.p_conf_given_sAsV(p,q,mm) = sum(sum(squeeze(temp_p_conf(mm,:,:)).*p_mAmV_given_sAsV));
-                R.conf(p,q,mm,:,:) = 
             end
-            %save predictions on localization responses
+
+            %save predictions on location estimates
             if strcmp(model.strategy_loc,'MA')
                 R.loc(p,q,:,:,:) = MAP_MA;
             elseif strcmp(model.strategy_loc,'MS')
