@@ -1,4 +1,4 @@
-function [loc, conf] = sim_loc_conf(num_rep, sA, sV, aA, bA, sigA, sigV, muP, sigP, pCommon, sigC, cA, cV, lapse, fixP, model_ind)
+function [loc, conf] = sim_loc_conf(num_rep, sA, sV, aA, bA, sigA, sigV, muP, sigP, pCommon, sigC, cA, cV, lapse, model_ind)
 
 %SIM_LOC_CONF_UNITY_RESP Simulates localization responses, confidence judgements,
 %and unity judgements for a bimodal audiovisual stimulus.
@@ -48,7 +48,7 @@ function [loc, conf] = sim_loc_conf(num_rep, sA, sV, aA, bA, sigA, sigV, muP, si
 %
 % Date: 24/03/06 
 sigMotor = 1.36;
-x                           = fixP.x;
+% x                           = fixP.x;
 % loc                         = NaN(2,num_rep);
 
 %simulate measurements, which are drawn from Gaussian distributions
