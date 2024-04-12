@@ -125,6 +125,6 @@ for m = numel(models):-1:1
     flnm        = sprintf('sub%d_ses%i-%i', sub, min(ses), max(ses));
     currentDateTimeStr = datestr(datetime('now'));
     modifiedDateTimeStr = strrep(currentDateTimeStr, ':', '-');
-    save(['FitResults_' models{m} '_' flnm '_' modifiedDateTimeStr],'data','model','pred')
+    save(['FitResults_' models{m} '_' flnm modifiedDateTimeStr],'data','model','pred')
 
 end

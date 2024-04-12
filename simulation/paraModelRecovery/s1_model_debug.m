@@ -113,8 +113,8 @@ else
             sigP                  = j_gt(6);
             pCommon               = j_gt(7);
             sigM                  = j_gt(8);
-            cA                     = j_gt(9);
-            cV                     = j_gt(10);
+            cA                    = j_gt(9);
+            cV                    = j_gt(10);
             lapse                 = 0.02;
             muP                   = 0;
 
