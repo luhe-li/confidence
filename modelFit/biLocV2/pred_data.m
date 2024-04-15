@@ -13,6 +13,8 @@ pCommon               = best_para(7);
 sigM                  = best_para(8);
 cA                    = best_para(9);
 cV                    = best_para(10);
+lapse                 = 0.02;
+muP                   = 0;
 
 % expt info
 cue_label             = {'Post-cue: A','Post-cue: V'};
@@ -26,16 +28,6 @@ sA                    = aud_VA(aud_level); % in deg. 8.5 being middle point
 sV                    = sA;
 sAV                   = combvec(sA, sV);
 num_s                 = size(sAV,2); % number of conditions
-% raw_diff                 = zeros(length(sA), length(sV));
-% for ii                 = 1:length(sA)
-%     for j                 = 1:length(sV)
-%         raw_diff(ii, j)           = sA(ii) - sV(j);
-%     end
-% end
-% abs_diff             = unique(abs(raw_diff))';
-
-lapse                 = 0.02;
-muP                   = 0;
 
 [pred_loc, pred_conf] = deal(NaN(num_s, num_cue, num_rel, num_rep));
 
@@ -49,53 +41,62 @@ end
 org_pred_loc               = reshape(pred_loc, [numel(sA), numel(sV), num_cue, num_rel, num_rep]);
 org_pred_conf              = reshape(pred_conf, [numel(sA), numel(sV), num_cue, num_rel, num_rep]);
 
-% checkFakeData=1;
-% 
-% if checkFakeData
-% 
-%     uni_loc = zeros(size(org_pred_loc));
-% 
-%     loc_a = repmat(sA',[1,numel(sV)]);
-%     loc_v = repmat(sV,[numel(sA),1]);
-% 
-%     uni_loc(:,:,1,1,:) = repmat(loc_a, [1, 1, 1, 1, num_rep]);
-%     uni_loc(:,:,2,1,:) = repmat(loc_v, [1, 1, 1, 1, num_rep]);
-% 
-%     uni_loc(:,:,1,2,:) = uni_loc(:,:,1,1,:);
-%     uni_loc(:,:,2,2,:) = uni_loc(:,:,2,1,:);
-% 
-%     % loc at uni minus loc at bi
-%     ve =  mean(uni_loc, 5) - mean(org_pred_loc,5);
-% 
-%     % diff x cue x reliability
-%     [ve_by_raw_diff, all_raw_diffs] = org_by_raw_diffs_4D(ve, sA);
-% 
-%     % assume participants localized perfectly in the unisensory
-%     % condition
-%     figure; hold on
-%     t = tiledlayout(2, 1);
-%     title(t,sprintf('M%s, rep: %i', model_slc, num_rep))
-%     xlabel(t, 'Audiovisual discrepancy (deg)');
-%     ylabel(t, 'Shift of localization');
-%     t.TileSpacing = 'compact';
-%     t.Padding = 'compact';
-% 
-%     for cue = 1:num_cue
-%         nexttile
-%         title(cue_label{cue})
-%         axis equal
-%         hold on
-% 
-%         for rel = 1: numel(sigVs)
-% 
-%             i_ve = squeeze(ve_by_raw_diff(:, cue, rel));
-%             plot(all_raw_diffs, i_ve)
-% 
-%         end
-%         xticks(all_raw_diffs)
-%     end
-% 
-% end
+%% check similated data without referencing to unimodal responses
+
+checkFakeData=0;
+
+if checkFakeData
+
+    uni_loc = zeros(size(org_pred_loc));
+
+    loc_a = repmat(sA',[1,numel(sV)]);
+    loc_v = repmat(sV,[numel(sA),1]);
+
+    uni_loc(:,:,1,1,:) = repmat(loc_a, [1, 1, 1, 1, num_rep]);
+    uni_loc(:,:,2,1,:) = repmat(loc_v, [1, 1, 1, 1, num_rep]);
+
+    uni_loc(:,:,1,2,:) = uni_loc(:,:,1,1,:);
+    uni_loc(:,:,2,2,:) = uni_loc(:,:,2,1,:);
+
+    % loc at uni minus loc at bi
+    ve =  mean(org_pred_loc,5) - mean(uni_loc, 5);
+
+    % diff x cue x reliability
+    [ve_by_raw_diff, all_raw_diffs] = org_by_raw_diffs_4D(ve, sA);
+
+    % assume participants localized perfectly in the unisensory
+    % condition
+    figure; hold on
+    t = tiledlayout(2, 1);
+    title(t,sprintf('M%s, rep: %i', model_slc, num_rep))
+    xlabel(t, 'Audiovisual discrepancy (V-A, deg)');
+    ylabel(t, 'Shift of localization');
+    t.TileSpacing = 'compact';
+    t.Padding = 'compact';
+
+    for cue = 1:num_cue
+        nexttile
+        title(cue_label{cue})
+        axis equal
+        hold on
+
+        for rel = 1: numel(sigVs)
+
+            i_ve = squeeze(ve_by_raw_diff(:, cue, rel));
+            plot(all_raw_diffs, i_ve)
+
+        end
+        xticks(all_raw_diffs)
+
+        yline(0,'--')
+        if cue == 1
+            plot(all_raw_diffs, all_raw_diffs,'k--')
+        else
+            plot(all_raw_diffs, -all_raw_diffs,'k--')
+        end
+    end
+
+end
 
 %% load real data
 
@@ -128,8 +129,9 @@ end
 
 %% analyze predicted ventriloquist effect
 
-mean_uni_resp = mean(uni_resp, 3); % condition (A,V1,V2) x loc (4) x rep
-loc_a = repmat(mean_uni_resp(1,:)', [1, numel(remapped_sV)]);
+mean_uni_resp = mean(uni_resp, 3); % condition (A,V1,V2) x loc (4)
+% loc_a = repmat(mean_uni_resp(1,:)', [1, numel(remapped_sV)]);
+loc_a = repmat(sA',[1, numel(remapped_sV)]);
 remap_loc_v = repmat(remapped_sV, [numel(sA), 1]);
 
 % reshape into dimensions of bi
@@ -137,7 +139,7 @@ uni_loc(:,:,1,1:2) = repmat(loc_a, [1,1,1,2]);
 uni_loc(:,:,2,1:2) = repmat(remap_loc_v, [1,1,1,2]);
 
 % loc at uni minus loc at bi
-ve = uni_loc - mean(org_pred_loc, 5);
+ve = mean(org_pred_loc, 5) - uni_loc;
 std_ve = std(org_pred_loc,[], 5);
 
 % diff x cue x reliability

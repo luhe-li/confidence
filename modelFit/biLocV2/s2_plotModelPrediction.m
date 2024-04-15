@@ -54,7 +54,7 @@ num_rel               = numel(rel_label);
 figure; hold on
 t = tiledlayout(2, 1);
 title(t,sprintf('%s, rep: %i', models{m}, num_rep))
-xlabel(t, 'Audiovisual discrepancy (deg)');
+xlabel(t, 'Audiovisual discrepancy (A-V, deg)');
 ylabel(t, 'Shift of localization');
 t.TileSpacing = 'compact';
 t.Padding = 'compact';
@@ -66,7 +66,6 @@ for cue = 1:num_cue
     axis equal
     hold on
     xticks(round(raw_diff))
-
 
     for rel = 1:num_rel
 

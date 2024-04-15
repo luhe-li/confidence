@@ -63,8 +63,8 @@ model.num_runs              = 3;
 model.num_sec               = model.num_runs*2;
 deg_per_px                  = rad2deg(atan(170 / 2 / ExpInfo.sittingDistance)) .* 2 / ScreenInfo.xaxis;
 model.x                     = (-512:1:512) * deg_per_px;
-model.sA                    = ExpInfo.speakerLocVA(ExpInfo.audIdx);
-model.sV                    = model.sA;
+model.sA                    = round(ExpInfo.speakerLocVA(ExpInfo.audIdx));
+% model.sV                    = model.sA;
 model.num_SD                = 5;
 model.numBins_A             = 10;
 model.numBins_V             = 15;
@@ -125,6 +125,6 @@ for m = numel(models):-1:1
     flnm        = sprintf('sub%d_ses%i-%i', sub, min(ses), max(ses));
     currentDateTimeStr = datestr(datetime('now'));
     modifiedDateTimeStr = strrep(currentDateTimeStr, ':', '-');
-    save(['FitResults_' models{m} '_' flnm modifiedDateTimeStr],'data','model','pred')
+    save(['FitResults_' models{m} '_' flnm '_' modifiedDateTimeStr],'data','model','pred')
 
 end

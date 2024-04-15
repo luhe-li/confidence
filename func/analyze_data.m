@@ -20,6 +20,7 @@ deg_per_px  = rad2deg(atan(170 / 2 / ExpInfo.sittingDistance)) .* 2 / ScreenInfo
 sA    = ExpInfo.speakerLocVA(ExpInfo.audIdx);
 remapped_sV = ExpInfo.targetPixel .* deg_per_px;
 
+% percentage of reporting confidence in unimodal task
 uni_pconf = mean(mean(uni_conf,3),2); % condition (A,V1,V2) x loc (4)
 
 % organize bi-confidence by discrepancy
@@ -40,8 +41,9 @@ end
 
 %% reorganize ventriloquist effect
 
-mean_uni_resp = mean(uni_resp, 3); % condition (A,V1,V2) x loc (4) x rep
-loc_a = repmat(mean_uni_resp(1,:)', [1, numel(remapped_sV)]);
+mean_uni_resp = mean(uni_resp, 3); % condition (A,V1,V2) x loc (4)
+% loc_a = repmat(mean_uni_resp(1,:)', [1, numel(remapped_sV)]);
+loc_a = repmat(sA',[1, numel(remapped_sV)]);
 remap_loc_v = repmat(remapped_sV, [numel(sA), 1]);
 
 % reshape into dimensions of bi
@@ -49,7 +51,7 @@ uni_loc(:,:,1,1:2) = repmat(loc_a, [1,1,1,2]);
 uni_loc(:,:,2,1:2) = repmat(remap_loc_v, [1,1,1,2]);
 
 % loc at uni minus loc at bi
-ve = uni_loc - mean(bi_resp, 5);
+ve = mean(bi_resp, 5) - uni_loc;
 std_ve = std(bi_resp,[], 5);
 
 % diff x cue x reliability
