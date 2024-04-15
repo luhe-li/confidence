@@ -33,7 +33,7 @@ switch ExpInfo.session
     case 'V'
         ExpInfo.nReliability = 2;
 end
-        
+
 switch ExpInfo.practice
     case 1
         outFileName = sprintf('uniLoc_sub%i_ses-%s', ExpInfo.subjID, ExpInfo.session);
@@ -42,9 +42,14 @@ switch ExpInfo.practice
     case 2
         switch ExpInfo.session
             case 'A'
-                ExpInfo.nRep = 4; 
+                ExpInfo.nRep = 4;
             case 'V'
-                ExpInfo.nRep = 2; 
+                ExpInfo.nRep = 2;
+                load([sprintf('AVbias_sub%i', ExpInfo.subjID) '.mat'])
+                ExpInfo.targetPixel  = unique(fitSV);
+                ExpInfo.randVisPixel = ExpInfo.targetPixel(ExpInfo.randVisIdx);
+                ExpInfo.v_loc_cm     = ExpInfo.randVisPixel ./ ScreenInfo.numPixels_perCM;
+                ExpInfo.v_loc_deg    = rad2deg(atan(ExpInfo.v_loc_cm/ExpInfo.sittingDistance));
         end
         outFileName = sprintf('uniLoc_practice_sub%i_ses-%s', ExpInfo.subjID, ExpInfo.session);
         ExpInfo.numBlocks = 2;
@@ -74,9 +79,9 @@ switch ExpInfo.mode
         opacity = 1;
         HideCursor();
         if strcmp(ExpInfo.session, 'A')
-        %Arduino = serial('/dev/cu.usbmodemFD131','BaudRate',115200); % make sure this value matches with the baudrate in the arduino code
-        Arduino = serial('/dev/cu.usbmodem14101','BaudRate',115200);
-        fopen(Arduino);
+            %Arduino = serial('/dev/cu.usbmodemFD131','BaudRate',115200); % make sure this value matches with the baudrate in the arduino code
+            Arduino = serial('/dev/cu.usbmodem14101','BaudRate',115200);
+            fopen(Arduino);
         end
     case 2 % debug mode
         windowSize = [100 100 1000 600]; % open a smaller window
@@ -89,8 +94,8 @@ AssertOpenGL();
 GetSecs();
 WaitSecs(0.1);
 KbCheck();
-% ListenChar(2); % silence the keyboard 
-% if you silence it at least leave one key on the other keyboard able to 
+% ListenChar(2); % silence the keyboard
+% if you silence it at least leave one key on the other keyboard able to
 % stop the script. Otherwise you can't even stop the program when
 % debugging since you SetMouse after every click.
 
@@ -175,7 +180,7 @@ VSinfo.blankScreen         = zeros(ScreenInfo.xaxis,ScreenInfo.yaxis);
 
 % white noise background
 VSinfo.GWNnumPixel         = 4; % 4 pixels will have the same color
-VSinfo.GWNnumFrames        = 10; 
+VSinfo.GWNnumFrames        = 10;
 VSinfo.gwn_texture         = generateNoisyBackground(VSinfo,ScreenInfo,windowPtr);
 
 % draw one blob
@@ -209,15 +214,12 @@ ExpInfo.sittingDistance              = 113.0; %cm
 ExpInfo.numSpeaker                   = 16;
 ExpInfo.LRmostSpeakers2center        = 65.5; %cm
 ExpInfo.LRmostVisualAngle            = (180/pi) * atan(ExpInfo.LRmostSpeakers2center / ...
-                                      ExpInfo.sittingDistance);
+    ExpInfo.sittingDistance);
 ExpInfo.speakerLocCM = linspace(-ExpInfo.LRmostSpeakers2center, ExpInfo.LRmostSpeakers2center, ExpInfo.numSpeaker);
 ExpInfo.speakerLocVA = linspace(-ExpInfo.LRmostVisualAngle, ExpInfo.LRmostVisualAngle, ExpInfo.numSpeaker);
 ExpInfo.speakerLocPixel = round(ExpInfo.speakerLocCM * ScreenInfo.numPixels_perCM);
 
 % visual locations in pixel
-ExpInfo.v_loc_cm     = ExpInfo.speakerLocCM(ExpInfo.randVisIdx);
-ExpInfo.v_loc_deg    = rad2deg(atan(ExpInfo.v_loc_cm/ExpInfo.sittingDistance));
-ExpInfo.randVisPixel = ExpInfo.v_loc_cm .* ScreenInfo.numPixels_perCM;
 
 % split all the trials into blocks
 ExpInfo.nTrials = ExpInfo.nLevel * ExpInfo.nRep * ExpInfo.nReliability;
@@ -253,11 +255,11 @@ Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
 DrawFormattedText(windowPtr, 'Press any button to start the unimodal localization task.',...
     'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis,[255 255 255]);
 Screen('Flip',windowPtr);
-KbWait(-3); 
+KbWait(-3);
 WaitSecs(1);
 
 for i = 1:ExpInfo.nTrials
-
+    
     %% present stimuli
     
     if strcmp(ExpInfo.session, 'A')
@@ -270,13 +272,13 @@ for i = 1:ExpInfo.nTrials
         SetMouse(ScreenInfo.xaxis*2, ScreenInfo.yaxis*2, windowPtr);
         HideCursor;
         Resp(i)= LocalizeVisualStim(i, ExpInfo,...
-                ScreenInfo,VSinfo,windowPtr);
-
+            ScreenInfo,VSinfo,windowPtr);
+        
     end
-
+    
     %% save by trial
     save(fullfile(outDir,outFileName),'Resp','ExpInfo','ScreenInfo','VSinfo','AudInfo');
-
+    
     %% add breaks
     if ismember(i,ExpInfo.breakTrials)
         
@@ -284,14 +286,14 @@ for i = 1:ExpInfo.nTrials
         idxBlock = find(ExpInfo.breakTrials==i);
         firstTrial = ExpInfo.firstTrial(idxBlock);
         lastTrial = ExpInfo.lastTrial(idxBlock);
-%         blockPt = sum([Resp(firstTrial:lastTrial).point]);
-%         maxPtPossible = sum([Resp(firstTrial:lastTrial).maxPtPossible]);
+        %         blockPt = sum([Resp(firstTrial:lastTrial).point]);
+        %         maxPtPossible = sum([Resp(firstTrial:lastTrial).maxPtPossible]);
         
         blockInfo = sprintf('You''ve finished block %i/%i. Please take a break.',idxBlock,ExpInfo.numBlocks);
-%         pointInfo = sprintf('Your total points of the last block is %.2f (max points possible: %.2f)',blockPt, maxPtPossible);
+        %         pointInfo = sprintf('Your total points of the last block is %.2f (max points possible: %.2f)',blockPt, maxPtPossible);
         
         Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
-        [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
+            [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
         DrawFormattedText(windowPtr, blockInfo,...
             'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis-30,...
             [255 255 255]);
@@ -307,17 +309,17 @@ c  = clock;
 ExpInfo.finish  = sprintf('%04d/%02d/%02d_%02d:%02d:%02d',c(1),c(2),c(3),c(4),c(5),ceil(c(6)));
 
 if ExpInfo.session == 'V'
-
+    
     [~, temp1] = sort(VSinfo.SD_blob);
     reliSortResp = Resp(temp1);
     reli1resp = reliSortResp(1:ExpInfo.nRep * ExpInfo.nLevel);
     reli2resp = reliSortResp((ExpInfo.nRep * ExpInfo.nLevel+1):end);
-
+    
     [~, temp2] = sort([reli1resp.target_idx]);
     sortedReli1Resp = reli1resp(temp2);
     [~, temp3] = sort([reli2resp.target_idx]);
     sortedReli2Resp = reli2resp(temp3);
-
+    
     save(fullfile(outDir,outFileName),'Resp','reliSortResp','ExpInfo','ScreenInfo','VSinfo','AudInfo','sortedReli1Resp','sortedReli2Resp')
     
 else
