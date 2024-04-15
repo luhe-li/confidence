@@ -51,7 +51,7 @@ switch model.mode
         pCommon                      = freeParam(7);
         sigC                         = freeParam(8);
         cA                            = freeParam(9);
-cV                            = freeParam(10);
+        cV                            = freeParam(10);
 %         sigA = sigV1 + delta_sigA;
 %         sigVs = [sigV1, sigV1 + delta_sigV2];
         sigVs = [sigV1, sigV2];
