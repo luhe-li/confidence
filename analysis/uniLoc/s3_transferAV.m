@@ -3,7 +3,7 @@ clear; clc; close all;
 
 %% set up
 
-sub = 6;
+sub = 7;
 
 %% manage path
 
@@ -16,7 +16,7 @@ if ~exist(out_dir,'dir') mkdir(out_dir); end
 %% organize data
 
 % load V first to avoid overwriting sortedResp
-load(sprintf('uniLoc_sub%i_ses%s', sub, '-V'))
+load(sprintf('uniLoc_sub%i_ses%s', sub, '-V1'))
 load(sprintf('uniLoc_sub%i_ses%s', sub, '-A'))
 % set up
 nRep = ExpInfo.nRep;

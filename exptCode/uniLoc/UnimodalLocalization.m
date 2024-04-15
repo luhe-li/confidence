@@ -30,9 +30,12 @@ end
 switch ExpInfo.session
     case 'A'
         ExpInfo.nReliability = 1;
-    case 'V'
+    case 'V1'
+        ExpInfo.nReliability = 2;
+    case 'V2'
         ExpInfo.nReliability = 2;
 end
+
 
 switch ExpInfo.practice
     case 1
@@ -43,13 +46,11 @@ switch ExpInfo.practice
         switch ExpInfo.session
             case 'A'
                 ExpInfo.nRep = 4;
-            case 'V'
+            case 'V1'
+                ExpInfo.nRep = 2;          
+            case 'V2'
                 ExpInfo.nRep = 2;
-                load([sprintf('AVbias_sub%i', ExpInfo.subjID) '.mat'])
-                ExpInfo.targetPixel  = unique(fitSV);
-                ExpInfo.randVisPixel = ExpInfo.targetPixel(ExpInfo.randVisIdx);
-                ExpInfo.v_loc_cm     = ExpInfo.randVisPixel ./ ScreenInfo.numPixels_perCM;
-                ExpInfo.v_loc_deg    = rad2deg(atan(ExpInfo.v_loc_cm/ExpInfo.sittingDistance));
+
         end
         outFileName = sprintf('uniLoc_practice_sub%i_ses-%s', ExpInfo.subjID, ExpInfo.session);
         ExpInfo.numBlocks = 2;
@@ -221,6 +222,21 @@ ExpInfo.speakerLocPixel = round(ExpInfo.speakerLocCM * ScreenInfo.numPixels_perC
 
 % visual locations in pixel
 
+switch ExpInfo.session
+    case 'V1'
+        ExpInfo.v_loc_cm     = ExpInfo.speakerLocCM(ExpInfo.randVisIdx);
+        ExpInfo.v_loc_deg    = rad2deg(atan(ExpInfo.v_loc_cm/ExpInfo.sittingDistance));
+        ExpInfo.randVisPixel = ExpInfo.v_loc_cm .* ScreenInfo.numPixels_perCM;
+    case 'V2'
+        
+        load([sprintf('AVbias_sub%i', ExpInfo.subjID) '.mat'])
+        ExpInfo.targetPixel  = unique(fitSV);
+        ExpInfo.randVisPixel = ExpInfo.targetPixel(ExpInfo.randVisIdx);
+        ExpInfo.v_loc_cm     = ExpInfo.randVisPixel ./ ScreenInfo.numPixels_perCM;
+        ExpInfo.v_loc_deg    = rad2deg(atan(ExpInfo.v_loc_cm/ExpInfo.sittingDistance));
+end
+
+
 % split all the trials into blocks
 ExpInfo.nTrials = ExpInfo.nLevel * ExpInfo.nRep * ExpInfo.nReliability;
 blocks = linspace(0,ExpInfo.nTrials,...
@@ -308,7 +324,7 @@ end
 c  = clock;
 ExpInfo.finish  = sprintf('%04d/%02d/%02d_%02d:%02d:%02d',c(1),c(2),c(3),c(4),c(5),ceil(c(6)));
 
-if ExpInfo.session == 'V'
+if ExpInfo.session == 'V1'
     
     [~, temp1] = sort(VSinfo.SD_blob);
     reliSortResp = Resp(temp1);
