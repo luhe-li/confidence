@@ -197,7 +197,7 @@ VSinfo.Cloud                         = reshape(cloud_temp,length(x),length(y)) .
 %% Experiment set up
 
 % choose auditory locations out of 16 speakers, in index
-ExpInfo.audLevel = [5,7,10,12]; %5:12
+ExpInfo.audLevel = [6, 8, 9, 11]; %5:12
 ExpInfo.nLevel = numel(ExpInfo.audLevel);
 for tt = 1:ExpInfo.nRep
     ExpInfo.randIdx(:,tt) = randperm(ExpInfo.nLevel)';
