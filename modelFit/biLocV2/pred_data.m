@@ -52,11 +52,8 @@ if checkFakeData
     loc_a = repmat(sA',[1,numel(sV)]);
     loc_v = repmat(sV,[numel(sA),1]);
 
-    uni_loc(:,:,1,1,:) = repmat(loc_a, [1, 1, 1, 1, num_rep]);
-    uni_loc(:,:,2,1,:) = repmat(loc_v, [1, 1, 1, 1, num_rep]);
-
-    uni_loc(:,:,1,2,:) = uni_loc(:,:,1,1,:);
-    uni_loc(:,:,2,2,:) = uni_loc(:,:,2,1,:);
+    uni_loc(:,:,1,1:2,:) = repmat(loc_a, [1, 1, 1, 2, num_rep]);
+    uni_loc(:,:,2,1:2,:) = repmat(loc_v, [1, 1, 1, 2, num_rep]);
 
     % loc at uni minus loc at bi
     ve =  mean(org_pred_loc,5) - mean(uni_loc, 5);

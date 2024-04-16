@@ -1,5 +1,5 @@
 function [mean_conf, std_mean_conf, uni_pconf, abs_diff,...
-    mean_ve, std_ve, raw_diff] = analyze_data(sub_slc,ses_slc)
+    mean_ve, std_ve, raw_diff] = analyze_data(sub_slc, ses_slc)
 
 % mean_conf, std_mean_conf: abs_diff x cue x reliability
 % uni_pconf: condition (A,V1,V2) x abs_diff

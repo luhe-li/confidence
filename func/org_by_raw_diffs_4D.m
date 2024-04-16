@@ -6,7 +6,7 @@
 %-------------------------------------------------------------------------------
 % Inputs:
 % org_data: The original 4D dataset to be organized, with dimensions representing
-%           [auditory location, visual location, cue, reliability, repetition.
+%           [auditory location, visual location, cue, reliability.
 % sA: A vector representing the auditory location indices. The subtraction of
 %     sA from itself is used to find the raw differences.
 
@@ -40,7 +40,7 @@ for i = 1:num_diffs
     
     end
     
-    % Average data across repeats for the current discrepancy, if applicable
+    % Average data across locations for the current discrepancy, if applicable
     if j > 1
         m_temp_data = mean(tempData,3);
     else

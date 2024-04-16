@@ -54,7 +54,7 @@ num_rel               = numel(rel_label);
 figure; hold on
 t = tiledlayout(2, 1);
 title(t,sprintf('%s, rep: %i', models{m}, num_rep))
-xlabel(t, 'Audiovisual discrepancy (A-V, deg)');
+xlabel(t, 'Audiovisual discrepancy (V-A, deg)');
 ylabel(t, 'Shift of localization');
 t.TileSpacing = 'compact';
 t.Padding = 'compact';
