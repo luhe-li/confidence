@@ -1,6 +1,7 @@
 
 % In this task, participants localized visual and auditory stimulic
-% presented alone in separate sessions. Each trial started with a fixation
+% presented alone in separate sessions. Each trial started with a
+% fixationSCA
 % cross presented straight ahead for 500 ms, followed by 300 ms of blank
 % screen. Then, either an auditory or a visual 100 ms-long stimulus was
 % presented, followed by 200 ms of blank screen. Next, the response cursor
