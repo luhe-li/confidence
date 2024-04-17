@@ -120,8 +120,6 @@ for cue = 1:num_cue
             yline(uni_pconf(rel+1),'--','Color',clt(rel+1,:))
         end
 
-    end
-
-    
+    end    
 
 end
