@@ -79,9 +79,9 @@ for cue = 1:num_cue
 
     yline(0,'--')
     if cue == 1
-        plot(raw_diff, raw_diff,'k--')
-    else
         plot(raw_diff, -raw_diff,'k--')
+    else
+        plot(raw_diff, raw_diff,'k--')
     end
 
 end
