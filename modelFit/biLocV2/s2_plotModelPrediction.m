@@ -1,10 +1,10 @@
 
-clear; clc; close all; rng('Shuffle');
+clear; %close all; rng('Shuffle');
 
-sub = 4;
+sub = 6;
 ses = 1:2;
 models = {'Heuristic','Suboptimal','Optimal'};
-m = 3;
+m = 2;
 
 flnm = sprintf('FitResults_%s_sub%i_ses%i-%i', models{m}, sub, min(ses), max(ses));
 

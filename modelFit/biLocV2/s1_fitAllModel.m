@@ -4,7 +4,7 @@ clear; clc; close all; rng('Shuffle');
 %% set environment
 
 useCluster = 0;
-sub = 4;
+sub = 6;
 ses = 1:2;
 models = {'Heuristic','Suboptimal','Optimal'};
 
@@ -40,6 +40,10 @@ switch useCluster
         fprintf('Number of cores: %i  \n', numCores);
 end
 
+if isempty(gcp('nocreate'))
+    parpool(numCores-1);
+end
+
 %% manage paths
 
 currentDir                  = pwd;
@@ -59,7 +63,7 @@ data.sigMotor = get_point_sigM(sub);
 %% define model
 
 % set fixed & set-up parameters
-model.num_runs              = 3;
+model.num_runs              = numCores - 1;
 model.num_sec               = model.num_runs*2;
 deg_per_px                  = rad2deg(atan(170 / 2 / ExpInfo.sittingDistance)) .* 2 / ScreenInfo.xaxis;
 model.x                     = (-512:1:512) * deg_per_px;
