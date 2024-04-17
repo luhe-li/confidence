@@ -76,54 +76,6 @@ model.strategy_loc          = 'MA';
 OPTIONS.UncertaintyHandling = 0;
 OPTIONS.TolMesh = 1e-4;
 
-%% check data
-
-    uni_loc = nan(size(data.org_resp));
-
-    loc_a = repmat(model.sA',[1,numel(model.sV)]);
-    loc_v = repmat(model.sV,[numel(model.sA),1]);
-
-    uni_loc(:,:,1,:,:) = repmat(loc_a, [1, 1, 1, 2, model.num_rep]);
-    uni_loc(:,:,2,:,:) = repmat(loc_v, [1, 1, 1, 2, model.num_rep]);
-
-    % loc at uni minus loc at bi
-    ve =  mean(data.org_resp,5) - mean(uni_loc, 5);
-
-    % diff x cue x reliability
-    [ve_by_raw_diff, all_raw_diffs] = org_by_raw_diffs_4D(ve, model.sA);
-
-    % assume participants localized perfectly in the unisensory
-    % condition
-    figure; hold on
-    t = tiledlayout(2, 1);
-%     title(t,sprintf('M%s, rep: %i', model_slc, num_rep))
-    xlabel(t, 'Audiovisual discrepancy (V-A, deg)');
-    ylabel(t, 'Shift of localization');
-    t.TileSpacing = 'compact';
-    t.Padding = 'compact';
-
-    for cue = 1:2
-        nexttile
-        axis equal
-        hold on
-
-        for rel = 1: 2
-
-            i_ve = squeeze(ve_by_raw_diff(:, cue, rel));
-            plot(all_raw_diffs, i_ve)
-
-        end
-        xticks(all_raw_diffs)
-
-        yline(0,'--')
-        if cue == 1
-            plot(all_raw_diffs, all_raw_diffs,'k--')
-        else
-            plot(all_raw_diffs, -all_raw_diffs,'k--')
-        end
-    end
-
-
 %% model fitting
 
 for m = numel(models):-1:1

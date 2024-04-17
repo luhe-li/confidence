@@ -52,7 +52,7 @@ rel_label             = {'High reliability','Low reliability'};
 num_rel               = numel(rel_label);
 
 figure; hold on
-t = tiledlayout(2, 1);
+t = tiledlayout(1, 2);
 title(t,sprintf('%s, rep: %i', models{m}, num_rep))
 xlabel(t, 'Audiovisual discrepancy (V-A, deg)');
 ylabel(t, 'Shift of localization');
@@ -79,9 +79,9 @@ for cue = 1:num_cue
 
     yline(0,'--')
     if cue == 1
-        plot(raw_diff, -raw_diff,'k--')
-    else
         plot(raw_diff, raw_diff,'k--')
+    else
+        plot(raw_diff, -raw_diff,'k--')
     end
 
 end

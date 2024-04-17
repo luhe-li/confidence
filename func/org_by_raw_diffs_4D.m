@@ -17,7 +17,7 @@
 % raw_diffs: A vector containing the unique raw discrepancies calculated from sA.
 %-------------------------------------------------------------------------------
 
-function [data_by_diff, raw_diffs] = org_by_raw_diffs_4D(org_data, sA)
+function [data_by_diff, raw_diffs] = org_by_raw_diffs_4D(data, sA)
 
 sV = sA;
 raw_diffs = unique(sV' - sA)';
@@ -36,7 +36,7 @@ for i = 1:num_diffs
     for j = 1:numel(audPairs)
         
         % Extract data for this specific audIdx and visIdx pair across all other dimensions
-        tempData = cat(3, tempData, squeeze(org_data(audPairs(j), visPairs(j), :, :)));
+        tempData = cat(3, tempData, squeeze(data(audPairs(j), visPairs(j), :, :)));
     
     end
     
