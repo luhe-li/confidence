@@ -12,9 +12,9 @@ switch exp
 
     case 'biLoc'
 
-        for i = 1:numel(ses_slc)
+        for ses = 1:numel(ses_slc)
 
-            flnm        = sprintf('biLoc_sub%i_ses%i.mat', sub_slc, ses_slc(i));
+            flnm        = sprintf('biLoc_sub%i_ses%i.mat', sub_slc, ses_slc(ses));
             load(fullfile(data_dir, flnm));
 
             % conditions

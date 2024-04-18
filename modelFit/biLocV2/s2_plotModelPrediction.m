@@ -1,10 +1,10 @@
 
-clear; clc; close all; rng('Shuffle');
+clear; %close all; rng('Shuffle');
 
-sub = 4;
+sub = 6;
 ses = 1:2;
 models = {'Heuristic','Suboptimal','Optimal'};
-m = 3;
+m = 2;
 
 flnm = sprintf('FitResults_%s_sub%i_ses%i-%i', models{m}, sub, min(ses), max(ses));
 
@@ -52,9 +52,9 @@ rel_label             = {'High reliability','Low reliability'};
 num_rel               = numel(rel_label);
 
 figure; hold on
-t = tiledlayout(2, 1);
+t = tiledlayout(1, 2);
 title(t,sprintf('%s, rep: %i', models{m}, num_rep))
-xlabel(t, 'Audiovisual discrepancy (A-V, deg)');
+xlabel(t, 'Audiovisual discrepancy (V-A, deg)');
 ylabel(t, 'Shift of localization');
 t.TileSpacing = 'compact';
 t.Padding = 'compact';
@@ -120,8 +120,6 @@ for cue = 1:num_cue
             yline(uni_pconf(rel+1),'--','Color',clt(rel+1,:))
         end
 
-    end
-
-    
+    end    
 
 end

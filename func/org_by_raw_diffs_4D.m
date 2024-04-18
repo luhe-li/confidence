@@ -6,7 +6,7 @@
 %-------------------------------------------------------------------------------
 % Inputs:
 % org_data: The original 4D dataset to be organized, with dimensions representing
-%           [auditory location, visual location, cue, reliability, repetition.
+%           [auditory location, visual location, cue, reliability.
 % sA: A vector representing the auditory location indices. The subtraction of
 %     sA from itself is used to find the raw differences.
 
@@ -17,7 +17,7 @@
 % raw_diffs: A vector containing the unique raw discrepancies calculated from sA.
 %-------------------------------------------------------------------------------
 
-function [data_by_diff, raw_diffs] = org_by_raw_diffs_4D(org_data, sA)
+function [data_by_diff, raw_diffs] = org_by_raw_diffs_4D(data, sA)
 
 sV = sA;
 raw_diffs = unique(sV' - sA)';
@@ -36,11 +36,11 @@ for i = 1:num_diffs
     for j = 1:numel(audPairs)
         
         % Extract data for this specific audIdx and visIdx pair across all other dimensions
-        tempData = cat(3, tempData, squeeze(org_data(audPairs(j), visPairs(j), :, :)));
+        tempData = cat(3, tempData, squeeze(data(audPairs(j), visPairs(j), :, :)));
     
     end
     
-    % Average data across repeats for the current discrepancy, if applicable
+    % Average data across locations for the current discrepancy, if applicable
     if j > 1
         m_temp_data = mean(tempData,3);
     else
