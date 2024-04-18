@@ -31,9 +31,7 @@ end
 switch ExpInfo.session
     case 'A'
         ExpInfo.nReliability = 1;
-    case 'V1'
-        ExpInfo.nReliability = 2;
-    case 'V2'
+    case 'V'
         ExpInfo.nReliability = 2;
 end
 
@@ -47,11 +45,8 @@ switch ExpInfo.practice
         switch ExpInfo.session
             case 'A'
                 ExpInfo.nRep = 4;
-            case 'V1'
+            case 'V'
                 ExpInfo.nRep = 2;          
-            case 'V2'
-                ExpInfo.nRep = 2;
-
         end
         outFileName = sprintf('uniLoc_practice_sub%i_ses-%s', ExpInfo.subjID, ExpInfo.session);
         ExpInfo.numBlocks = 2;
@@ -222,21 +217,9 @@ ExpInfo.speakerLocVA = linspace(-ExpInfo.LRmostVisualAngle, ExpInfo.LRmostVisual
 ExpInfo.speakerLocPixel = round(ExpInfo.speakerLocCM * ScreenInfo.numPixels_perCM);
 
 % visual locations in pixel
-
-switch ExpInfo.session
-    case 'V1'
-        ExpInfo.v_loc_cm     = ExpInfo.speakerLocCM(ExpInfo.randVisIdx);
-        ExpInfo.v_loc_deg    = rad2deg(atan(ExpInfo.v_loc_cm/ExpInfo.sittingDistance));
-        ExpInfo.randVisPixel = ExpInfo.v_loc_cm .* ScreenInfo.numPixels_perCM;
-    case 'V2'
-        
-        load([sprintf('AVbias_sub%i', ExpInfo.subjID) '.mat'])
-        ExpInfo.targetPixel  = unique(fitSV);
-        ExpInfo.randVisPixel = ExpInfo.targetPixel(ExpInfo.randVisIdx);
-        ExpInfo.v_loc_cm     = ExpInfo.randVisPixel ./ ScreenInfo.numPixels_perCM;
-        ExpInfo.v_loc_deg    = rad2deg(atan(ExpInfo.v_loc_cm/ExpInfo.sittingDistance));
-end
-
+ExpInfo.v_loc_cm     = ExpInfo.speakerLocCM(ExpInfo.randVisIdx);
+ExpInfo.v_loc_deg    = rad2deg(atan(ExpInfo.v_loc_cm/ExpInfo.sittingDistance));
+ExpInfo.randVisPixel = ExpInfo.v_loc_cm .* ScreenInfo.numPixels_perCM;
 
 % split all the trials into blocks
 ExpInfo.nTrials = ExpInfo.nLevel * ExpInfo.nRep * ExpInfo.nReliability;
@@ -325,7 +308,7 @@ end
 c  = clock;
 ExpInfo.finish  = sprintf('%04d/%02d/%02d_%02d:%02d:%02d',c(1),c(2),c(3),c(4),c(5),ceil(c(6)));
 
-if ExpInfo.session == 'V1'
+if ExpInfo.session == 'V'
     
     [~, temp1] = sort(VSinfo.SD_blob);
     reliSortResp = Resp(temp1);
@@ -346,4 +329,5 @@ else
     save(fullfile(outDir,outFileName),'Resp','sortedResp','ExpInfo','ScreenInfo','VSinfo','AudInfo');
 end
 
+ShowCursor;
 % Screen('CloseAll');

@@ -185,11 +185,9 @@ load([sprintf('AVbias_sub%i', ExpInfo.subjID) '.mat'])
 
 
 x = ExpInfo.speakerLocPixel(ExpInfo.randAudIdx);
-
 coefsA = squeeze(Transfer.PxCoeff(1, :));
-coefsV = squeeze(Transfer.PxCoeff(2, :));
 fitRA = x .* coefsA(2) + coefsA(1);
-fitSV = (fitRA - coefsV(1)) ./ coefsV(2);
+fitSV = fitRA - ScreenInfo.xmid;
 
 
 ExpInfo.targetPixel                  = unique(fitSV);
@@ -279,5 +277,5 @@ ExpInfo.finish                       = sprintf('%04d/%02d/%02d_%02d:%02d:%02d',c
 % [~, temp]                            = sort([Resp(1:end).loc_idx]);
 % sortedResp                           = Resp(temp);
 save(fullfile(outDir,outFileName),'Resp','ExpInfo','ScreenInfo','VSinfo','AudInfo');
-
+ShowCursor;
 % Screen('CloseAll')

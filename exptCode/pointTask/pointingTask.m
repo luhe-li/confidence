@@ -233,5 +233,5 @@ ExpInfo.finish  = sprintf('%04d/%02d/%02d_%02d:%02d:%02d',c(1),c(2),c(3),c(4),c(
 sortedResp = Resp(temp2);
 save(fullfile(outDir,outFileName),'Resp','sortedResp','ExpInfo','ScreenInfo','VSinfo');
 
-
+ShowCursor;
 % Screen('CloseAll');
