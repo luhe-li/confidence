@@ -42,8 +42,8 @@ end
 %% reorganize ventriloquist effect
 
 mean_uni_resp = mean(uni_resp, 3); % condition (A,V1,V2) x loc (4)
-% loc_a = repmat(mean_uni_resp(1,:)', [1, numel(remapped_sV)]);
-loc_a = repmat(sA',[1, numel(remapped_sV)]);
+loc_a = repmat(mean_uni_resp(1,:)', [1, numel(remapped_sV)]);
+% loc_a = repmat(sA',[1, numel(remapped_sV)]);
 remap_loc_v = repmat(remapped_sV, [numel(sA), 1]);
 
 % reshape into dimensions of bi
