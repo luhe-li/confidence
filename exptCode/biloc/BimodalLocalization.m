@@ -11,7 +11,7 @@ while isempty(ExpInfo.subjID)        == 1
     end
 end
 
-switch ExpInfo.practice
+switch ExpInfo.practice1
     case 1
         outFileName                          = sprintf('biLoc_sub%i_ses%i', ExpInfo.subjID, ExpInfo.session);
         ExpInfo.nRep                         = 6; % number of trial per condition level
