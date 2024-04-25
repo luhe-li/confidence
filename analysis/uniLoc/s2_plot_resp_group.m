@@ -2,7 +2,11 @@ clear; clc; close all;
 
 %% set up
 
+<<<<<<< Updated upstream
 sub_slc = 9;
+=======
+sub_slc = 7;
+>>>>>>> Stashed changes
 
 % session
 ses_labels = {'-A','-V'};
