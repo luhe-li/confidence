@@ -171,6 +171,3 @@ for cue = 1:numel(cueIdx)
 end
 flnm = sprintf('ve_sub%i_ses%i-%i', sub_slc, min(ses_slc), max(ses_slc));
 saveas(gca, fullfile(out_dir, flnm),'png')
-
-
-

@@ -4,8 +4,8 @@ clear; clc; close all; rng('Shuffle');
 %% set environment
 
 useCluster = 0;
-sub = 6;
-ses = 1:2;
+sub = 9;
+ses = 1;
 models = {'Heuristic','Suboptimal','Optimal'};
 
 % set cores
@@ -36,7 +36,7 @@ switch useCluster
         end
 
     case false
-        numCores                    = 8; % number of cores locally
+        numCores                    = maxNumCompThreads; % number of cores locally
         fprintf('Number of cores: %i  \n', numCores);
 end
 
