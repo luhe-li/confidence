@@ -8,7 +8,7 @@ while isempty(ExpInfo.subjID)        == 1
         ExpInfo.session                      = input('Session#: ');
         ExpInfo.practice                     = input('Main expt: 1; Practice: 2#: ');
     catch
-    end
+        end1
 end
 
 switch ExpInfo.practice
@@ -278,4 +278,6 @@ ExpInfo.finish                       = sprintf('%04d/%02d/%02d_%02d:%02d:%02d',c
 % sortedResp                           = Resp(temp);
 save(fullfile(outDir,outFileName),'Resp','ExpInfo','ScreenInfo','VSinfo','AudInfo');
 ShowCursor;
-% Screen('CloseAll')
+KbWait(-3);
+ WaitSecs(1);
+Screen('CloseAll')
