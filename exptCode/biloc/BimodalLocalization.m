@@ -233,7 +233,7 @@ Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
 DrawFormattedText(windowPtr, 'Press any button to start the bimodal localization task.',...
     'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis,[255 255 255]);
 Screen('Flip',windowPtr);
-% KbWait(-3);
+KbWait(-3);
 WaitSecs(1);
 
 for i                                = 1:ExpInfo.nTrials
