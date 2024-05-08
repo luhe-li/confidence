@@ -8,7 +8,7 @@ while isempty(ExpInfo.subjID)        == 1
         ExpInfo.session                      = input('Session#: ');
         ExpInfo.practice                     = input('Main expt: 1; Practice: 2#: ');
     catch
-        end1
+    end
 end
 
 switch ExpInfo.practice
