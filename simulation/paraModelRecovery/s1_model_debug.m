@@ -309,7 +309,7 @@ end
 
 % set other info
 model.num_runs        = 10;
-model.num_sec         = 10; 
+model.num_sec         = 10;
 ds_conf               = {'Heuristic','Suboptimal','Optimal'};
 num_model             = numel(ds_conf);
 num_rep               = 100;
@@ -374,7 +374,7 @@ for d                = 1:num_model
     end
 
     saveas(gca, fullfile(pwd, 's1_model_debug', sprintf('recovery_model-%s_rep-%i', ds_conf{d}, num_rep)), 'png')
-    
+
 end
 
 

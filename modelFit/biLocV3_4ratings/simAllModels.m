@@ -11,7 +11,8 @@ function [loc, conf] = simAllModels(aA, bA, sigA, sigV, muP, sigP, pCommon, sigC
 sA = fixP.sA;
 sV = fixP.sV;
 model_ind = fixP.model_ind;
-sigMotor = fixP.sig_motor;
+sigMotor = fixP.sigMotor;
+num_rep = fixP.num_rep;
 
 %% generative model
 
@@ -94,6 +95,7 @@ norm_est_var(2,:) = est_var(2,:)./sigV;
 
 % compare variance to criterion s.t. the lowest variance leads to highest
 % confidence
+conf = NaN(size(norm_est_var));
 conf(norm_est_var < c1) = 4; 
 conf(norm_est_var >= c1 & norm_est_var < c2) = 3;
 conf(norm_est_var >= c2 & norm_est_var < c3) = 2;
@@ -103,6 +105,6 @@ conf(norm_est_var >= c3) = 1;
 lapse_trial = rand(size(loc))<lapse;
 
 % Assign random confidence values between 1 and 4 for lapsed trials
-conf(lapse_trial) = randi([1, 4], sum(lapse_trial), 1);
+conf(lapse_trial) = randi([1, 4], size(conf(lapse_trial)));
 
 end
