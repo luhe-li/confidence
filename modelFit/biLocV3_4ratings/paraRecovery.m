@@ -60,10 +60,11 @@ abs_diff             = unique(abs(diff))';
 
 if ~sampleGT
 
-    %        aA,    bA, sigV1, dsigA, dsigV2, sigP,   pCC,  sigC,    c1,  dc2,  dc3
-    GT = {[   1,   0.1,     1,   1.2,    1.5,    8,  0.57,   0.3,   0.5, 1, 1],...% Heuristic
-        [     1,   0.1,   0.5,   1.5,    1.8,    8,   0.8,   0.5,  0.48, 0.5, 0.5],...% Suboptimal
-        [     1,   0.1,     1,   1.5,    1.8,    8,  0.57,   0.5,  0.48, 0.5, 0.5]}; % Optimal
+    % localization parameter GT
+    %        aA,    bA, sigV1, dsigA, dsigV2, sigP,   pCC,  sigC
+    GT = {[   1,   0.1,     1,   1.2,    1.5,    8,  0.57,   1],...% Heuristic
+        [     1,   0.1,   0.5,   1.5,    1.8,    8,   0.8,   1],...% Suboptimal
+        [     1,   0.1,     1,   1.5,    1.8,    8,  0.57,   1]}; % Optimal
 
 else
 
@@ -92,7 +93,7 @@ else
 
     for i = 1:num_sample
 
-        for d = 3
+        for d = 2
 
             % specific GT for this sample and model
             i_gt = GT{i, d};
@@ -108,11 +109,23 @@ else
             sigP                  = i_gt(6);
             pCommon               = i_gt(7);
             sigC                  = i_gt(8);
-            c1                    = i_gt(9);
-            c2                    = i_gt(9) + i_gt(10);
-            c3                    = i_gt(9) + i_gt(10) + i_gt(11);
             lapse                 = 0.02;
             muP                   = 0;
+
+            %% set criterion based on other free parameters
+
+            M_fixP.sA = sA;
+            M_fixP.sV = sV;
+            M_fixP.model_ind = d;
+            M_fixP.num_rep = num_rep;
+
+            [lb, ub] = findConfRange(aA, bA, sigA, sigV1, sigV2, sigP, pCommon, M_fixP);
+            intervals = linspace(lb, ub, 5);
+            c1 = intervals(2);
+            c2 = intervals(3);
+            c3 = intervals(4);
+
+            %% simulate fake data
 
             % num_s: stimulus location combination
             % 3 confidence decision strategies
@@ -203,7 +216,7 @@ else
                 t = tiledlayout(2, 1);
                 title(t,sprintf('%s, rep: %i', ds_conf{d}, num_rep))
                 xlabel(t, 'Absolute audiovisual discrepancy (deg)');
-                ylabel(t, 'Proportion of confidence report');
+                ylabel(t, 'Confidence rating (1-4)');
                 t.TileSpacing = 'compact';
                 t.Padding = 'compact';
 
@@ -224,12 +237,13 @@ else
                     end
                     xticks(abs_diff)
                 end
+
             end
 
             %% model fitting
 
             % general setting for all models
-            model.num_run        = num_run;
+            model.num_run         = num_run;
             model.num_sec         = 10; % number of samples in the parameter space, must be larger than num_run
             model.x               = (-512:1:512) * deg_per_px;
             model.sA              = sA;
@@ -242,7 +256,7 @@ else
             model.strategy_loc    = 'MA';
 
             OPTIONS.TolMesh = 1e-3;
-            
+
             data.org_resp         = org_loc;
             data.org_conf         = org_conf;
             data.sigMotor         = fixP.sigMotor;

@@ -13,7 +13,7 @@ switch model.mode
         paraH.sigV1                  = [1e-2,     3]; % degree
         paraH.sigA                   = [   2,    10]; % degree
         paraH.sigV2                  = [   2,    10]; % degree
-        paraH.sigP                   = [  1,   30]; % degrees
+        paraH.sigP                   = [   1,   30]; % degrees
         paraH.pC1                    = [1e-3,1-1e-3]; % weight
         paraH.sigC                   = [ 0.1,     2]; % measurement noise of confidence
         paraH.cA                     = [0.01,     5]; % 
