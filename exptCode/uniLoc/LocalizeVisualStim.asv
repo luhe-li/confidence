@@ -99,11 +99,10 @@ Screen('Flip',windowPtr);
 yLoc = ScreenInfo.yaxis-ScreenInfo.liftingYaxis;
 SetMouse(randi(ScreenInfo.xaxis*2,1), yLoc*2, windowPtr);
 HideCursor;
-% buttons = 0;
-resp = 1;
+buttons = 0;
 tic;
-while resp
-    [x,~,~] = GetMouse(windowPtr);
+while true
+    [x,~,buttons] = GetMouse(windowPtr);
     HideCursor;
     x = min(x, ScreenInfo.xmid*2); 
     x = max(0,x);
@@ -117,24 +116,18 @@ while resp
         ShowCursor;
         Screen('CloseAll');
         error('Escape');
+        break
     end
     [~, ~, keyCode] = KbCheck();
     if keyCode(KbName('numLock'))
         ShowCursor;
         sca;
-        Screen('CloseAll');
         error('Escape');
     elseif keyCode(KbName('1'))
         conf = 1;
         resp = 0;
     elseif keyCode(KbName('2'))
-        conf = 2;
-        resp = 0;
-    elseif keyCode(KbName('3'))
-        conf = 3;
-        resp = 0;
-    elseif keyCode(KbName('4'))
-        conf = 4;
+        conf = 0;
         resp = 0;
     end
 end
@@ -151,23 +144,23 @@ HideCursor;
 %     'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis-30,[255 255 255]);
 % Screen('Flip',windowPtr);
 
-% resp=1; 
-% tic;
-% while resp
-%     [~, ~, keyCode] = KbCheck();
-%     if keyCode(KbName('numLock'))
-%         ShowCursor;
-%         sca;
-%         error('Escape');
-%     elseif keyCode(KbName('1'))
-%         conf = 1;
-%         resp = 0;
-%     elseif keyCode(KbName('2'))
-%         conf = 0;
-%         resp = 0;
-%     end
-% end
-% Resp.RT2 = toc;
+resp=1; 
+tic;
+while resp
+    [~, ~, keyCode] = KbCheck();
+    if keyCode(KbName('numLock'))
+        ShowCursor;
+        sca;
+        error('Escape');
+    elseif keyCode(KbName('1'))
+        conf = 1;
+        resp = 0;
+    elseif keyCode(KbName('2'))
+        conf = 0;
+        resp = 0;
+    end
+end
+Resp.RT2 = toc;
 Resp.conf = conf;
 
 % ITI

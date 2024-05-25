@@ -93,11 +93,11 @@ end
 yLoc = ScreenInfo.yaxis-ScreenInfo.liftingYaxis;
 Screen('TextSize',windowPtr,20);
 SetMouse(randi(ScreenInfo.xmid*2,1), yLoc*2, windowPtr);
-buttons = 0;
+resp = 1;
 tic;
 HideCursor;
-while sum(buttons)==0
-    [x,~,buttons] = GetMouse(windowPtr); 
+while resp
+    [x,~,~] = GetMouse(windowPtr); 
     x = min(x, ScreenInfo.xmid*2); 
     x = max(0,x);
     HideCursor;
@@ -115,6 +115,25 @@ while sum(buttons)==0
         Screen('CloseAll');
         error('Escape');
     end
+        [~, ~, keyCode] = KbCheck();
+    if keyCode(KbName('numLock'))
+        ShowCursor;
+        sca;
+        Screen('CloseAll');
+        error('Escape');
+    elseif keyCode(KbName('1'))
+        conf = 1;
+        resp = 0;
+    elseif keyCode(KbName('2'))
+        conf = 2;
+        resp = 0;
+    elseif keyCode(KbName('3'))
+        conf = 3;
+        resp = 0;
+    elseif keyCode(KbName('4'))
+        conf = 4;
+        resp = 0;
+    end
 end
 Resp.RT1  = toc;
 Resp.response_pixel = x;
@@ -129,22 +148,22 @@ DrawFormattedText(windowPtr, 'Are you confident about your estimation?\nYes: 1\n
     'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis-30,[255 255 255]);
 Screen('Flip',windowPtr);
 
-resp=1; tic;
-while resp
-    [~, ~, keyCode] = KbCheck();
-    if keyCode(KbName('numLock'))
-        ShowCursor;
-        sca;
-        error('Escape');
-    elseif keyCode(KbName('1'))
-        conf = 1;
-        resp = 0;
-    elseif keyCode(KbName('2'))
-        conf = 0;
-        resp = 0;
-    end
-end
-Resp.RT2 = toc;
+% resp=1; tic;
+% while resp
+%     [~, ~, keyCode] = KbCheck();
+%     if keyCode(KbName('numLock'))
+%         ShowCursor;
+%         sca;
+%         error('Escape');
+%     elseif keyCode(KbName('1'))
+%         conf = 1;
+%         resp = 0;
+%     elseif keyCode(KbName('2'))
+%         conf = 0;
+%         resp = 0;
+%     end
+% end
+% Resp.RT2 = toc;
 Resp.conf = conf;
 
 % ITI

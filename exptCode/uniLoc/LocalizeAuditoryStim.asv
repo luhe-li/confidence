@@ -35,10 +35,11 @@ HideCursor;
 yLoc = ScreenInfo.yaxis-ScreenInfo.liftingYaxis;
 SetMouse(randi(ScreenInfo.xmid*2,1), yLoc*2, windowPtr);
 resp = 0;
+
 tic
 HideCursor;
-while resp
-    [x,~,~] = GetMouse(windowPtr);
+while sum(buttons)==0
+    [x,~,buttons] = GetMouse(windowPtr);
     HideCursor;
     x = min(x, ScreenInfo.xmid*2);
     x = max(0,x);
