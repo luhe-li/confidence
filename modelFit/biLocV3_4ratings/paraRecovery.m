@@ -3,8 +3,9 @@ clear; close all;
 %% set recovery parameters
 
 num_rep = 100; % experimental repetition per condition
-num_run = 4; % run of fits
+num_run = 10; % run of fits
 
+recompute = true;
 sampleGT = false; % use a fixed set of GT or sample num_sample from GT range
 if sampleGT; num_sample = 100; else; num_sample = 1; end
 checkFakeData = true;
@@ -62,9 +63,9 @@ if ~sampleGT
 
     % localization parameter GT
     %        aA,    bA, sigV1, dsigA, dsigV2, sigP,   pCC,  sigC
-    GT = {[   1,   0.1,     1,   1.2,    1.5,    8,  0.57,   1],...% Heuristic
-        [     1,   0.1,   0.5,   1.5,    1.8,    8,   0.8,   1],...% Suboptimal
-        [     1,   0.1,     1,   1.5,    1.8,    8,  0.57,   1]}; % Optimal
+    GT = {[   1,   0.1,     1,   1.2,    1.5,    8,  0.57,   0.5],...% Heuristic
+        [     1,   0.1,   0.5,   1.5,    1.8,    8,   0.8,   0.5],...% Suboptimal
+        [     1,   0.1,     1,   1.5,    1.8,    8,  0.57,   0.5]}; % Optimal
 
 else
 
@@ -81,19 +82,15 @@ rel_label             = {'High reliability','Low reliability'};
 
 %% run
 
-flnm = sprintf('recoveryResults_rep%i_sample%i_run%i', num_rep, num_sample, num_run);
+flnm = sprintf('recoveryResults_rep%i_sample%i_run%i.mat', num_rep, num_sample, num_run);
 
-if exist(flnm,'file')
+if ~exist(fullfile(out_dir, flnm),'file') || recompute
 
-    load(flnm);
-
-else
-
-    [saveData, saveModel, pred] = deal(cell(num_model, num_sample));
+    [saveData, saveLocModel, saveConfModel, pred] = deal(cell(num_model, num_sample));
 
     for i = 1:num_sample
 
-        for d = 2
+        for d = 3
 
             % specific GT for this sample and model
             i_gt = GT{i, d};
@@ -209,7 +206,7 @@ else
 
                 %% check confidence data
 
-                % organize localization data: {diff} cue x reliability x rep
+                % organize confidence data: {diff} cue x reliability x rep
                 [conf_by_diff, all_diffs] = org_by_diffs(org_conf, sA);
 
                 figure; hold on
@@ -240,11 +237,11 @@ else
 
             end
 
-            %% model fitting
+            %% two-stage model fitting
 
             % general setting for all models
             model.num_run         = num_run;
-            model.num_sec         = 10; % number of samples in the parameter space, must be larger than num_run
+            model.num_sec         = 20; % number of samples in the parameter space, must be larger than num_run
             model.x               = (-512:1:512) * deg_per_px;
             model.sA              = sA;
             model.sV              = model.sA;
@@ -255,14 +252,18 @@ else
             model.modality        = {'A','V'};
             model.strategy_loc    = 'MA';
 
-            OPTIONS.TolMesh = 1e-3;
+            OPTIONS.TolMesh = 1e-5;
 
+            data.gt               = i_gt;
             data.org_resp         = org_loc;
             data.org_conf         = org_conf;
             data.sigMotor         = fixP.sigMotor;
             saveData{d,i}         = data;
 
-            currModel = str2func('nllBimodal');
+            %% 1. first part: loc only
+
+            % localization only
+            currModel = str2func('nllLoc');
 
             % switch confidence strategies
             model.strategy_conf         = ds_conf{d};
@@ -276,17 +277,13 @@ else
             NLL                         = NaN(1, model.num_run);
             estP                        = NaN(model.num_run, Val.num_para);
 
-            % % test using ground truth parameters
-            %             p = GT{d};
-            %             test = currModel(p, model, data);
-
             parfor n              = 1:model.num_run
 
                 tempModel             = model;
                 tempVal               = Val;
                 tempFunc              = currModel;
 
-                [estP(n,:),NLL(n),~,~,traj(n)]    = bads(@(p) tempFunc(p, model, data),...
+                [estP(n,:),NLL(n),~,~,~]    = bads(@(p) tempFunc(p, model, data),...
                     Val.init(n,:), Val.lb,...
                     Val.ub, Val.plb, Val.pub, [], OPTIONS);
 
@@ -299,19 +296,70 @@ else
             bestP                 = estP(best_idx, :);
 
             % save all fitting results
-            saveModel{d,i}.estP = estP;
-            saveModel{d,i}.NLL = NLL;
-            saveModel{d,i}.bestP = bestP;
-            saveModel{d,i}.minNLL = minNLL;
+            saveLocModel{d,i}.paraInfo = Val;
+            saveLocModel{d,i}.estP = estP;
+            saveLocModel{d,i}.NLL = NLL;
+            saveLocModel{d,i}.bestP = bestP;
+            saveLocModel{d,i}.minNLL = minNLL;
 
-            % predict using the best-fitting parameter
-            model.mode            = 'predict';
-            tmpPred               = currModel(bestP, model, data);
-            pred{d,i}             = tmpPred;
+            %% 2. second part: loc + conf
+
+            % use best-fitting parameter to find out range for criteria
+            M_fixP.sA = sA;
+            M_fixP.sV = sV;
+            M_fixP.model_ind = d;
+            M_fixP.num_rep = num_rep;
+            [lb, ub] = findConfRange(bestP(1), bestP(2), bestP(4), bestP(3), bestP(5), bestP(6), bestP(7), M_fixP);
+            model.c_lb = lb;
+            model.c_ub = ub;
+
+            % localization only
+            currModel = str2func('nllLocConf');
+
+            % switch confidence strategies
+            model.strategy_conf         = ds_conf{d};
+
+            % initiate
+            model.mode                  = 'initiate';
+            Val = currModel([], model, data);
+
+            % optimize
+            model.mode                  = 'optimize';
+            NLL                         = NaN(1, model.num_run);
+            estP                        = NaN(model.num_run, Val.num_para);
+
+            p = [i_gt, c1, c2, c3];
+            test = currModel(p, model, data);
+
+            parfor n              = 1:model.num_run
+
+                tempModel             = model;
+                tempVal               = Val;
+                tempFunc              = currModel;
+
+                [estP(n,:),NLL(n),~,~,~]    = bads(@(p) tempFunc(p, model, data),...
+                    Val.init(n,:), Val.lb,...
+                    Val.ub, Val.plb, Val.pub, [], OPTIONS);
+
+                disp(estP(n,:))
+
+            end
+
+            % find the parameter with the least NLL
+            [minNLL, best_idx]    = min(NLL);
+            bestP                 = estP(best_idx, :);
+
+            % save all fitting results
+            saveConfModel{d,i}.paraInfo = Val;
+            saveConfModel{d,i}.estP = estP;
+            saveConfModel{d,i}.NLL = NLL;
+            saveConfModel{d,i}.bestP = bestP;
+            saveConfModel{d,i}.minNLL = minNLL;
 
         end
+
     end
 
-    save(flnm, 'saveModel','saveData', 'pred')
+    save(fullfile(out_dir, flnm), 'saveLocModel','saveData','saveConfModel')
 
 end

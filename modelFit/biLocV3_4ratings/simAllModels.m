@@ -82,24 +82,24 @@ switch model_ind
         variance(2,:)= post_C1./(1/JV + 1/JA + 1/JP) + post_C2./(1/JV + 1/JP) + post_C1.* post_C2 .* (sHat_V_C2 - sHat_C1).^2;
 end
 
+% normalize variance by the corresponding modality noise
+norm_var(1,:) = variance(1,:)./sigA;
+norm_var(2,:) = variance(2,:)./sigV;
+
 % make noisy measurements of variance/uncertainty for each modality
-m = variance;
+m = norm_var;
 v = sigC;
 mu = log((m.^2)./sqrt(v+m.^2));
 sigma = sqrt(log(v./(m.^2)+1));
 est_var = lognrnd(mu, sigma);
 
-% normalize variance by the corresponding modality noise
-norm_est_var(1,:) = est_var(1,:)./sigA;
-norm_est_var(2,:) = est_var(2,:)./sigV;
-
 % compare variance to criterion s.t. the lowest variance leads to highest
 % confidence
-conf = NaN(size(norm_est_var));
-conf(norm_est_var < c1) = 4; 
-conf(norm_est_var >= c1 & norm_est_var < c2) = 3;
-conf(norm_est_var >= c2 & norm_est_var < c3) = 2;
-conf(norm_est_var >= c3) = 1;
+conf = NaN(size(est_var));
+conf(est_var < c1) = 4; 
+conf(est_var >= c1 & est_var < c2) = 3;
+conf(est_var >= c2 & est_var < c3) = 2;
+conf(est_var >= c3) = 1;
 
 % add lapse to confidence report
 lapse_trial = rand(size(loc))<lapse;

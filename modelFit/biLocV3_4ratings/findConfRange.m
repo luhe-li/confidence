@@ -24,7 +24,7 @@ for aa = 1:numel(fixP.sA)
             if fixP.model_ind == 1
 
                 variance(aa, vv, 1, rr, :) = repmat(sigA, [1, num_rep]); % normalized by sigA
-                variance(aa, vv, 2, rr,: ) = repmat(sigV, [1, num_rep]); % normalized by sigV
+                variance(aa, vv, 2, rr, :) = repmat(sigV, [1, num_rep]); % normalized by sigV
 
             else
 
