@@ -368,26 +368,26 @@ if ~exist(fullfile(out_dir, flnm),'file') || recompute
 
 end
 
-function [c, ceq] = constraintFunction(X)
-    global threshold;
-
-    % Initialize constraints
-    num_samples = size(X, 1);
-    c = zeros(num_samples, 1);
-    
-    % Compute constraints for each sample
-    for i = 1:num_samples
-        % if c2 exceeds threshold, return c2 < threshold as ineuqality
-        % constraints
-        if X(i, 9) + X(i, 10) > threshold
-            c(i) = X(i, 9) + X(i, 10) - threshold;
-        % if c3 but not c2 exceeds threshold, return c3 < threshold as ineuqality
-        % constraints
-        else
-            c(i) = X(i, 9) + X(i, 10) + X(i,11) - threshold;
-        end
-    end
-
-    % Equality constraints
-    ceq = [];
-end
+% function [c, ceq] = constraintFunction(X)
+%     global threshold;
+% 
+%     % Initialize constraints
+%     num_samples = size(X, 1);
+%     c = zeros(num_samples, 1);
+%     
+%     % Compute constraints for each sample
+%     for i = 1:num_samples
+%         % if c2 exceeds threshold, return c2 < threshold as ineuqality
+%         % constraints
+%         if X(i, 9) + X(i, 10) > threshold
+%             c(i) = X(i, 9) + X(i, 10) - threshold;
+%         % if c3 but not c2 exceeds threshold, return c3 < threshold as ineuqality
+%         % constraints
+%         else
+%             c(i) = X(i, 9) + X(i, 10) + X(i,11) - threshold;
+%         end
+%     end
+% 
+%     % Equality constraints
+%     ceq = [];
+% end
