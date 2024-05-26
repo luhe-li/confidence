@@ -4,7 +4,7 @@ switch model.mode
 
     case 'initiate'
 
-        out.paraID                   = {'aA','bA','\sigma_{V1}','\sigma_{A}','\sigma_{V2}','\sigma_{P}','p_{common}','\sigma_{C}','c1','c2','c3'};
+        out.paraID                   = {'aA','bA','\sigma_{V1}','\sigma_{A}','\sigma_{V2}','\sigma_{P}','p_{common}','\sigma_{C}','c1','\delta_{c2}','\delta_{c3}'};
         out.num_para                 = length(out.paraID);
 
         % hard bounds, the range for LB, UB, larger than soft bounds
@@ -17,8 +17,8 @@ switch model.mode
         paraH.pC1                    = [1e-3,1-1e-3]; % weight
         paraH.sigC                   = [ 0.1,     3]; % measurement noise of confidence
         paraH.c1                     = [model.c_lb, model.c_ub];
-        paraH.c2                     = [model.c_lb, model.c_ub];
-        paraH.c3                     = [model.c_lb, model.c_ub];
+        paraH.dc2                    = [0.01, model.c_ub];
+        paraH.dc3                    = [0.01, model.c_ub];
 
         % soft bounds, the range for PLB, PUB
         paraS.aA                     = [ 0.9,     1]; % degree
@@ -29,9 +29,9 @@ switch model.mode
         paraS.sigP                   = [   8,    10]; % degrees
         paraS.pC1                    = [ 0.5,   0.7]; % weight
         paraS.sigC                   = [ 0.1,     2]; % measurement noise of confidence
-        paraS.c1                     = [model.c_lb, model.c_lb+0.1];
-        paraS.c2                     = [model.c_lb+0.1, model.c_ub-0.1];
-        paraS.c3                     = [model.c_ub-0.1, model.c_ub];
+        paraS.c1                     = [model.c_lb, model.c_lb+0.5];
+        paraS.dc2                    = [0.1, 0.5];
+        paraS.dc3                    = [0.1, 0.5];
 
         % reorganize parameter bounds to feed to bads
         fn                           = fieldnames(paraH);
@@ -64,11 +64,13 @@ switch model.mode
         pCommon                      = freeParam(7);
         sigC                         = freeParam(8);
         c1                           = freeParam(9);
-        c2                           = freeParam(10);
-        c3                           = freeParam(11);
+        dc2                          = freeParam(10);
+        dc3                          = freeParam(11);
 
         sigVs = [sigV1, sigV2];
         num_sigVs = numel(sigVs);
+        c2 = c1 + dc2;
+        c3 = c1 + dc2 + dc3;
         sigMotor = data.sigMotor;
 
         R = cell(1, num_sigVs);
@@ -195,9 +197,9 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
         % and an S.D. of confidence measurement noise (sigC), evaluated at
         % each criteria.
         mu = log(norm_var);
-        temp_p4 = normcdf(log(c1), mu, sigC);
-        temp_p3 = normcdf(log(c2), mu, sigC) - normcdf(log(c1), mu, sigC);
-        temp_p2 = normcdf(log(c3), mu, sigC) - normcdf(log(c2), mu, sigC);
+        temp_p4 = normcdf(c1, mu, sigC);
+        temp_p3 = normcdf(c2, mu, sigC) - normcdf(c1, mu, sigC);
+        temp_p2 = normcdf(c3, mu, sigC) - normcdf(c2, mu, sigC);
 
         % add lapse
         p4_conf = lapse./4 + (1-lapse) .* temp_p4 + 1e-20;

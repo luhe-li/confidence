@@ -328,22 +328,20 @@ if ~exist(fullfile(out_dir, flnm),'file') || recompute
             NLL                         = NaN(1, model.num_run);
             estP                        = NaN(model.num_run, Val.num_para);
 
-%             % Define the non-bound constraint function
-%             global threshold;
-%             threshold = model.c_ub;
-%             nonbcon = @(x) constraintFunction(x);
+            % Define the non-bound constraint function
+            nonbcon = @(x) constraintFunction(x, mode);
 
 %             p = [i_gt, c1, c2, c3];
 %             test = currModel(p, model, data);
 
-            parfor n              = 1:model.num_run
+            for n              = 1:model.num_run
 
                 tempModel             = model;
                 tempVal               = Val;
                 tempFunc              = currModel;
 
                 [estP(n,:),NLL(n),~,~,~]    = bads(@(p) tempFunc(p, model, data),...
-                    Val.init(n,:), Val.lb, Val.ub, Val.plb, Val.pub, [], OPTIONS);
+                    Val.init(n,:), Val.lb, Val.ub, Val.plb, Val.pub, nonbcon, OPTIONS);
 
                 disp(estP(n,:))
 
@@ -369,23 +367,15 @@ if ~exist(fullfile(out_dir, flnm),'file') || recompute
 end
 
 function [c, ceq] = constraintFunction(X)
-    global threshold;
 
     % Initialize constraints
     num_samples = size(X, 1);
-    c = zeros(num_samples, 1);
+    c = zeros(num_samples, 2);
     
     % Compute constraints for each sample
     for i = 1:num_samples
-        % if c2 exceeds threshold, return c2 < threshold as ineuqality
-        % constraints
-        if X(i, 9) + X(i, 10) > threshold
-            c(i) = X(i, 9) + X(i, 10) - threshold;
-        % if c3 but not c2 exceeds threshold, return c3 < threshold as ineuqality
-        % constraints
-        else
-            c(i) = X(i, 9) + X(i, 10) + X(i,11) - threshold;
-        end
+        c(i, :) = [X(i, 9) + X(i, 10) - threshold;   % Ensures c1 + dc2 < threshold
+                   X(i, 9) + X(i, 10) + X(i, 11) - threshold]; % Ensures c1 + dc2 + dc3 < threshold
     end
 
     % Equality constraints
