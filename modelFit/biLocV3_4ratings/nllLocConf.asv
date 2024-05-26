@@ -4,7 +4,7 @@ switch model.mode
 
     case 'initiate'
 
-        out.paraID                   = {'aA','bA','\sigma_{V1}','\sigma_{A}','\sigma_{V2}','\sigma_{P}','p_{common}','\sigma_{c}','c1','c2','c3'};
+        out.paraID                   = {'aA','bA','\sigma_{V1}','\sigma_{A}','\sigma_{V2}','\sigma_{P}','p_{common}','\sigma_{C}','c1','c2','c3'};
         out.num_para                 = length(out.paraID);
 
         % hard bounds, the range for LB, UB, larger than soft bounds
@@ -15,7 +15,7 @@ switch model.mode
         paraH.sigV2                  = [   2,    10]; % degree
         paraH.sigP                   = [   1,    30]; % degrees
         paraH.pC1                    = [1e-3,1-1e-3]; % weight
-        paraH.sigC                   = [ 0.1,     2]; % measurement noise of confidence
+        paraH.sigC                   = [ 0.1,     3]; % measurement noise of confidence
         paraH.c1                     = [model.c_lb, model.c_ub];
         paraH.c2                     = [model.c_lb, model.c_ub];
         paraH.c3                     = [model.c_lb, model.c_ub];
@@ -28,6 +28,7 @@ switch model.mode
         paraS.sigV2                  = [   3,     8]; % degree
         paraS.sigP                   = [   8,    10]; % degrees
         paraS.pC1                    = [ 0.5,   0.7]; % weight
+        paraS.sigC                   = [ 0.1,     2]; % measurement noise of confidence
         paraS.c1                     = paraH.c1;
         paraS.c2                     = paraH.c2;
         paraS.c3                     = paraH.c3;
@@ -43,7 +44,7 @@ switch model.mode
         out.paraS                    = paraS; out.paraH = paraH;
 
         % get grid initializations
-        out.init                     = getInit(out.lb, out.ub, model.num_sec, model.num_runs);
+        out.init                     = getInit(out.lb, out.ub, model.num_sec, model.num_run);
 
     case {'optimize','predict'}
 
@@ -146,7 +147,7 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
         %calculate the likelihood and the posterior of a common cause and
         %separate causes L(C=1|x1=mA, x2=mV) and L(C=2|x1=mA, x2=mV)
         %size of Post_C1 (#rows x #cols): length(x2_grid) x length(x1_grid)
-        [Post_C1, Post_C2, ~, ~]= calculatePostC1C2(GRID_X1, GRID_X2, CI, mu_P, pC1);
+        [Post_C1, Post_C2, ~, ~]= calculatePostC1C2(GRID_X1, GRID_X2, CI, mu_P, pCommon);
 
         %calculate the shat_{C=1}, shat_{C=2} and MAP estimates assuming
         %model averaging
@@ -186,23 +187,23 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
         end
 
         % normalize variance by the corresponding modality noise
-        norm_var(1,:) = var(1,:)./sigA;
-        norm_var(2,:) = var(2,:)./sigV;
+        norm_var(1,:,:) = var(1,:,:)./sigA;
+        norm_var(2,:,:) = var(2,:,:)./sigV;
 
         % probability of reporting confidence is the value of a lognormal
         % cumulative distribution with a mean of confidence variable (var)
         % and an S.D. of confidence measurement noise (sigC), evaluated at
         % each criteria.
-        mu = log(var);
+        mu = log(norm_var);
         temp_p4 = normcdf(log(c1), mu, sigC);
         temp_p3 = normcdf(log(c2), mu, sigC) - normcdf(log(c1), mu, sigC);
-        temp_p2 = normcdf(log(c2), mu, sigC) - normcdf(log(c2), mu, sigC);
-
-        temp_p_conf(1,:,:) = normcdf(log(c1), squeeze(mu(1,:,:)), sigC);
-        temp_p_conf(2,:,:) = 1 - normcdf(log(cV), squeeze(mu(2,:,:)), sigC);
+        temp_p2 = normcdf(log(c3), mu, sigC) - normcdf(log(c2), mu, sigC);
 
         % add lapse
-        p_conf = lapse./2 + (1-lapse) .* temp_p_conf;
+        p4_conf = lapse./4 + (1-lapse) .* temp_p4 + 1e-20;
+        p3_conf = lapse./4 + (1-lapse) .* temp_p3 + 1e-20;
+        p2_conf = lapse./4 + (1-lapse) .* temp_p2 + 1e-20;
+        p1_conf = 1 - p2_conf - p3_conf - p4_conf;
 
         %----------------------- Compute likelihood -----------------------
         % For each same sA, sV combination, the data are organized by
@@ -216,10 +217,19 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
         if strcmp(model.strategy_loc,'MA') %Model averaging
             for mm = 1:num_modality
                 for kk = 1:num_rep
+                    % localization probability
                     p_r_given_MAP = norm_dst(locResp_A_V(mm, kk),squeeze(MAP_MA(mm,:,:)),...
                         sigMotor,1e-20);
-                    if confResp_A_V(mm, kk) == 1; p_conf_given_m = squeeze(p_conf(mm,:,:));
-                    else; p_conf_given_m = 1-squeeze(p_conf(mm,:,:)); end
+                    % confidence probability
+                    if confResp_A_V(mm, kk) == 1
+                        p_conf_given_m = squeeze(p1_conf(mm,:,:));
+                    elseif confResp_A_V(mm, kk) == 2
+                        p_conf_given_m = squeeze(p2_conf(mm,:,:));
+                    elseif confResp_A_V(mm, kk) == 3
+                        p_conf_given_m = squeeze(p3_conf(mm,:,:));
+                    elseif confResp_A_V(mm, kk) == 4
+                        p_conf_given_m = squeeze(p4_conf(mm,:,:));
+                    end
                     nLL_bimodal = nLL_bimodal - log(sum(sum(p_r_given_MAP.*...
                         p_conf_given_m.*p_mAmV_given_sAsV)));
                 end
@@ -227,13 +237,22 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
         elseif strcmp(model.strategy_loc,'MS') %Model selection
             for mm = 1:num_modality
                 for kk = 1:num_rep
+                    % localization probability
                     if Post_C1(mm,kk) > 0.5
                         p_r_given_MAP = norm_dst(locResp_A_V(mm, kk),shat_C1,sigMotor,1e-20);
                     else
                         p_r_given_MAP = norm_dst(locResp_A_V(mm, kk),squeeze(shat_C2(mm,:,:)),sigMotor,1e-20);
                     end
-                    if confResp_A_V(mm, kk) == 1; p_conf_given_m = squeeze(p_conf(mm,:,:));
-                    else; p_conf_given_m = 1-squeeze(p_conf(mm,:,:)); end
+                    % confidence probability
+                    if confResp_A_V(mm, kk) == 1
+                        p_conf_given_m = squeeze(p1_conf(mm,:,:));
+                    elseif confResp_A_V(mm, kk) == 2
+                        p_conf_given_m = squeeze(p2_conf(mm,:,:));
+                    elseif confResp_A_V(mm, kk) == 3
+                        p_conf_given_m = squeeze(p3_conf(mm,:,:));
+                    elseif confResp_A_V(mm, kk) == 4
+                        p_conf_given_m = squeeze(p4_conf(mm,:,:));
+                    end
                     nLL_bimodal = nLL_bimodal - log(sum(sum(p_r_given_MAP.*...
                         p_conf_given_m.*p_mAmV_given_sAsV)));
                 end

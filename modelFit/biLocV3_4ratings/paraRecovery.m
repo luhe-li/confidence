@@ -328,6 +328,9 @@ if ~exist(fullfile(out_dir, flnm),'file') || recompute
             NLL                         = NaN(1, model.num_run);
             estP                        = NaN(model.num_run, Val.num_para);
 
+            % Define the non-bound constraint function
+            nonbcon = @(x) constraintFunction(x);
+
             p = [i_gt, c1, c2, c3];
             test = currModel(p, model, data);
 
@@ -338,8 +341,7 @@ if ~exist(fullfile(out_dir, flnm),'file') || recompute
                 tempFunc              = currModel;
 
                 [estP(n,:),NLL(n),~,~,~]    = bads(@(p) tempFunc(p, model, data),...
-                    Val.init(n,:), Val.lb,...
-                    Val.ub, Val.plb, Val.pub, [], OPTIONS);
+                    Val.init(n,:), Val.lb, Val.ub, Val.plb, Val.pub, nonbcon, OPTIONS);
 
                 disp(estP(n,:))
 
@@ -362,4 +364,11 @@ if ~exist(fullfile(out_dir, flnm),'file') || recompute
 
     save(fullfile(out_dir, flnm), 'saveLocModel','saveData','saveConfModel')
 
+end
+
+% Constraint function ensuring c1 < c2 < c3
+function [c, ceq] = constraintFunction(x)
+    c = [x(9) - x(10); % c1 - c2 < 0
+         x(10) - x(11)]; % c2 - c3 < 0
+    ceq = [];
 end

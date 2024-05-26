@@ -4,7 +4,7 @@ switch model.mode
 
     case 'initiate'
 
-        out.paraID                   = {'aA','bA','\sigma_{V1}','\sigma_{A}','\sigma_{V2}','\sigma_{P}','p_{common}','\sigma_{C}','c1','d_c2','d_c3'};
+        out.paraID                   = {'aA','bA','\sigma_{V1}','\sigma_{A}','\sigma_{V2}','\sigma_{P}','p_{common}','\sigma_{C}','c1','c2','c3'};
         out.num_para                 = length(out.paraID);
 
         % hard bounds, the range for LB, UB, larger than soft bounds
@@ -29,9 +29,9 @@ switch model.mode
         paraS.sigP                   = [   8,    10]; % degrees
         paraS.pC1                    = [ 0.5,   0.7]; % weight
         paraS.sigC                   = [ 0.1,     2]; % measurement noise of confidence
-        paraS.c1                     = paraH.c1;
-        paraS.c2                     = paraH.c2;
-        paraS.c3                     = paraH.c3;
+        paraS.c1                     = [model.c_lb, model.c_lb+0.1];
+        paraS.c2                     = [model.c_lb+0.1, model.c_ub-0.1];
+        paraS.c3                     = [model.c_ub-0.1, model.c_ub];
 
         % reorganize parameter bounds to feed to bads
         fn                           = fieldnames(paraH);
