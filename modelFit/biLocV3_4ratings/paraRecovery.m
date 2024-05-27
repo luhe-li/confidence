@@ -212,7 +212,7 @@ if ~exist(fullfile(out_dir, flnm),'file') || recompute
 
                 uni_loc = zeros(size(org_loc));
 
-                loc_a = repmat(sA',[1,numel(sV)]);
+                loc_a = repmat((sA*aA+bA)',[1,numel(sV)]);
                 loc_v = repmat(sV,[numel(sA),1]);
 
                 uni_loc(:,:,1,1:2,:) = repmat(loc_a, [1, 1, 1, 2, num_rep]);

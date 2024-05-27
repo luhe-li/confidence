@@ -2,9 +2,6 @@ function [loc, conf] = simAllModels(aA, bA, sigA, sigV, muP, sigP, pCommon, sigC
 % simAllModels simulates bimodal localization responses and confidence
 % report for the specified model index
 
-% TO-DO
-% - Add bounded window to measurements and estimates
-
 % 24/05 LL
 
 %% fixed parameters/experimental settings

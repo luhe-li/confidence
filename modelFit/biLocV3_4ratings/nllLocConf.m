@@ -130,7 +130,7 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
         model.numBins_A);
     mDist_AV_A = norm_dst(x1_grid, sA_prime(p), sigA, 0);
 
-    sV_prime  = sA_prime;%model.sV.*aV+bV;
+    sV_prime  = model.sV.*aV+bV;
     for q = 1:length(sV_prime) %for each AV pair with s_V' = s_V_prime(q)
 
         x2_grid    = linspace(sV_prime(q) - model.num_SD*sigV,...
