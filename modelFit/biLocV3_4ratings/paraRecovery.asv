@@ -48,7 +48,7 @@ end
 %% set recovery parameters
 
 recompute = true;
-sampleGT = true; % use a fixed set of GT or sample num_sample from GT range
+sampleGT = false; % use a fixed set of GT or sample num_sample from GT range
 if sampleGT
     num_sample = 2; checkFakeData = true; 
 else
@@ -109,7 +109,7 @@ if ~sampleGT
     % localization parameter GT
     %        aA,    bA, sigV1,  sigA,  sigV2, sigP,   pCC,  sigC
     GT = {[   1,   0.1,     1,   1.5,    1.8,    8,  0.57,   0.5],...% Heuristic
-        [     1,   0.1,     1,   1.5,    1.8,    8,  0.57,   0.5],...% Suboptimal
+        [     1,   0.1,     1,   6,    1.8,    8,  0.57,   0.5],...% Suboptimal
         [     1,   0.1,     1,   1.5,    1.8,    8,  0.57,   0.5]}; % Optimal
 
 else
