@@ -8,12 +8,12 @@ switch model.mode
         out.num_para                 = length(out.paraID);
 
         % hard bounds, the range for LB, UB, larger than soft bounds
-        paraH.aA                     = [ 0.8,     2]; % degree
-        paraH.bA                     = [  -3,     3]; % degree
+        paraH.aA                     = [ 0.5,     3]; % degree
+        paraH.bA                     = [ -10,    10]; % degree
         paraH.sigV1                  = [1e-2,     3]; % degree
         paraH.sigA                   = [ 0.1,    10]; % degree
         paraH.sigV2                  = [ 0.1,    10]; % degree
-        paraH.sigP                   = [   1,    30]; % degrees
+        paraH.sigP                   = [model.sig_p_lb, model.sig_p_ub]; % degrees
         paraH.pC1                    = [1e-3,1-1e-3]; % weight
         paraH.sigC                   = [ 0.1,     3]; % measurement noise of confidence
         paraH.c1                     = [model.c_lb, model.c_ub];
@@ -26,7 +26,7 @@ switch model.mode
         paraS.sigV1                  = [ 0.1,     2]; % degree
         paraS.sigA                   = [   3,     8]; % degree
         paraS.sigV2                  = [   3,     8]; % degree
-        paraS.sigP                   = [   8,    10]; % degrees
+        paraS.sigP                   = [model.sig_p_lb, model.sig_p_ub]; % degrees
         paraS.pC1                    = [ 0.5,   0.7]; % weight
         paraS.sigC                   = [ 0.1,     2]; % measurement noise of confidence
         paraS.c1                     = [model.c_lb, model.c_lb+0.5];
@@ -197,9 +197,9 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
         % and an S.D. of confidence measurement noise (sigC), evaluated at
         % each criteria.
         mu = log(norm_var);
-        temp_p4 = normcdf(c1, mu, sigC);
-        temp_p3 = normcdf(c2, mu, sigC) - normcdf(c1, mu, sigC);
-        temp_p2 = normcdf(c3, mu, sigC) - normcdf(c2, mu, sigC);
+        temp_p4 = normcdf(log(c1), mu, sigC);
+        temp_p3 = normcdf(log(c2), mu, sigC) - normcdf(log(c1), mu, sigC);
+        temp_p2 = normcdf(log(c3), mu, sigC) - normcdf(log(c2), mu, sigC);
 
         % add lapse
         p4_conf = lapse./4 + (1-lapse) .* temp_p4 + 1e-20;

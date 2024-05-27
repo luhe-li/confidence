@@ -6,9 +6,12 @@ num_rep = 100; % experimental repetition per condition
 num_run = 10; % run of fits
 
 recompute = true;
-sampleGT = false; % use a fixed set of GT or sample num_sample from GT range
-if sampleGT; num_sample = 100; else; num_sample = 1; end
-checkFakeData = true;
+sampleGT = true; % use a fixed set of GT or sample num_sample from GT range
+if sampleGT
+    num_sample = 100; checkFakeData = false; 
+else
+    num_sample = 1; checkFakeData = true; 
+end
 
 %% manage path
 
@@ -62,14 +65,17 @@ abs_diff             = unique(abs(diff))';
 if ~sampleGT
 
     % localization parameter GT
-    %        aA,    bA, sigV1, dsigA, dsigV2, sigP,   pCC,  sigC
-    GT = {[   1,   0.1,     1,   1.2,    1.5,    8,  0.57,   0.5],...% Heuristic
-        [     1,   0.1,   0.5,   1.5,    1.8,    8,   0.8,   0.5],...% Suboptimal
+    %        aA,    bA, sigV1,  sigA,  sigV2, sigP,   pCC,  sigC
+    GT = {[   1,   0.1,     1,   1.5,    1.8,    8,  0.57,   0.5],...% Heuristic
+        [     1,   0.1,     1,   1.5,    1.8,    8,  0.57,   0.5],...% Suboptimal
         [     1,   0.1,     1,   1.5,    1.8,    8,  0.57,   0.5]}; % Optimal
 
 else
 
-    % TO-DO: sample from a GT range
+    % values taken from Hong et al., 2022 except for dsigV2, pCC, and sigC
+    mu_GT = [2.49, -5.6, 1.14, 8.98, 10, 12.5, 0.57, 0.5];
+    se_GT = [0.21, 1.49, 0.19, 0.63, 0.8, 1.85, 0.2, 0.2];
+    samples = sampleGTfromGaussian(mu_GT, se_GT, num_sample);
 
 end
 
@@ -129,7 +135,7 @@ if ~exist(fullfile(out_dir, flnm),'file') || recompute
             % 2 modalities(1 = aud, 2 = vis)
             % 2 visual reliabilities
             % num_rep
-            [loc, conf] = deal(NaN(num_s, num_cue, numel(sigVs), num_rep));
+            [org_loc, org_conf] = deal(NaN(numel(sA), numel(sV), num_cue, numel(sigVs), num_rep));
 
             for a = 1:numel(sA)
 
@@ -254,7 +260,7 @@ if ~exist(fullfile(out_dir, flnm),'file') || recompute
 
             OPTIONS.TolMesh = 1e-5;
 
-            data.gt               = i_gt;
+            data.gt               = [i_gt, c1, c2-c1, c3-c2];
             data.org_resp         = org_loc;
             data.org_conf         = org_conf;
             data.sigMotor         = fixP.sigMotor;
@@ -313,7 +319,13 @@ if ~exist(fullfile(out_dir, flnm),'file') || recompute
             model.c_lb = lb;
             model.c_ub = ub;
 
-            % localization only
+            % use best-fitting parameter to set range for sigma_p
+            mu_sig_p = mean(saveLocModel{d,i}.estP(:,6));
+            sd_sig_p = std(saveLocModel{d,i}.estP(:,6));
+            model.sig_p_lb = mu_sig_p - 3 * sd_sig_p;
+            model.sig_p_ub = mu_sig_p + 3 * sd_sig_p;
+
+            % loc + conf
             currModel = str2func('nllLocConf');
 
             % switch confidence strategies
@@ -328,20 +340,22 @@ if ~exist(fullfile(out_dir, flnm),'file') || recompute
             NLL                         = NaN(1, model.num_run);
             estP                        = NaN(model.num_run, Val.num_para);
 
-            % Define the non-bound constraint function
-            nonbcon = @(x) constraintFunction(x, mode);
+%             % Define the non-bound constraint function
+%             global threshold;
+%             threshold = model.c_ub;
+%             nonbcon = @(x) constraintFunction(x);
 
 %             p = [i_gt, c1, c2, c3];
 %             test = currModel(p, model, data);
 
-            for n              = 1:model.num_run
+            parfor n              = 1:model.num_run
 
                 tempModel             = model;
                 tempVal               = Val;
                 tempFunc              = currModel;
 
                 [estP(n,:),NLL(n),~,~,~]    = bads(@(p) tempFunc(p, model, data),...
-                    Val.init(n,:), Val.lb, Val.ub, Val.plb, Val.pub, nonbcon, OPTIONS);
+                    Val.init(n,:), Val.lb, Val.ub, Val.plb, Val.pub, [], OPTIONS);
 
                 disp(estP(n,:))
 
@@ -366,18 +380,55 @@ if ~exist(fullfile(out_dir, flnm),'file') || recompute
 
 end
 
-function [c, ceq] = constraintFunction(X)
+% function [c, ceq] = constraintFunction(X)
+%     global threshold;
+% 
+%     % Initialize constraints
+%     num_samples = size(X, 1);
+%     c = zeros(num_samples, 1);
+%     
+%     % Compute constraints for each sample
+%     for i = 1:num_samples
+%         % if c2 exceeds threshold, return c2 < threshold as ineuqality
+%         % constraints
+%         if X(i, 9) + X(i, 10) > threshold
+%             c(i) = X(i, 9) + X(i, 10) - threshold;
+%         % if c3 but not c2 exceeds threshold, return c3 < threshold as ineuqality
+%         % constraints
+%         else
+%             c(i) = X(i, 9) + X(i, 10) + X(i,11) - threshold;
+%         end
+%     end
+% 
+%     % Equality constraints
+%     ceq = [];
+% end
 
-    % Initialize constraints
-    num_samples = size(X, 1);
-    c = zeros(num_samples, 2);
-    
-    % Compute constraints for each sample
-    for i = 1:num_samples
-        c(i, :) = [X(i, 9) + X(i, 10) - threshold;   % Ensures c1 + dc2 < threshold
-                   X(i, 9) + X(i, 10) + X(i, 11) - threshold]; % Ensures c1 + dc2 + dc3 < threshold
-    end
 
-    % Equality constraints
-    ceq = [];
+function [samples] = sampleGTfromGaussian(mean_values, sem_values, num_sample)
+
+% Initialize the matrix to store the sampled values
+samples = zeros(num_sample, 8);
+
+% Parameters 'aA' and 'bA' are normally distributed
+samples(:, 1) = normrnd(mean_values(1), sem_values(1), [num_sample, 1]);
+samples(:, 2) = normrnd(mean_values(2), sem_values(2), [num_sample, 1]);
+
+% Parameters '\sigma_{V1}', '\sigma_{A}', '\sigma_{V2}', '\sigma_{P}', '\sigma_{C}' are log-normally distributed
+log_mean_values = log([mean_values(3), mean_values(4), mean_values(5), mean_values(6), mean_values(8)]);
+log_sem_values = log(sem_values(3:6));
+log_sem_values(5) = log(sem_values(8));
+
+samples(:, 3) = exp(normrnd(log_mean_values(1), log_sem_values(1), [num_sample, 1]));
+samples(:, 4) = exp(normrnd(log_mean_values(2), log_sem_values(2), [num_sample, 1]));
+samples(:, 5) = exp(normrnd(log_mean_values(3), log_sem_values(3), [num_sample, 1]));
+samples(:, 6) = exp(normrnd(log_mean_values(4), log_sem_values(4), [num_sample, 1]));
+samples(:, 8) = exp(normrnd(log_mean_values(5), log_sem_values(5), [num_sample, 1]));
+
+% Parameter 'p_{common}' should be between 0 and 1, sampled from a truncated normal distribution
+p_common_samples = normrnd(mean_values(7), sem_values(7), [num_sample, 1]);
+p_common_samples(p_common_samples < 0) = 0;
+p_common_samples(p_common_samples > 1) = 1;
+samples(:, 7) = p_common_samples;
+
 end

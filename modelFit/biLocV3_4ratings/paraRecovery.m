@@ -1,14 +1,59 @@
-clear; close all;
+clear; close all; rng('shuffle');
+
+%% set environment
+
+useCluster                  = false;
+
+% set cores
+if ~exist('useCluster', 'var') || isempty(useCluster)
+    useCluster                  = false;
+end
+
+switch useCluster
+    case true
+
+        % See how many cores we have:
+        if ~exist('numCores', 'var') || isempty(numCores)
+            numCores                    = maxNumCompThreads;
+        end
+        fprintf('Number of cores %i  \n', numCores);
+        % Make sure Matlab does not exceed this
+        maxNumCompThreads(numCores);
+
+        hpc_job_number              = str2double(getenv('SLURM_ARRAY_TASK_ID'));
+        if isnan(hpc_job_number), error('Problem with array assigment'); end
+
+        numJob                      = numel(hpc_job_number);
+        fprintf('job number: %i \n', hpc_job_number);
+        i_rep                       = hpc_job_number;
+
+        % set experimental repetition per condition
+        reps = round(logspace(log10(10), log10(10000), 10));
+        num_rep = reps(i_rep);
+
+        % set run of fit by number of cores
+        num_run = 7;
+
+        if isempty(gcp('nocreate'))
+            parpool(numCores-1);
+        end
+
+    case false
+        numCores                    = 8; % number of cores locally
+        fprintf('Number of cores: %i  \n', numCores);
+        num_rep = 20;
+        num_run = numCores - 1;
+end
 
 %% set recovery parameters
 
-num_rep = 100; % experimental repetition per condition
-num_run = 10; % run of fits
-
 recompute = true;
-sampleGT = false; % use a fixed set of GT or sample num_sample from GT range
-if sampleGT; num_sample = 100; else; num_sample = 1; end
-checkFakeData = true;
+sampleGT = true; % use a fixed set of GT or sample num_sample from GT range
+if sampleGT
+    num_sample = 2; checkFakeData = false; 
+else
+    num_sample = 1; checkFakeData = true; 
+end
 
 %% manage path
 
@@ -19,16 +64,6 @@ if ~exist(out_dir,'dir') mkdir(out_dir); end
 addpath(genpath(fullfile(project_dir, 'func')))
 addpath(genpath(fullfile(project_dir, 'bads')))
 addpath(genpath(fullfile(project_dir, 'modelFit', 'biLocV3_4ratings')))
-
-%% plot set up
-
-lw = 2;
-fontSZ = 15;
-titleSZ = 20;
-dotSZ = 80;
-clt = [30, 120, 180; % blue
-    227, 27, 27;  % dark red
-    repmat(125, 1, 3)]./255;
 
 %% experiment info
 
@@ -62,14 +97,17 @@ abs_diff             = unique(abs(diff))';
 if ~sampleGT
 
     % localization parameter GT
-    %        aA,    bA, sigV1, dsigA, dsigV2, sigP,   pCC,  sigC
-    GT = {[   1,   0.1,     1,   1.2,    1.5,    8,  0.57,   0.5],...% Heuristic
-        [     1,   0.1,   0.5,   1.5,    1.8,    8,   0.8,   0.5],...% Suboptimal
+    %        aA,    bA, sigV1,  sigA,  sigV2, sigP,   pCC,  sigC
+    GT = {[   1,   0.1,     1,   1.5,    1.8,    8,  0.57,   0.5],...% Heuristic
+        [     1,   0.1,     1,   1.5,    1.8,    8,  0.57,   0.5],...% Suboptimal
         [     1,   0.1,     1,   1.5,    1.8,    8,  0.57,   0.5]}; % Optimal
 
 else
 
-    % TO-DO: sample from a GT range
+    % values taken from Hong et al., 2022 except for dsigV2, pCC, and sigC
+    mu_GT = [2.49, -5.6, 1.14, 8.98, 10, 12.5, 0.57, 0.5];
+    se_GT = [0.21, 1.49, 0.19, 0.63, 0.8, 1.85, 0.2, 0.1];
+    GT_samples = sampleGTfromGaussian(mu_GT, se_GT, num_sample);
 
 end
 
@@ -90,10 +128,14 @@ if ~exist(fullfile(out_dir, flnm),'file') || recompute
 
     for i = 1:num_sample
 
-        for d = 3
+        for d = 3:-1:1
 
-            % specific GT for this sample and model
-            i_gt = GT{i, d};
+            % specific GT for this sample
+            if ~sampleGT
+                i_gt = GT{i, d};
+            else
+                i_gt = GT_samples(i,:); 
+            end
 
             % assign simulation parameters
             num_para              = length(i_gt);
@@ -129,7 +171,7 @@ if ~exist(fullfile(out_dir, flnm),'file') || recompute
             % 2 modalities(1 = aud, 2 = vis)
             % 2 visual reliabilities
             % num_rep
-            [loc, conf] = deal(NaN(num_s, num_cue, numel(sigVs), num_rep));
+            [org_loc, org_conf] = deal(NaN(numel(sA), numel(sV), num_cue, numel(sigVs), num_rep));
 
             for a = 1:numel(sA)
 
@@ -254,7 +296,7 @@ if ~exist(fullfile(out_dir, flnm),'file') || recompute
 
             OPTIONS.TolMesh = 1e-5;
 
-            data.gt               = i_gt;
+            data.gt               = [i_gt, c1, c2-c1, c3-c2];
             data.org_resp         = org_loc;
             data.org_conf         = org_conf;
             data.sigMotor         = fixP.sigMotor;
@@ -313,7 +355,13 @@ if ~exist(fullfile(out_dir, flnm),'file') || recompute
             model.c_lb = lb;
             model.c_ub = ub;
 
-            % localization only
+            % use best-fitting parameter to set range for sigma_p
+            mu_sig_p = mean(saveLocModel{d,i}.estP(:,6));
+            sd_sig_p = std(saveLocModel{d,i}.estP(:,6));
+            model.sig_p_lb = mu_sig_p - 3 * sd_sig_p;
+            model.sig_p_ub = mu_sig_p + 3 * sd_sig_p;
+
+            % loc + conf
             currModel = str2func('nllLocConf');
 
             % switch confidence strategies
@@ -391,3 +439,34 @@ end
 %     % Equality constraints
 %     ceq = [];
 % end
+
+
+function [samples] = sampleGTfromGaussian(mean_values, sem_values, num_sample)
+
+% Initialize the matrix to store the sampled values
+samples = zeros(num_sample, 8);
+
+% Parameters 'aA' and 'bA' are normally distributed
+samples(:, 1) = normrnd(mean_values(1), sem_values(1), [num_sample, 1]);
+samples(:, 2) = normrnd(mean_values(2), sem_values(2), [num_sample, 1]);
+
+% Parameters '\sigma_{V1}', '\sigma_{A}', '\sigma_{V2}', '\sigma_{P}', '\sigma_{C}' are log-normally distributed
+log_mean_values = [mean_values(3), mean_values(4), mean_values(5), mean_values(6), mean_values(8)];
+log_sem_values = sem_values(3:6);
+log_sem_values(5) = sem_values(8);
+
+log_mu = log((log_mean_values.^2)./sqrt(log_sem_values+log_mean_values.^2));
+log_sigma = sqrt(log(log_sem_values./(log_mean_values.^2)+1));
+samples(:, 3) = lognrnd(log_mu(1), log_sigma(1), [num_sample, 1]);
+samples(:, 4) = lognrnd(log_mu(2), log_sigma(2), [num_sample, 1]);
+samples(:, 5) = lognrnd(log_mu(3), log_sigma(3), [num_sample, 1]);
+samples(:, 6) = lognrnd(log_mu(4), log_sigma(4), [num_sample, 1]);
+samples(:, 8) = lognrnd(log_mu(5), log_sigma(5), [num_sample, 1]);
+
+% Parameter 'p_{common}' should be between 0 and 1, sampled from a truncated normal distribution
+p_common_samples = normrnd(mean_values(7), sem_values(7), [num_sample, 1]);
+p_common_samples(p_common_samples < 0) = 0;
+p_common_samples(p_common_samples > 1) = 1;
+samples(:, 7) = p_common_samples;
+
+end
