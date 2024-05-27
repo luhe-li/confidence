@@ -196,10 +196,13 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
         % cumulative distribution with a mean of confidence variable (var)
         % and an S.D. of confidence measurement noise (sigC), evaluated at
         % each criteria.
-        mu = log(norm_var);
-        temp_p4 = normcdf(log(c1), mu, sigC);
-        temp_p3 = normcdf(log(c2), mu, sigC) - normcdf(log(c1), mu, sigC);
-        temp_p2 = normcdf(log(c3), mu, sigC) - normcdf(log(c2), mu, sigC);
+        m = norm_var;
+        v = sigC;
+        mu = log((m.^2)./sqrt(v+m.^2));
+        sigma = sqrt(log(v./(m.^2)+1));
+        temp_p4 = logncdf(c1, mu, sigma);
+        temp_p3 = logncdf(c2, mu, sigma) - logncdf(c1, mu, sigma);
+        temp_p2 = logncdf(c3, mu, sigma) - logncdf(c2, mu, sigma);
 
         % add lapse
         p4_conf = lapse./4 + (1-lapse) .* temp_p4 + 1e-20;

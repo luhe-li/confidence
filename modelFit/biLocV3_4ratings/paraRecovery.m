@@ -41,7 +41,7 @@ switch useCluster
     case false
         numCores                    = 8; % number of cores locally
         fprintf('Number of cores: %i  \n', numCores);
-        num_rep = 20;
+        num_rep = 100;
         num_run = numCores - 1;
 end
 
@@ -50,7 +50,7 @@ end
 recompute = true;
 sampleGT = true; % use a fixed set of GT or sample num_sample from GT range
 if sampleGT
-    num_sample = 2; checkFakeData = false; 
+    num_sample = 2; checkFakeData = true; 
 else
     num_sample = 1; checkFakeData = true; 
 end
@@ -64,6 +64,16 @@ if ~exist(out_dir,'dir') mkdir(out_dir); end
 addpath(genpath(fullfile(project_dir, 'func')))
 addpath(genpath(fullfile(project_dir, 'bads')))
 addpath(genpath(fullfile(project_dir, 'modelFit', 'biLocV3_4ratings')))
+
+%% plot set up
+
+lw = 2;
+fontSZ = 15;
+titleSZ = 20;
+dotSZ = 80;
+clt = [30, 120, 180; % blue
+    227, 27, 27;  % dark red
+    repmat(125, 1, 3)]./255;
 
 %% experiment info
 
@@ -104,8 +114,8 @@ if ~sampleGT
 
 else
 
-    % values taken from Hong et al., 2022 except for dsigV2, pCC, and sigC
-    mu_GT = [2.49, -5.6, 1.14, 8.98, 10, 12.5, 0.57, 0.5];
+    % TO-DO: values measured from fitting from pilot data
+    mu_GT = [1,   -0.5,     1,   3,    4,    8,  0.57,   0.5];
     se_GT = [0.21, 1.49, 0.19, 0.63, 0.8, 1.85, 0.2, 0.1];
     GT_samples = sampleGTfromGaussian(mu_GT, se_GT, num_sample);
 
@@ -128,7 +138,7 @@ if ~exist(fullfile(out_dir, flnm),'file') || recompute
 
     for i = 1:num_sample
 
-        for d = 3:-1:1
+        for d = 3%:-1:1
 
             % specific GT for this sample
             if ~sampleGT
@@ -440,7 +450,6 @@ end
 %     ceq = [];
 % end
 
-
 function [samples] = sampleGTfromGaussian(mean_values, sem_values, num_sample)
 
 % Initialize the matrix to store the sampled values
@@ -451,12 +460,10 @@ samples(:, 1) = normrnd(mean_values(1), sem_values(1), [num_sample, 1]);
 samples(:, 2) = normrnd(mean_values(2), sem_values(2), [num_sample, 1]);
 
 % Parameters '\sigma_{V1}', '\sigma_{A}', '\sigma_{V2}', '\sigma_{P}', '\sigma_{C}' are log-normally distributed
-log_mean_values = [mean_values(3), mean_values(4), mean_values(5), mean_values(6), mean_values(8)];
-log_sem_values = sem_values(3:6);
-log_sem_values(5) = sem_values(8);
-
-log_mu = log((log_mean_values.^2)./sqrt(log_sem_values+log_mean_values.^2));
-log_sigma = sqrt(log(log_sem_values./(log_mean_values.^2)+1));
+m = [mean_values(3), mean_values(4), mean_values(5), mean_values(6), mean_values(8)];
+v = [sem_values(3:6), sem_values(8)].^2; % variance
+log_mu = log((m.^2)./sqrt(v+m.^2));
+log_sigma = sqrt(log(v./(m.^2)+1));
 samples(:, 3) = lognrnd(log_mu(1), log_sigma(1), [num_sample, 1]);
 samples(:, 4) = lognrnd(log_mu(2), log_sigma(2), [num_sample, 1]);
 samples(:, 5) = lognrnd(log_mu(3), log_sigma(3), [num_sample, 1]);
