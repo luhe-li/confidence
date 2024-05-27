@@ -49,10 +49,11 @@ end
 
 recompute = true;
 sampleGT = false; % use a fixed set of GT or sample num_sample from GT range
+simulateOnly = true;
 if sampleGT
-    num_sample = 2; checkFakeData = true; 
+    num_sample = 2; checkFakeData = true;
 else
-    num_sample = 1; checkFakeData = true; 
+    num_sample = 1; checkFakeData = true;
 end
 
 %% manage path
@@ -100,7 +101,7 @@ for ii                 = 1:length(sA)
         diff(ii, j)           = sA(ii) - sV(j);
     end
 end
-abs_diff             = unique(abs(diff))';
+all_diffs             = unique(abs(diff))';
 
 %% model info
 
@@ -144,7 +145,7 @@ if ~exist(fullfile(out_dir, flnm),'file') || recompute
             if ~sampleGT
                 i_gt = GT{i, d};
             else
-                i_gt = GT_samples(i,:); 
+                i_gt = GT_samples(i,:);
             end
 
             % assign simulation parameters
@@ -274,150 +275,152 @@ if ~exist(fullfile(out_dir, flnm),'file') || recompute
                     title(cue_label{cue})
                     hold on
                     for rel = 1: numel(sigVs)
-                        [p_conf, se_conf] = deal(NaN(1, numel(abs_diff)));
-                        for diff = 1:numel(abs_diff)
+                        [p_conf, se_conf] = deal(NaN(1, numel(all_diffs)));
+                        for diff = 1:numel(all_diffs)
                             i_conf = squeeze(conf_by_diff{diff}(cue, rel, :))';
                             p = sum(i_conf)/(numel(i_conf));
                             p_conf(diff) = p;
                             se_conf(diff) = sqrt((p*(1-p))/numel(i_conf));
                         end
-                        plot(abs_diff, p_conf, 'Color',clt(rel+1,:));
+                        plot(all_diffs, p_conf, 'Color',clt(rel+1,:));
                         ylim([1, 4]) % rating range
                     end
-                    xticks(abs_diff)
+                    xticks(all_diffs)
                 end
 
             end
 
-            %% two-stage model fitting
+            if ~simulateOnly
+                %% two-stage model fitting
 
-            % general setting for all models
-            model.num_run         = num_run;
-            model.num_sec         = 20; % number of samples in the parameter space, must be larger than num_run
-            model.x               = (-512:1:512) * deg_per_px;
-            model.sA              = sA;
-            model.sV              = model.sA;
-            model.num_rep         = num_rep;
-            model.num_SD          = 5;
-            model.numBins_A       = 15;
-            model.numBins_V       = 15;
-            model.modality        = {'A','V'};
-            model.strategy_loc    = 'MA';
+                % general setting for all models
+                model.num_run         = num_run;
+                model.num_sec         = 20; % number of samples in the parameter space, must be larger than num_run
+                model.x               = (-512:1:512) * deg_per_px;
+                model.sA              = sA;
+                model.sV              = model.sA;
+                model.num_rep         = num_rep;
+                model.num_SD          = 5;
+                model.numBins_A       = 15;
+                model.numBins_V       = 15;
+                model.modality        = {'A','V'};
+                model.strategy_loc    = 'MA';
 
-            OPTIONS.TolMesh = 1e-5;
+                OPTIONS.TolMesh = 1e-5;
 
-            data.gt               = [i_gt, c1, c2-c1, c3-c2];
-            data.org_resp         = org_loc;
-            data.org_conf         = org_conf;
-            data.sigMotor         = fixP.sigMotor;
-            saveData{d,i}         = data;
+                data.gt               = [i_gt, c1, c2-c1, c3-c2];
+                data.org_resp         = org_loc;
+                data.org_conf         = org_conf;
+                data.sigMotor         = fixP.sigMotor;
+                saveData{d,i}         = data;
 
-            %% 1. first part: loc only
+                %% 1. first part: loc only
 
-            % localization only
-            currModel = str2func('nllLoc');
+                % localization only
+                currModel = str2func('nllLoc');
 
-            % switch confidence strategies
-            model.strategy_conf         = ds_conf{d};
+                % switch confidence strategies
+                model.strategy_conf         = ds_conf{d};
 
-            % initiate
-            model.mode                  = 'initiate';
-            Val = currModel([], model, data);
+                % initiate
+                model.mode                  = 'initiate';
+                Val = currModel([], model, data);
 
-            % optimize
-            model.mode                  = 'optimize';
-            NLL                         = NaN(1, model.num_run);
-            estP                        = NaN(model.num_run, Val.num_para);
+                % optimize
+                model.mode                  = 'optimize';
+                NLL                         = NaN(1, model.num_run);
+                estP                        = NaN(model.num_run, Val.num_para);
 
-            parfor n              = 1:model.num_run
+                parfor n              = 1:model.num_run
 
-                tempModel             = model;
-                tempVal               = Val;
-                tempFunc              = currModel;
+                    tempModel             = model;
+                    tempVal               = Val;
+                    tempFunc              = currModel;
 
-                [estP(n,:),NLL(n),~,~,~]    = bads(@(p) tempFunc(p, model, data),...
-                    Val.init(n,:), Val.lb,...
-                    Val.ub, Val.plb, Val.pub, [], OPTIONS);
+                    [estP(n,:),NLL(n),~,~,~]    = bads(@(p) tempFunc(p, model, data),...
+                        Val.init(n,:), Val.lb,...
+                        Val.ub, Val.plb, Val.pub, [], OPTIONS);
 
-                disp(estP(n,:))
+                    disp(estP(n,:))
+
+                end
+
+                % find the parameter with the least NLL
+                [minNLL, best_idx]    = min(NLL);
+                bestP                 = estP(best_idx, :);
+
+                % save all fitting results
+                saveLocModel{d,i}.paraInfo = Val;
+                saveLocModel{d,i}.estP = estP;
+                saveLocModel{d,i}.NLL = NLL;
+                saveLocModel{d,i}.bestP = bestP;
+                saveLocModel{d,i}.minNLL = minNLL;
+
+                %% 2. second part: loc + conf
+
+                % use best-fitting parameter to find out range for criteria
+                M_fixP.sA = sA;
+                M_fixP.sV = sV;
+                M_fixP.model_ind = d;
+                M_fixP.num_rep = num_rep;
+                [lb, ub] = findConfRange(bestP(1), bestP(2), bestP(4), bestP(3), bestP(5), bestP(6), bestP(7), M_fixP);
+                model.c_lb = lb;
+                model.c_ub = ub;
+
+                % use best-fitting parameter to set range for sigma_p
+                mu_sig_p = mean(saveLocModel{d,i}.estP(:,6));
+                sd_sig_p = std(saveLocModel{d,i}.estP(:,6));
+                model.sig_p_lb = mu_sig_p - 3 * sd_sig_p;
+                model.sig_p_ub = mu_sig_p + 3 * sd_sig_p;
+
+                % loc + conf
+                currModel = str2func('nllLocConf');
+
+                % switch confidence strategies
+                model.strategy_conf         = ds_conf{d};
+
+                % initiate
+                model.mode                  = 'initiate';
+                Val = currModel([], model, data);
+
+                % optimize
+                model.mode                  = 'optimize';
+                NLL                         = NaN(1, model.num_run);
+                estP                        = NaN(model.num_run, Val.num_para);
+
+                %             % Define the non-bound constraint function
+                %             global threshold;
+                %             threshold = model.c_ub;
+                %             nonbcon = @(x) constraintFunction(x);
+
+                %             p = [i_gt, c1, c2, c3];
+                %             test = currModel(p, model, data);
+
+                parfor n              = 1:model.num_run
+
+                    tempModel             = model;
+                    tempVal               = Val;
+                    tempFunc              = currModel;
+
+                    [estP(n,:),NLL(n),~,~,~]    = bads(@(p) tempFunc(p, model, data),...
+                        Val.init(n,:), Val.lb, Val.ub, Val.plb, Val.pub, [], OPTIONS);
+
+                    disp(estP(n,:))
+
+                end
+
+                % find the parameter with the least NLL
+                [minNLL, best_idx]    = min(NLL);
+                bestP                 = estP(best_idx, :);
+
+                % save all fitting results
+                saveConfModel{d,i}.paraInfo = Val;
+                saveConfModel{d,i}.estP = estP;
+                saveConfModel{d,i}.NLL = NLL;
+                saveConfModel{d,i}.bestP = bestP;
+                saveConfModel{d,i}.minNLL = minNLL;
 
             end
-
-            % find the parameter with the least NLL
-            [minNLL, best_idx]    = min(NLL);
-            bestP                 = estP(best_idx, :);
-
-            % save all fitting results
-            saveLocModel{d,i}.paraInfo = Val;
-            saveLocModel{d,i}.estP = estP;
-            saveLocModel{d,i}.NLL = NLL;
-            saveLocModel{d,i}.bestP = bestP;
-            saveLocModel{d,i}.minNLL = minNLL;
-
-            %% 2. second part: loc + conf
-
-            % use best-fitting parameter to find out range for criteria
-            M_fixP.sA = sA;
-            M_fixP.sV = sV;
-            M_fixP.model_ind = d;
-            M_fixP.num_rep = num_rep;
-            [lb, ub] = findConfRange(bestP(1), bestP(2), bestP(4), bestP(3), bestP(5), bestP(6), bestP(7), M_fixP);
-            model.c_lb = lb;
-            model.c_ub = ub;
-
-            % use best-fitting parameter to set range for sigma_p
-            mu_sig_p = mean(saveLocModel{d,i}.estP(:,6));
-            sd_sig_p = std(saveLocModel{d,i}.estP(:,6));
-            model.sig_p_lb = mu_sig_p - 3 * sd_sig_p;
-            model.sig_p_ub = mu_sig_p + 3 * sd_sig_p;
-
-            % loc + conf
-            currModel = str2func('nllLocConf');
-
-            % switch confidence strategies
-            model.strategy_conf         = ds_conf{d};
-
-            % initiate
-            model.mode                  = 'initiate';
-            Val = currModel([], model, data);
-
-            % optimize
-            model.mode                  = 'optimize';
-            NLL                         = NaN(1, model.num_run);
-            estP                        = NaN(model.num_run, Val.num_para);
-
-%             % Define the non-bound constraint function
-%             global threshold;
-%             threshold = model.c_ub;
-%             nonbcon = @(x) constraintFunction(x);
-
-%             p = [i_gt, c1, c2, c3];
-%             test = currModel(p, model, data);
-
-            parfor n              = 1:model.num_run
-
-                tempModel             = model;
-                tempVal               = Val;
-                tempFunc              = currModel;
-
-                [estP(n,:),NLL(n),~,~,~]    = bads(@(p) tempFunc(p, model, data),...
-                    Val.init(n,:), Val.lb, Val.ub, Val.plb, Val.pub, [], OPTIONS);
-
-                disp(estP(n,:))
-
-            end
-
-            % find the parameter with the least NLL
-            [minNLL, best_idx]    = min(NLL);
-            bestP                 = estP(best_idx, :);
-
-            % save all fitting results
-            saveConfModel{d,i}.paraInfo = Val;
-            saveConfModel{d,i}.estP = estP;
-            saveConfModel{d,i}.NLL = NLL;
-            saveConfModel{d,i}.bestP = bestP;
-            saveConfModel{d,i}.minNLL = minNLL;
-
         end
 
     end
@@ -428,11 +431,11 @@ end
 
 % function [c, ceq] = constraintFunction(X)
 %     global threshold;
-% 
+%
 %     % Initialize constraints
 %     num_samples = size(X, 1);
 %     c = zeros(num_samples, 1);
-%     
+%
 %     % Compute constraints for each sample
 %     for i = 1:num_samples
 %         % if c2 exceeds threshold, return c2 < threshold as ineuqality
@@ -445,7 +448,7 @@ end
 %             c(i) = X(i, 9) + X(i, 10) + X(i,11) - threshold;
 %         end
 %     end
-% 
+%
 %     % Equality constraints
 %     ceq = [];
 % end

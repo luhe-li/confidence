@@ -1,4 +1,4 @@
-function [loc, conf] = simAllModels(aA, bA, sigA, sigV, muP, sigP, pCommon, sigC, c1, c2, c3, lapse, fixP)
+function [loc, conf, variance, norm_var, est_var] = simAllModels(aA, bA, sigA, sigV, muP, sigP, pCommon, sigC, c1, c2, c3, lapse, fixP)
 % simAllModels simulates bimodal localization responses and confidence
 % report for the specified model index
 
@@ -71,9 +71,12 @@ switch model_ind
         variance(1,:)= repmat(JA, [1, num_rep]);
         variance(2,:)= repmat(JV, [1, num_rep]);
     case 2
-        variance(1:2,:)= repmat(1/(1/JV + 1/JA + 1/JP), [2, num_rep]);
-        variance(1,post_C1<0.5)  = 1/(1/JA + 1/JP);
-        variance(2,post_C1<0.5)  = 1/(1/JV + 1/JP);
+        variance(1,:)= post_C1./(1/JV + 1/JA + 1/JP) + post_C2./(1/JA + 1/JP);
+        variance(2,:)= post_C1./(1/JV + 1/JA + 1/JP) + post_C2./(1/JV + 1/JP);
+%         % CONSIDER PREVIOUS M2 AS M3-MODEL SELECTION VER
+%         variance(1:2,:)= repmat(1/(1/JV + 1/JA + 1/JP), [2, num_rep]);
+%         variance(1,post_C1<0.5)  = 1/(1/JA + 1/JP);
+%         variance(2,post_C1<0.5)  = 1/(1/JV + 1/JP);
     case 3
         variance(1,:)= post_C1./(1/JV + 1/JA + 1/JP) + post_C2./(1/JA + 1/JP) + post_C1.* post_C2 .* (sHat_A_C2 - sHat_C1).^2;
         variance(2,:)= post_C1./(1/JV + 1/JA + 1/JP) + post_C2./(1/JV + 1/JP) + post_C1.* post_C2 .* (sHat_V_C2 - sHat_C1).^2;

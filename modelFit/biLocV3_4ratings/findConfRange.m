@@ -61,9 +61,8 @@ for aa = 1:numel(fixP.sA)
                     JA = sigA^2;
                     JV = sigV^2;
                     JP = sigP^2;
-                    variance(aa, vv, 1:2, rr, :)= repmat(1/(1/JV + 1/JA + 1/JP), [2, num_rep]);
-                    variance(aa, vv, 1, rr, post_C1<0.5)  = 1/(1/JA + 1/JP)./sigA;
-                    variance(aa, vv, 2, rr, post_C1<0.5)  = 1/(1/JV + 1/JP)./sigV;
+                    variance(aa, vv, 1, rr, :)= (post_C1./(1/JV + 1/JA + 1/JP) + post_C2./(1/JA + 1/JP))./sigA;
+                    variance(aa, vv, 2, rr, :)= (post_C1./(1/JV + 1/JA + 1/JP) + post_C2./(1/JV + 1/JP))./sigV;
 
                 else
                     %compute the two intermediate location estimates
