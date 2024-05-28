@@ -93,6 +93,8 @@ SetMouse(randi(ScreenInfo.xmid*2,1), yLoc*2, windowPtr);
 resp = 1;
 tic;
 HideCursor;
+stopRecorded = 0;
+x = 0;
 while resp
     [x,~,~] = GetMouse(windowPtr); 
     x = min(x, ScreenInfo.xmid*2); 
@@ -105,31 +107,40 @@ while resp
         [255 255 255],[], [], [], [], [], ...
         [x-20,yLoc-12,x+20,yLoc-6]);
     Screen('Flip',windowPtr);
-    [~, ~, keyCode] = KbCheck(-1);
-    if keyCode(KbName('ESCAPE'))
-        sca;
-        ShowCursor;
-        Screen('CloseAll');
-        error('Escape');
+    
+    locdiff = abs(cache - x);
+    if locdiff ~= 0
+        stopRecorded = 0;
+    elseif locdiff == 0 && ~stopRecorded
+        mouseStopT = GetSecs();
+        stopRecorded = 1;
     end
-        [~, ~, keyCode] = KbCheck();
-    if keyCode(KbName('numLock'))
-        ShowCursor;
-        sca;
-        Screen('CloseAll');
-        error('Escape');
-    elseif keyCode(KbName('1'))
-        conf = 1;
-        resp = 0;
-    elseif keyCode(KbName('2'))
-        conf = 2;
-        resp = 0;
-    elseif keyCode(KbName('3'))
-        conf = 3;
-        resp = 0;
-    elseif keyCode(KbName('4'))
-        conf = 4;
-        resp = 0;
+    
+    % Check the keyboard
+    [keyIsDown, startTime, keyCode] = KbCheck();
+    if keyIsDown
+        % Check if any of the specified keys are pressed
+        if keyCode(KbName('a')) || keyCode(KbName('s')) || keyCode(KbName('d')) || keyCode(KbName('f'))
+            [releaseTime, ~, ~] = KbReleaseWait();
+            Resp.PressDuration = releaseTime - startTime;
+            Resp.mouseStopDuration = startTime - mouseStopT;
+            if keyCode(KbName('a'))
+                conf = 1;
+            elseif keyCode(KbName('s'))
+                conf = 2;
+            elseif keyCode(KbName('d'))
+                conf = 3;
+            elseif keyCode(KbName('f'))
+                conf = 4;
+            end
+            resp = 0;
+        end
+        if keyCode(KbName('ESCAPE'))
+            sca;
+            ShowCursor;
+            Screen('CloseAll');
+            error('Escape!');
+        end
     end
 end
 Resp.conf = conf;
