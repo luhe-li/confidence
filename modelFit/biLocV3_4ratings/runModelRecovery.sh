@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-#SBATCH --job-name=MatlabJob
-#SBATCH -a 1-10 # modify based on looping variable
+#SBATCH --job-name=ModelRecovery
+#SBATCH -a 1-3 # modify based on looping variable
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=11
@@ -16,6 +16,6 @@ module load matlab/2022a
 
 matlab <<EOF
 
-paraRecovery
+modelRecovery
 
 EOF

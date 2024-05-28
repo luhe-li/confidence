@@ -32,7 +32,7 @@ switch useCluster
         num_rep = reps(i_rep);
 
         % set run of fit by number of cores
-        num_run = 7;
+        num_run = numCores - 1;
 
         if isempty(gcp('nocreate'))
             parpool(numCores-1);
@@ -308,6 +308,7 @@ if ~exist(fullfile(out_dir, flnm),'file') || recompute
                 model.strategy_loc    = 'MA';
 
                 OPTIONS.TolMesh = 1e-5;
+                OPTIONS.Display = 'off';
 
                 data.gt               = [i_gt, c1, c2-c1, c3-c2];
                 data.org_resp         = org_loc;
