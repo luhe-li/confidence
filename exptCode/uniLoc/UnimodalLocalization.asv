@@ -329,11 +329,6 @@ else
     save(fullfile(outDir,outFileName),'Resp','sortedResp','ExpInfo','ScreenInfo','VSinfo','AudInfo');
 end
 
-Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
-    [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
-DrawFormattedText(windowPtr, 'End of this session.\nPress any button to exit.',...
-    'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis,[255 255 255]);
-Screen('Flip',windowPtr);
-KbWait(-3);
 ShowCursor;
+KbWait(-3);
 Screen('CloseAll');

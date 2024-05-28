@@ -139,7 +139,7 @@ our_device=devices(end).DeviceIndex;
 AudInfo.fs                  = 44100;
 audioSamples                = linspace(1,AudInfo.fs,AudInfo.fs);
 standardFrequency_gwn       = 10;
-AudInfo.stimDura            = 0.033; % sec
+AudInfo.stimDura            = 3; % sec
 duration_gwn                = length(audioSamples)*AudInfo.stimDura;
 timeline_gwn                = linspace(1,duration_gwn,duration_gwn);
 sineWindow_gwn              = sin(standardFrequency_gwn/2*2*pi*timeline_gwn/AudInfo.fs);
@@ -166,7 +166,7 @@ end
 
 VSinfo.SD_yaxis            = 5; %SD of the blob in cm (vertical)
 VSinfo.num_randomDots      = 10; %number of blobs
-VSinfo.numFrames           = 3; %for visual stimuli
+VSinfo.numFrames           = 300; %for visual stimuli
 VSinfo.numFramesMasker     = 30; %for mask
 
 % create background
@@ -193,7 +193,7 @@ VSinfo.Cloud                         = reshape(cloud_temp,length(x),length(y)) .
 %% Experiment set up
 
 % choose auditory locations out of 16 speakers, in index
-ExpInfo.audLevel = [6, 8, 9, 11]; %5:12
+ExpInfo.audLevel = [6, 7, 8, 9, 10, 11]; %5:12
 ExpInfo.nLevel = numel(ExpInfo.audLevel);
 for tt = 1:ExpInfo.nRep
     ExpInfo.randIdx(:,tt) = randperm(ExpInfo.nLevel)';
@@ -329,11 +329,5 @@ else
     save(fullfile(outDir,outFileName),'Resp','sortedResp','ExpInfo','ScreenInfo','VSinfo','AudInfo');
 end
 
-Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
-    [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
-DrawFormattedText(windowPtr, 'End of this session.\nPress any button to exit.',...
-    'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis,[255 255 255]);
-Screen('Flip',windowPtr);
-KbWait(-3);
 ShowCursor;
-Screen('CloseAll');
+% Screen('CloseAll');

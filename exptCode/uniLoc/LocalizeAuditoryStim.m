@@ -34,9 +34,8 @@ HideCursor;
 % perception response
 yLoc = ScreenInfo.yaxis-ScreenInfo.liftingYaxis;
 SetMouse(randi(ScreenInfo.xmid*2,1), yLoc*2, windowPtr);
-resp = 0;
+resp = 1;
 tic
-HideCursor;
 while resp
     [x,~,~] = GetMouse(windowPtr);
     HideCursor;
@@ -46,33 +45,36 @@ while resp
         [0,0,ScreenInfo.xaxis, ScreenInfo.yaxis]);
     Screen('DrawLine', windowPtr, [255 255 255],x, yLoc-3, x, yLoc+3, 1);
     Screen('Flip',windowPtr);
-    [~, ~, keyCode] = KbCheck(-1);
-    if keyCode(KbName('ESCAPE'))
-        sca;
-        ShowCursor;
-        Screen('CloseAll');
-        error('Escape');
-    end
-        [~, ~, keyCode] = KbCheck();
-    if keyCode(KbName('numLock'))
-        ShowCursor;
-        sca;
-        Screen('CloseAll');
-        error('Escape');
-    elseif keyCode(KbName('1'))
-        conf = 1;
-        resp = 0;
-    elseif keyCode(KbName('2'))
-        conf = 2;
-        resp = 0;
-    elseif keyCode(KbName('3'))
-        conf = 3;
-        resp = 0;
-    elseif keyCode(KbName('4'))
-        conf = 4;
-        resp = 0;
+    
+    % Check the keyboard
+    [keyIsDown, ~, keyCode] = KbCheck();    
+    if keyIsDown
+        % Check if any of the specified keys are pressed
+        if keyCode(KbName('a')) || keyCode(KbName('s')) || keyCode(KbName('d')) || keyCode(KbName('f'))
+            startTime = secs;
+            [releaseTime, ~, ~] = KbReleaseWait();
+            Resp.PressDuration = releaseTime - startTime;
+            
+            if keyCode(KbName('a'))
+                conf = 1;
+            elseif keyCode(KbName('s'))
+                conf = 2;
+            elseif keyCode(KbName('d'))
+                conf = 3;
+            elseif keyCode(KbName('f'))
+                conf = 4;
+            end
+            resp = 0;
+        end
+        if keyCode(KbName('ESCAPE'))
+            sca;
+            ShowCursor;
+            Screen('CloseAll');
+            error('Escape!');
+        end
     end
 end
+Resp.conf = conf;
 Resp.RT1  = toc;
 HideCursor;
 Resp.response_pixel = x;
@@ -85,24 +87,6 @@ Screen('DrawTexture',windowPtr, VSinfo.grey_texture,[],...
 DrawFormattedText(windowPtr, 'Are you confident about your estimation?\nYes: 1\nNo: 2', ...
     'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis-30,[255 255 255]);
 Screen('Flip',windowPtr);
-
-% resp=1; tic;
-% while resp
-%     [~, ~, keyCode] = KbCheck();
-%     if keyCode(KbName('numLock'))
-%         ShowCursor;
-%         sca;
-%         error('Escape');
-%     elseif keyCode(KbName('1'))
-%         conf = 1;
-%         resp = 0;
-%     elseif keyCode(KbName('2'))
-%         conf = 0;
-%         resp = 0;
-%     end
-% end
-% Resp.RT2 = toc;
-Resp.conf = conf;
 
 % ITI
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
