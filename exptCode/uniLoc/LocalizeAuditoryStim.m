@@ -27,16 +27,16 @@ input_off = ['<',num2str(0),':',num2str(ExpInfo.randAudIdx(i)),'>'];
 fprintf(Arduino,input_off);
 PsychPortAudio('Stop',pahandle);
 
-% blank screen 2
-WaitSecs(ExpInfo.tBlank2);
-HideCursor;
-
-% perception response
+% perceptual response
 yLoc = ScreenInfo.yaxis-ScreenInfo.liftingYaxis;
-SetMouse(randi(ScreenInfo.xmid*2,1), yLoc*2, windowPtr);
+SetMouse(randi(ScreenInfo.xaxis*2,1), yLoc*2, windowPtr);
+HideCursor;
 resp = 1;
-tic
+tic;
+stopRecorded = 0;
+x = 0;
 while resp
+    cache = x;
     [x,~,~] = GetMouse(windowPtr);
     HideCursor;
     x = min(x, ScreenInfo.xmid*2);
@@ -44,17 +44,24 @@ while resp
     Screen('DrawTexture',windowPtr, VSinfo.grey_texture,[],...
         [0,0,ScreenInfo.xaxis, ScreenInfo.yaxis]);
     Screen('DrawLine', windowPtr, [255 255 255],x, yLoc-3, x, yLoc+3, 1);
-    Screen('Flip',windowPtr);
+    Screen('Flip', windowPtr);
+    
+    locdiff = abs(cache - x);
+    if locdiff ~= 0
+        stopRecorded = 0;
+    elseif locdiff == 0 && ~stopRecorded
+        mouseStopT = GetSecs();
+        stopRecorded = 1;
+    end
     
     % Check the keyboard
-    [keyIsDown, ~, keyCode] = KbCheck();    
+    [keyIsDown, startTime, keyCode] = KbCheck();
     if keyIsDown
         % Check if any of the specified keys are pressed
         if keyCode(KbName('a')) || keyCode(KbName('s')) || keyCode(KbName('d')) || keyCode(KbName('f'))
-            startTime = secs;
             [releaseTime, ~, ~] = KbReleaseWait();
             Resp.PressDuration = releaseTime - startTime;
-            
+            Resp.mouseStopDuration = startTime - mouseStopT;
             if keyCode(KbName('a'))
                 conf = 1;
             elseif keyCode(KbName('s'))
@@ -76,17 +83,10 @@ while resp
 end
 Resp.conf = conf;
 Resp.RT1  = toc;
-HideCursor;
 Resp.response_pixel = x;
 Resp.response_cm    = (Resp.response_pixel -  ScreenInfo.xmid)/ScreenInfo.numPixels_perCM;
 Resp.response_deg   = rad2deg(atan(Resp.response_cm/ExpInfo.sittingDistance));
-
-% confidence response
-Screen('DrawTexture',windowPtr, VSinfo.grey_texture,[],...
-        [0,0,ScreenInfo.xaxis, ScreenInfo.yaxis]);
-DrawFormattedText(windowPtr, 'Are you confident about your estimation?\nYes: 1\nNo: 2', ...
-    'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis-30,[255 255 255]);
-Screen('Flip',windowPtr);
+HideCursor;
 
 % ITI
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
@@ -98,4 +98,5 @@ Resp.target_idx = ExpInfo.randAudIdx(i); % visual location that corresponds to s
 Resp.target_cm = ExpInfo.speakerLocCM(Resp.target_idx);
 Resp.target_pixel = Resp.target_cm * ScreenInfo.numPixels_perCM;
 Resp.target_deg = rad2deg(atan(Resp.target_cm/ExpInfo.sittingDistance));
+
 end

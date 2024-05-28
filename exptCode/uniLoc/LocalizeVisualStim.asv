@@ -72,7 +72,20 @@ Screen('DrawTexture', windowPtr, VSinfo.gwn_texture(rem(jj,VSinfo.GWNnumFrames)+
          [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
 Screen('Flip',windowPtr);
 end
-
+     
+% % display visual stimulus
+% for j = 1:VSinfo.numFrames 
+%     Screen('DrawTexture',windowPtr,dotClouds_targetLoc,[],...
+%         [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
+%     Screen('Flip',windowPtr);
+% end
+% 
+% % display post-stimulus mask
+% for jj = 1:VSinfo.numFramesMasker
+%     Screen('DrawTexture', windowPtr, VSinfo.gwn_texture(jj),[],...
+%         [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
+%     Screen('Flip',windowPtr);
+% end
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
     [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
 Screen('Flip',windowPtr);
@@ -89,7 +102,6 @@ HideCursor;
 resp = 1;
 tic;
 stopRecorded = 0;
-x = 0;
 while resp
     cache = x;
     [x,~,~] = GetMouse(windowPtr);
@@ -105,7 +117,7 @@ while resp
     if locdiff ~= 0
         stopRecorded = 0;
     elseif locdiff == 0 && ~stopRecorded
-        mouseStopT = GetSecs();
+        tic
         stopRecorded = 1;
     end
     
@@ -116,7 +128,7 @@ while resp
         if keyCode(KbName('a')) || keyCode(KbName('s')) || keyCode(KbName('d')) || keyCode(KbName('f'))
             [releaseTime, ~, ~] = KbReleaseWait();
             Resp.PressDuration = releaseTime - startTime;
-            Resp.mouseStopDuration = startTime - mouseStopT;
+            
             if keyCode(KbName('a'))
                 conf = 1;
             elseif keyCode(KbName('s'))
@@ -154,5 +166,13 @@ Resp.target_idx = ExpInfo.randVisIdx(i); % visual location that corresponds to s
 Resp.target_cm = ExpInfo.speakerLocCM(Resp.target_idx);
 Resp.target_pixel = Resp.target_cm * ScreenInfo.numPixels_perCM;
 Resp.target_deg = rad2deg(atan(Resp.target_cm/ExpInfo.sittingDistance));
+% Resp.enclosed = abs(Resp.target_cm - Resp.response_cm) <= Resp.conf_radius_cm;
+% bestRadius_cm = abs(Resp.target_cm - Resp.response_cm);
+% Resp.maxPtPossible = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * bestRadius_cm, ExpInfo.minPoint);
+% if Resp.enclosed
+%     Resp.point = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * Resp.conf_radius_cm, ExpInfo.minPoint);
+% else
+%     Resp.point = 0;
+% end
 
 end
