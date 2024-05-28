@@ -176,10 +176,12 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
 
         elseif strcmp(model.strategy_conf, 'Suboptimal')
 
-            var = repmat(1/CI.constC1_shat, [2, size(Post_C1)]);
-            indices = (Post_C1 >= 0.5);
-            var(1,indices) = 1/CI.constC2_1_shat;
-            var(2,indices) = 1/CI.constC2_2_shat;
+            var(1,:,:)= Post_C1 ./CI.constC1_shat + Post_C2 ./CI.constC2_1_shat;
+            var(2,:,:)= Post_C1 ./CI.constC1_shat + Post_C2 ./CI.constC2_2_shat;
+%             var = repmat(1/CI.constC1_shat, [2, size(Post_C1)]);
+%             indices = (Post_C1 >= 0.5);
+%             var(1,indices) = 1/CI.constC2_1_shat;
+%             var(2,indices) = 1/CI.constC2_2_shat;
 
         elseif strcmp(model.strategy_conf, 'Heuristic')
 

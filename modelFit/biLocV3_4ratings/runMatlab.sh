@@ -16,6 +16,6 @@ module load matlab/2022a
 
 matlab <<EOF
 
-modelFit
+paraRecovery
 
 EOF
