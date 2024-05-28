@@ -84,9 +84,6 @@ Screen('DrawTexture', windowPtr, VSinfo.gwn_texture(rem(jj,VSinfo.GWNnumFrames)+
 Screen('Flip',windowPtr);
 end
 
-% blank screen 2
-% WaitSecs(ExpInfo.tBlank2);
-
 %% response
 
 % perception response
@@ -135,36 +132,12 @@ while resp
         resp = 0;
     end
 end
+Resp.conf = conf;
 Resp.RT1  = toc;
 Resp.response_pixel = x;
 Resp.response_cm    = (Resp.response_pixel -  ScreenInfo.xmid)/ScreenInfo.numPixels_perCM;
 Resp.response_deg   = rad2deg(atan(Resp.response_cm/ExpInfo.sittingDistance));
 HideCursor;
-
-% confidence response
-Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
-    [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
-DrawFormattedText(windowPtr, 'Are you confident about your estimation?\nYes: 1\nNo: 2', ...
-    'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis-30,[255 255 255]);
-Screen('Flip',windowPtr);
-
-% resp=1; tic;
-% while resp
-%     [~, ~, keyCode] = KbCheck();
-%     if keyCode(KbName('numLock'))
-%         ShowCursor;
-%         sca;
-%         error('Escape');
-%     elseif keyCode(KbName('1'))
-%         conf = 1;
-%         resp = 0;
-%     elseif keyCode(KbName('2'))
-%         conf = 0;
-%         resp = 0;
-%     end
-% end
-% Resp.RT2 = toc;
-Resp.conf = conf;
 
 % ITI
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
