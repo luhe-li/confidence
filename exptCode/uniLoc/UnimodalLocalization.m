@@ -92,7 +92,7 @@ AssertOpenGL();
 GetSecs();
 WaitSecs(0.1);
 KbCheck();
-ListenChar(2);
+ListenChar(1); % change from 2 to 1 because if 2 then NO keyboard will be usable after quitting with escape.
 
 Screen('Preference', 'VisualDebugLevel', 1);
 Screen('Preference', 'SkipSyncTests', 1);
@@ -202,7 +202,7 @@ if strcmp(ExpInfo.session, 'A')
     testSpeaker = 8;
     input_on = ['<',num2str(1),':',num2str(testSpeaker),'>']; %arduino takes input in this format
     fprintf(Arduino,input_on);
-    PsychPortAudio('FillBuffer',pahandle, AudInfo.Gaussia% Parameters
+    PsychPortAudio('FillBuffer',pahandle, AudInfo.GaussianWhiteNoise) % Parameters
     PsychPortAudio('Start',pahandle,1,0,0);
     WaitSecs(0.1);
     input_off = ['<',num2str(0),':',num2str(testSpeaker),'>'];
