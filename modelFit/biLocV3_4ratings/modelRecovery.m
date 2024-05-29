@@ -129,7 +129,7 @@ rel_label             = {'High reliability','Low reliability'};
 
 %% sample and fit for each simulating model
 
-flnm = sprintf('RecoveryResults_simM%i_rep%i_sample%i_run%i.mat\n', simd, num_rep, num_sample, num_run);
+flnm = sprintf('RecoveryResults_simM%i_rep%i_sample%i_run%i.mat', simd, num_rep, num_sample, num_run);
 
 [saveData, saveLocModel, saveConfModel] = deal(cell(num_model, num_model, num_sample));
 [loc_CM, conf_CM] = deal(zeros(3));
@@ -417,9 +417,9 @@ for i_sample = 1:num_sample
 
     % find the best fitting model for this sampled dataset
     [~, best_fitd] = min(saveLocModel{simd,1,i_sample}.minNLL, saveLocModel{simd,2,i_sample}.minNLL, saveLocModel{simd,3,i_sample}.minNLL);
-    loc_CM(simd, best_fitd) = 1;
+    loc_CM(simd, best_fitd) = loc_CM(simd, best_fitd) + 1;
     [~, best_fitd] = min(saveConfModel{simd,1,i_sample}.minNLL, saveConfModel{simd,2,i_sample}.minNLL, saveConfModel{simd,3,i_sample}.minNLL);
-    conf_CM(simd, best_fitd) = 1;
+    conf_CM(simd, best_fitd) = conf_CM(simd, best_fitd) + 1;
 
     % save partial results
     save(fullfile(out_dir, flnm), 'saveLocModel','saveData','saveConfModel','loc_CM','conf_CM');
