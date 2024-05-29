@@ -121,6 +121,7 @@ ExpInfo.randAudIdx                   = ExpInfo.randAVIdx(1,:);
 % convert visual locations from index to perceptually matching pixel
 load([sprintf('AVbias_sub%i', ExpInfo.subjID) '.mat'])
 
+
 x = ExpInfo.speakerLocPixel(ExpInfo.randAudIdx);
 coefsA = squeeze(Transfer.PxCoeff(1, :));
 fitRA = x .* coefsA(2) + coefsA(1);
