@@ -91,10 +91,7 @@ AssertOpenGL();
 GetSecs();
 WaitSecs(0.1);
 KbCheck();
-% ListenChar(2); % silence the keyboard
-% if you silence it at least leave one key on the other keyboard able to
-% stop the script. Otherwise you can't even stop the program when
-% debugging since you SetMouse after every click.
+ListenChar(2); % silence the keyboard
 
 Screen('Preference', 'VisualDebugLevel', 1);
 Screen('Preference', 'SkipSyncTests', 1);
@@ -125,6 +122,58 @@ ScreenInfo.y1_ub = ScreenInfo.yaxis-ScreenInfo.liftingYaxis+1;
 ScreenInfo.y2_lb = ScreenInfo.yaxis-ScreenInfo.liftingYaxis-7;
 ScreenInfo.y2_ub = ScreenInfo.yaxis-ScreenInfo.liftingYaxis+7;
 
+%% Experiment set up
+
+% choose auditory locations out of 16 speakers, level/index is speaker
+% order (left to right: 1-16)
+ExpInfo.audLevel = 6:11;
+ExpInfo.nLevel = numel(ExpInfo.audLevel);
+for tt = 1:ExpInfo.nRep
+    ExpInfo.randA(:,tt) = randperm(ExpInfo.nLevel)';
+    ExpInfo.randV(:,tt) = randperm(ExpInfo.nLevel * ExpInfo.nReliability)';
+end
+ExpInfo.randA = reshape(ExpInfo.randA, [], 1)';
+ExpInfo.randV = reshape(ExpInfo.randV, [], 1)';
+
+% randomized auditory and visual stimulus location in speaker index
+ExpInfo.randAudIdx = ExpInfo.audLevel(ExpInfo.randA);
+ExpInfo.randVisIdx = ExpInfo.audLevel(ceil(ExpInfo.randV./2));
+
+% location of speakers in CM, visual angle, and pixel
+ExpInfo.sittingDistance              = 113.0; %cm
+ExpInfo.numSpeaker                   = 16;
+ExpInfo.LRmostSpeakers2center        = 65.5; %cm
+ExpInfo.LRmostVisualAngle            = (180/pi) * atan(ExpInfo.LRmostSpeakers2center / ...
+    ExpInfo.sittingDistance);
+ExpInfo.speakerLocCM = linspace(-ExpInfo.LRmostSpeakers2center, ExpInfo.LRmostSpeakers2center, ExpInfo.numSpeaker);
+ExpInfo.speakerLocVA = linspace(-ExpInfo.LRmostVisualAngle, ExpInfo.LRmostVisualAngle, ExpInfo.numSpeaker);
+ExpInfo.speakerLocPixel = round(ExpInfo.speakerLocCM * ScreenInfo.numPixels_perCM);
+
+% auditory locations in different units
+ExpInfo.randAudCM     = ExpInfo.speakerLocCM(ExpInfo.randVisIdx);
+ExpInfo.randAudVA     = rad2deg(atan(ExpInfo.randAudCM/ExpInfo.sittingDistance));
+ExpInfo.randAudPixel  = ExpInfo.randAudCM .* ScreenInfo.numPixels_perCM;
+
+% visual locations in different units
+ExpInfo.randVisCM     = ExpInfo.speakerLocCM(ExpInfo.randVisIdx);
+ExpInfo.randVisVA    = rad2deg(atan(ExpInfo.randVisCM/ExpInfo.sittingDistance));
+ExpInfo.randVisPixel = ExpInfo.randVisCM .* ScreenInfo.numPixels_perCM;
+
+% split all the trials into blocks
+ExpInfo.nTrials = ExpInfo.nLevel * ExpInfo.nRep * ExpInfo.nReliability;
+blocks = linspace(0,ExpInfo.nTrials, ExpInfo.numBlocks+1);
+ExpInfo.breakTrials = floor(blocks(2:(end-1)));
+ExpInfo.firstTrial = blocks(1:ExpInfo.numBlocks)+1;
+ExpInfo.lastTrial = blocks(2:(ExpInfo.numBlocks+1));
+ExpInfo.numTrialsPerBlock = ExpInfo.breakTrials(1);
+
+% define durations
+ExpInfo.tFixation = 0.5;
+ExpInfo.tBlank1 = 0.3;
+ExpInfo.tStimFrame = 3; % in frame
+ExpInfo.ITI = 0.3;
+ExpInfo.tIFI = ScreenInfo.ifi;
+
 %% Auditory set up
 
 % get correct sound card
@@ -135,18 +184,19 @@ our_device=devices(end).DeviceIndex;
 % Gaussian white noise
 AudInfo.fs                  = 44100;
 audioSamples                = linspace(1,AudInfo.fs,AudInfo.fs);
-standardFrequency_gwn       = 10;
-AudInfo.stimDura            = 0.033; % sec
+standardFrequency_gwn       = 20;
+AudInfo.stimDura            = ExpInfo.tStimFrame * ExpInfo.tIFI; % in sec
 duration_gwn                = length(audioSamples)*AudInfo.stimDura;
 timeline_gwn                = linspace(1,duration_gwn,duration_gwn);
 sineWindow_gwn              = sin(standardFrequency_gwn/2*2*pi*timeline_gwn/AudInfo.fs);
 carrierSound_gwn            = randn(1, numel(timeline_gwn));
-AudInfo.intensity_GWN       = 5; % too loud for debugging, originally 15
+AudInfo.intensity_GWN       = 0.5; % too loud for debugging, originally 15
 AudInfo.GaussianWhiteNoise  = [AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn;...
-    AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn];
-pahandle                    = PsychPortAudio('Open', our_device, [], [], [], 2);%open device
+                            AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn];
+pahandle                    = PsychPortAudio('Open', our_device, [], [], [], 2); % open device
 
 %% audio test / warm-up
+
 if strcmp(ExpInfo.session, 'A')
     testSpeaker = 8;
     input_on = ['<',num2str(1),':',num2str(testSpeaker),'>']; %arduino takes input in this format
@@ -161,10 +211,14 @@ end
 
 %% make visual stimuli
 
+% randomize visual reliability by horizontal blob S.D.
+VSinfo.SD_blob(~~rem(ExpInfo.randV,2)) = 8; % in CM
+VSinfo.SD_blob(~rem(ExpInfo.randV,2)) = 20; % in CM
+
 VSinfo.SD_yaxis            = 5; %SD of the blob in cm (vertical)
 VSinfo.num_randomDots      = 10; %number of blobs
-VSinfo.numFrames           = 3; %for visual stimuli
-VSinfo.numFramesMasker     = 30; %for mask
+VSinfo.numFrames           = ExpInfo.tStimFrame; %for visual stimuli
+VSinfo.numFramesMasker     = 30; % for mask
 
 % create background
 VSinfo.pblack              = 1/8; % set contrast to 1*1/8 for the "black" background, so it's not too dark and the projector doesn't complain
@@ -186,52 +240,6 @@ x = 1:1:VSinfo.boxSize; y = x;
 cloud_temp                           = mvnpdf([X(:) Y(:)],[median(x) median(y)],...
     [VSinfo.width 0; 0 VSinfo.width]);
 VSinfo.Cloud                         = reshape(cloud_temp,length(x),length(y)) .* (VSinfo.maxBrightness/max(cloud_temp));
-
-%% Experiment set up
-
-% choose auditory locations out of 16 speakers, in index
-ExpInfo.audLevel = [6, 8, 9, 11]; %5:12
-ExpInfo.nLevel = numel(ExpInfo.audLevel);
-for tt = 1:ExpInfo.nRep
-    ExpInfo.randIdx(:,tt) = randperm(ExpInfo.nLevel)';
-    ExpInfo.randVisReliabIdx(:,tt) = randperm(ExpInfo.nLevel * ExpInfo.nReliability)';
-end
-ExpInfo.randIdx = reshape(ExpInfo.randIdx, [], 1)';
-ExpInfo.randVisReliabIdx = reshape(ExpInfo.randVisReliabIdx, [], 1)';
-VSinfo.SD_blob(~~rem(ExpInfo.randVisReliabIdx,2)) = 8;%10; % the unit is already in centimeters
-VSinfo.SD_blob(~rem(ExpInfo.randVisReliabIdx,2)) = 20;%28; % visual reliability is mixed here
-ExpInfo.randAudIdx = ExpInfo.audLevel(ExpInfo.randIdx);
-ExpInfo.randVisIdx = ExpInfo.audLevel(ceil(ExpInfo.randVisReliabIdx ./ 2));
-
-% location of speakers in CM, visual angle, and pixel
-ExpInfo.sittingDistance              = 113.0; %cm
-ExpInfo.numSpeaker                   = 16;
-ExpInfo.LRmostSpeakers2center        = 65.5; %cm
-ExpInfo.LRmostVisualAngle            = (180/pi) * atan(ExpInfo.LRmostSpeakers2center / ...
-    ExpInfo.sittingDistance);
-ExpInfo.speakerLocCM = linspace(-ExpInfo.LRmostSpeakers2center, ExpInfo.LRmostSpeakers2center, ExpInfo.numSpeaker);
-ExpInfo.speakerLocVA = linspace(-ExpInfo.LRmostVisualAngle, ExpInfo.LRmostVisualAngle, ExpInfo.numSpeaker);
-ExpInfo.speakerLocPixel = round(ExpInfo.speakerLocCM * ScreenInfo.numPixels_perCM);
-
-% visual locations in pixel
-ExpInfo.v_loc_cm     = ExpInfo.speakerLocCM(ExpInfo.randVisIdx);
-ExpInfo.v_loc_deg    = rad2deg(atan(ExpInfo.v_loc_cm/ExpInfo.sittingDistance));
-ExpInfo.randVisPixel = ExpInfo.v_loc_cm .* ScreenInfo.numPixels_perCM;
-
-% split all the trials into blocks
-ExpInfo.nTrials = ExpInfo.nLevel * ExpInfo.nRep * ExpInfo.nReliability;
-blocks = linspace(0,ExpInfo.nTrials,...
-    ExpInfo.numBlocks+1);
-ExpInfo.breakTrials       = floor(blocks(2:(end-1)));
-ExpInfo.firstTrial     = blocks(1:ExpInfo.numBlocks)+1;
-ExpInfo.lastTrial    = blocks(2:(ExpInfo.numBlocks+1));
-ExpInfo.numTrialsPerBlock = ExpInfo.breakTrials(1);
-
-% define durations
-ExpInfo.tFixation = 0.5;
-ExpInfo.tBlank1 = 0.3;
-ExpInfo.tStim = VSinfo.numFrames * (1/60);
-ExpInfo.ITI = 0.3;
 
 %% Run the experiment
 
@@ -275,12 +283,8 @@ for i = 1:ExpInfo.nTrials
         idxBlock = find(ExpInfo.breakTrials==i);
         firstTrial = ExpInfo.firstTrial(idxBlock);
         lastTrial = ExpInfo.lastTrial(idxBlock);
-        %         blockPt = sum([Resp(firstTrial:lastTrial).point]);
-        %         maxPtPossible = sum([Resp(firstTrial:lastTrial).maxPtPossible]);
-        
+
         blockInfo = sprintf('You''ve finished block %i/%i. Please take a break.',idxBlock,ExpInfo.numBlocks);
-        %         pointInfo = sprintf('Your total points of the last block is %.2f (max points possible: %.2f)',blockPt, maxPtPossible);
-        
         Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
             [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
         DrawFormattedText(windowPtr, blockInfo,...
@@ -290,6 +294,7 @@ for i = 1:ExpInfo.nTrials
             'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis,...
             [255 255 255]);
         Screen('Flip',windowPtr); KbWait(-3); WaitSecs(1);
+        
     end
 end
 
@@ -312,10 +317,12 @@ if ExpInfo.session == 'V'
     save(fullfile(outDir,outFileName),'Resp','reliSortResp','ExpInfo','ScreenInfo','VSinfo','AudInfo','sortedReli1Resp','sortedReli2Resp')
     
 else
+    
     % sort trials by location level
     [~, temp2] = sort([Resp(1:end).target_idx]);
     sortedResp = Resp(temp2);
     save(fullfile(outDir,outFileName),'Resp','sortedResp','ExpInfo','ScreenInfo','VSinfo','AudInfo');
+    
 end
 
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...

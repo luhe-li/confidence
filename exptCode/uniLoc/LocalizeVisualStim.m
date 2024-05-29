@@ -1,5 +1,4 @@
-function Resp = LocalizeVisualStim(i, ExpInfo,...
-    ScreenInfo,VSinfo,windowPtr)
+function Resp = LocalizeVisualStim(i, ExpInfo, ScreenInfo,VSinfo,windowPtr)
 
 %% precompute visual stimuli
 
@@ -78,9 +77,6 @@ Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
     [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
 Screen('Flip',windowPtr);
 
-% blank screen 2
-% WaitSecs(ExpInfo.tBlank2);
-
 %% response
 
 % perceptual response
@@ -150,10 +146,10 @@ Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
 Screen('Flip',windowPtr);
 WaitSecs(ExpInfo.ITI);
 
-% calculate points
+% Record target location
 Resp.target_idx = ExpInfo.randVisIdx(i); % visual location that corresponds to speaker index
-Resp.target_cm = ExpInfo.speakerLocCM(Resp.target_idx);
-Resp.target_pixel = Resp.target_cm * ScreenInfo.numPixels_perCM;
-Resp.target_deg = rad2deg(atan(Resp.target_cm/ExpInfo.sittingDistance));
+Resp.target_cm = ExpInfo.randVisCM(i);
+Resp.target_pixel = ExpInfo.randVisPixel(i);
+Resp.target_deg = ExpInfo.randVisVA(i);
 
 end

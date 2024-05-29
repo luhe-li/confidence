@@ -1,6 +1,8 @@
 function Resp = LocalizeAuditoryStim(i, ExpInfo,...
     ScreenInfo,AudInfo,VSinfo,Arduino,pahandle,windowPtr)
 
+%% start the trial
+
 % fixation
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
     [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
@@ -26,6 +28,8 @@ WaitSecs(0.1);
 input_off = ['<',num2str(0),':',num2str(ExpInfo.randAudIdx(i)),'>'];
 fprintf(Arduino,input_off);
 PsychPortAudio('Stop',pahandle);
+
+%% response
 
 % perceptual response
 yLoc = ScreenInfo.yaxis-ScreenInfo.liftingYaxis;
@@ -95,8 +99,8 @@ Screen('Flip',windowPtr);
 WaitSecs(ExpInfo.ITI);
 
 Resp.target_idx = ExpInfo.randAudIdx(i); % visual location that corresponds to speaker index
-Resp.target_cm = ExpInfo.speakerLocCM(Resp.target_idx);
-Resp.target_pixel = Resp.target_cm * ScreenInfo.numPixels_perCM;
-Resp.target_deg = rad2deg(atan(Resp.target_cm/ExpInfo.sittingDistance));
+Resp.target_cm = ExpInfo.randAudCM(i);
+Resp.target_pixel = ExpInfo.randAudPixel(i);
+Resp.target_deg = ExpInfo.randAudVA(i);
 
 end
