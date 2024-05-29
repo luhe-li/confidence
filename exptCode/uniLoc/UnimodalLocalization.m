@@ -203,20 +203,6 @@ if strcmp(ExpInfo.session, 'A')
     input_on = ['<',num2str(1),':',num2str(testSpeaker),'>']; %arduino takes input in this format
     fprintf(Arduino,input_on);
     PsychPortAudio('FillBuffer',pahandle, AudInfo.Gaussia% Parameters
-numSamples = 1000;  % Number of samples
-meanValue = 0;      % Mean of the Gaussian noise
-stdDev = 1;         % Standard deviation of the Gaussian noise
-
-% Generate Gaussian white noise
-gaussianNoise = meanValue + stdDev * randn(1, numSamples);
-
-% Plot the Gaussian white noise
-figure;
-plot(gaussianNoise);
-title('Gaussian White Noise');
-xlabel('Sample Number');
-ylabel('Amplitude');
-nWhiteNoise);
     PsychPortAudio('Start',pahandle,1,0,0);
     WaitSecs(0.1);
     input_off = ['<',num2str(0),':',num2str(testSpeaker),'>'];

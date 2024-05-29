@@ -96,7 +96,7 @@ ExpInfo.visIdx                       = [6,8,9,11];
 ExpInfo.cueIdx                       = [1,2]; % 1 = A, 2 = V
 ExpInfo.visReliIdx                   = [8,20];%[10,28]; % std in centimeters
 ExpInfo.cue                          = {'A','V'};
-ExpInfo.avIdx                        = combvec(ExpInfo.audIdx, ExpInfo.visIdx, ExpInfo.cueIdx,ExpInfo.visReliIdx);
+ExpInfo.avIdx                        = combvec(ExpInfo.audIdx, ExpInfo.visIdx, ExpInfo.cueIdx, ExpInfo.visReliIdx);
 ExpInfo.nLevel                       = size(ExpInfo.avIdx, 2);
 for tt                               = 1:ExpInfo.nRep
     ExpInfo.randIdx(:,tt)                = randperm(ExpInfo.nLevel)';
@@ -115,24 +115,28 @@ ExpInfo.speakerLocCM                 = linspace(-ExpInfo.LRmostSpeakers2center, 
 ExpInfo.speakerLocVA                 = linspace(-ExpInfo.LRmostVisualAngle, ExpInfo.LRmostVisualAngle, ExpInfo.numSpeaker);
 ExpInfo.speakerLocPixel              = round(ExpInfo.speakerLocCM * ScreenInfo.numPixels_perCM);
 
-% randomized auditory locations
-ExpInfo.randAudIdx                   = ExpInfo.randAVIdx(1,:);
+% auditory locations in different units
+ExpInfo.randAudIdx    = ExpInfo.randAVIdx(1,:);
+ExpInfo.randAudCM     = ExpInfo.speakerLocCM(ExpInfo.randAudIdx);
+ExpInfo.randAudVA     = rad2deg(atan(ExpInfo.randAudCM/ExpInfo.sittingDistance));
+ExpInfo.randAudPixel  = ExpInfo.randAudCM .* ScreenInfo.numPixels_perCM;
 
+% visual locations in different units
+ExpInfo.randVisIdx    = ExpInfo.randAVIdx(2,:);
+ExpInfo.randVisCM     = ExpInfo.speakerLocCM(ExpInfo.randVisIdx);
+ExpInfo.randVisVA    = rad2deg(atan(ExpInfo.randVisCM/ExpInfo.sittingDistance));
+ExpInfo.randVisPixel = ExpInfo.randVisCM .* ScreenInfo.numPixels_perCM;
 
-
-
-% convert visual locations from index to perceptually matching pixel
-load([sprintf('AVbias_sub%i', ExpInfo.subjID) '.mat'])
-
-x = ExpInfo.speakerLocPixel(ExpInfo.randAudIdx);
-coefsA = squeeze(Transfer.PxCoeff(1, :));
-fitRA = x .* coefsA(2) + coefsA(1);
-fitSV = fitRA - ScreenInfo.xmid;
-
-
-ExpInfo.targetPixel                  = unique(fitSV);
-[~, ~, ic]                           = unique(ExpInfo.randAVIdx(2,:));
-ExpInfo.randVisPixel                 = ExpInfo.targetPixel(ic');
+% % convert visual locations from index to perceptually matching pixel
+% load([sprintf('AVbias_sub%i', ExpInfo.subjID) '.mat'])
+% 
+% x = ExpInfo.speakerLocPixel(ExpInfo.randAudIdx);
+% coefsA = squeeze(Transfer.PxCoeff(1, :));
+% fitRA = x .* coefsA(2) + coefsA(1);
+% fitSV = fitRA - ScreenInfo.xmid; 
+% ExpInfo.targetPixel                  = unique(fitSV);
+% [~, ~, ic]                           = unique(ExpInfo.randAVIdx(2,:));
+% ExpInfo.randVisPixel                 = ExpInfo.targetPixel(ic');
 
 % split all the trials into blocks
 if ExpInfo.practice == 1
@@ -147,20 +151,16 @@ ExpInfo.firstTrial                   = blocks(1:ExpInfo.numBlocks)+1;
 ExpInfo.lastTrial                    = blocks(2:(ExpInfo.numBlocks+1));
 ExpInfo.numTrialsPerBlock            = ExpInfo.breakTrials(1);
 
-% cost-function set up
-ExpInfo.maxPoint                     = 100;
-ExpInfo.minPoint                     = 1; % if enclosed
-% maxPoint - droprate * 2 * confidence_radius = minPoint
-% we define max 2 * confidence_radius as half of the screen size
-ExpInfo.dropRate                     = (ExpInfo.maxPoint - ExpInfo.minPoint)/ScreenInfo.halfScreenSize;
-
 % define durations
 ExpInfo.tFixation                    = 0.5;
 ExpInfo.tBlank1                      = 0.3;
-ExpInfo.tBlank2                      = 0.2;
-ExpInfo.frameStim                    = round(AudInfo.stimDura * 60);
-ExpInfo.tStim                        = ExpInfo.frameStim * (1/60);
-ExpInfo.ITI                          = 0.3;
+ExpInfo.tStimFrame = 3; % in frame
+ExpInfo.ITI = 0.3;
+ExpInfo.tIFI = ScreenInfo.ifi;
+
+% ExpInfo.frameStim                    = round(AudInfo.stimDura * 60);
+% ExpInfo.tStim                        = ExpInfo.frameStim * (1/60);
+% ExpInfo.ITI                          = 0.3;
 
 
 %% Auditory set up
@@ -173,18 +173,19 @@ our_device                           = devices(end).DeviceIndex;
 % Gaussian white noise
 AudInfo.fs                           = 44100;
 audioSamples                         = linspace(1,AudInfo.fs,AudInfo.fs);
-standardFrequency_gwn                = 10;
-AudInfo.stimDura                     = 0.033; %s
+standardFrequency_gwn                = 20;
+AudInfo.stimDura                     = ExpInfo.tStimFrame * ExpInfo.tIFI; % in sec
 duration_gwn                         = length(audioSamples)*AudInfo.stimDura;
 timeline_gwn                         = linspace(1,duration_gwn,duration_gwn);
 sineWindow_gwn                       = sin(standardFrequency_gwn/2*2*pi*timeline_gwn/AudInfo.fs);
 carrierSound_gwn                     = randn(1, numel(timeline_gwn));
-AudInfo.intensity_GWN                = 5; % too loud for debugging, orginally 15
+AudInfo.intensity_GWN                = 0.5; % too loud for debugging, orginally 15
 AudInfo.GaussianWhiteNoise           = [AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn;...
     AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn];
 pahandle                             = PsychPortAudio('Open', our_device, [], [], [], 2);%open device
 
-%% audio test
+%% audio test / warm-up
+
 testSpeaker = 8;
 input_on = ['<',num2str(1),':',num2str(testSpeaker),'>']; %arduino takes input in this format
 fprintf(Arduino,input_on);
@@ -253,10 +254,8 @@ for i                                = 1:ExpInfo.nTrials
         idxBlock                             = find(ExpInfo.breakTrials==i);
         firstTrial                           = ExpInfo.firstTrial(idxBlock);
         lastTrial                            = ExpInfo.lastTrial(idxBlock);
-%         blockPt                              = sum([Resp(firstTrial:lastTrial).point]);
-%         maxPtPossible = sum([Resp(firstTrial:lastTrial).maxPtPossible]);
+
         blockInfo = sprintf('You''ve finished block %i/%i. Please take a break.',idxBlock,ExpInfo.numBlocks);
-%         pointInfo = sprintf('Your total points of the last block is %.2f (max points possible: %.2f)',blockPt, maxPtPossible);
      
         Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
         [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
@@ -274,11 +273,11 @@ end
 c                                    = clock;
 ExpInfo.finish                       = sprintf('%04d/%02d/%02d_%02d:%02d:%02d',c(1),c(2),c(3),c(4),c(5),ceil(c(6)));
 
-% sort trials by location level
-% [~, temp]                            = sort([Resp(1:end).loc_idx]);
-% sortedResp                           = Resp(temp);
-save(fullfile(outDir,outFileName),'Resp','ExpInfo','ScreenInfo','VSinfo','AudInfo');
-ShowCursor;
+Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
+    [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
+DrawFormattedText(windowPtr, 'End of this session.\nPress any button to exit.',...
+    'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis,[255 255 255]);
+Screen('Flip',windowPtr);
 KbWait(-3);
- WaitSecs(1);
-Screen('CloseAll')
+ShowCursor;
+Screen('CloseAll');

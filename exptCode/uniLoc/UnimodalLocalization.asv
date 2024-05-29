@@ -1,20 +1,21 @@
 
-% TO-DO: update details
-In unimodal localization task, participants localized visual and auditory stimulic
-presented alone in separate sessions. Each trial started with a
-fixation cross presented straight ahead for 500 ms, followed by 300 ms of blank
-screen. Then, either an auditory or a visual 100 ms-long stimulus was
-presented, followed by 200 ms of blank screen. Next, the response cursor
-appeared, and participants adjusted the horizontal location of the cursor
-to match that of the stimulus. There was no time constraint for the
-response. Visual feedback of the cursor location was provided during its
-adjustment, but error feedback was not provided. After the response, the
-loudspeaker moved to its new location. The inter-trial interval was
-300 ms.
-
-Auditory stimuli were presenetd at nine locations, corresponding to
-speaker indices -12:3:12. Each location was tested 20 times
-pseudorandomly, resulting in 180 trials.
+% Updated: 24/0/28 
+% In the unimodal localization task, participants localized
+% visual and auditory stimuli presented alone in separate sessions. Each
+% trial began with a fixation cross presented straight ahead for 500 ms,
+% followed by a 300 ms blank screen. Then, either an auditory or a visual
+% 50 ms-long stimulus was presented. Next, the response cursor appeared,
+% and participants adjusted the horizontal location of the cursor to match
+% that of the stimulus. They pressed a button to reflect their confidence
+% level (1 to 4, from less to more confident), which also registered their
+% location report. There was no time constraint for the response. Visual
+% feedback of the cursor location was provided during its adjustment, but
+% error feedback was not provided. The inter-trial interval (ITI) was 300
+% ms. 
+% Auditory or visual stimuli were presented at six locations, ranging
+% from -10 to 10 degrees of visual angle, linearly spaced. Each location
+% was tested 20 times pseudorandomly, resulting in 120 trials. The visual
+% stimuli mixed two reliabilities, resulting in 240 trials.
 
 %% Enter experiment info
 clear; close all;  rng('Shuffle');
@@ -91,7 +92,7 @@ AssertOpenGL();
 GetSecs();
 WaitSecs(0.1);
 KbCheck();
-ListenChar(2); % silence the keyboard
+ListenChar(2);
 
 Screen('Preference', 'VisualDebugLevel', 1);
 Screen('Preference', 'SkipSyncTests', 1);
@@ -150,7 +151,7 @@ ExpInfo.speakerLocVA = linspace(-ExpInfo.LRmostVisualAngle, ExpInfo.LRmostVisual
 ExpInfo.speakerLocPixel = round(ExpInfo.speakerLocCM * ScreenInfo.numPixels_perCM);
 
 % auditory locations in different units
-ExpInfo.randAudCM     = ExpInfo.speakerLocCM(ExpInfo.randVisIdx);
+ExpInfo.randAudCM     = ExpInfo.speakerLocCM(ExpInfo.randAudIdx);
 ExpInfo.randAudVA     = rad2deg(atan(ExpInfo.randAudCM/ExpInfo.sittingDistance));
 ExpInfo.randAudPixel  = ExpInfo.randAudCM .* ScreenInfo.numPixels_perCM;
 

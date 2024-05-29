@@ -43,6 +43,7 @@ while 1
     end
 end
 Resp.vStimDotsCoor = dots_targetLoc_coordinates;
+
 %% trial start
 
 % fixation
@@ -71,7 +72,7 @@ vbl = Screen('Flip',windowPtr); % v onset
 PsychPortAudio('Start',pahandle,1,0,0);
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
     [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
-Screen('Flip',windowPtr, vbl + (ExpInfo.frameStim - 0.5) * ScreenInfo.ifi);
+Screen('Flip',windowPtr, vbl + (ExpInfo.tStimFrame - 0.5) * ExpInfo.tIFI);
 WaitSecs(0.1);
 input_off = ['<',num2str(0),':',num2str(ExpInfo.randAudIdx(i)),'>'];
 fprintf(Arduino,input_off);
@@ -89,13 +90,13 @@ end
 % perception response
 yLoc = ScreenInfo.yaxis-ScreenInfo.liftingYaxis;
 Screen('TextSize',windowPtr,20);
-SetMouse(randi(ScreenInfo.xmid*2,1), yLoc*2, windowPtr);
+HideCursor;
 resp = 1;
 tic;
-HideCursor;
 stopRecorded = 0;
 x = 0;
 while resp
+    cache = x;
     [x,~,~] = GetMouse(windowPtr); 
     x = min(x, ScreenInfo.xmid*2); 
     x = max(0,x);
@@ -165,13 +166,5 @@ end
 Resp.target_cm = ExpInfo.speakerLocCM(Resp.target_idx);
 Resp.target_pixel = Resp.target_cm .* ScreenInfo.numPixels_perCM;
 Resp.target_deg = rad2deg(atan(Resp.target_cm/ExpInfo.sittingDistance));
-% Resp.enclosed = abs(Resp.target_cm - Resp.response_cm) <= Resp.conf_radius_cm;
-% bestRadius_cm = abs(Resp.target_cm - Resp.response_cm);
-% Resp.maxPtPossible = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * bestRadius_cm, ExpInfo.minPoint);
-% if Resp.enclosed
-%     Resp.point = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * Resp.conf_radius_cm, ExpInfo.minPoint);
-% else
-%     Resp.point = 0;
-% end
 
 end
