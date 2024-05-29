@@ -118,6 +118,9 @@ ExpInfo.speakerLocPixel              = round(ExpInfo.speakerLocCM * ScreenInfo.n
 % randomized auditory locations
 ExpInfo.randAudIdx                   = ExpInfo.randAVIdx(1,:);
 
+
+
+
 % convert visual locations from index to perceptually matching pixel
 load([sprintf('AVbias_sub%i', ExpInfo.subjID) '.mat'])
 

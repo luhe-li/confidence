@@ -151,7 +151,7 @@ ExpInfo.speakerLocVA = linspace(-ExpInfo.LRmostVisualAngle, ExpInfo.LRmostVisual
 ExpInfo.speakerLocPixel = round(ExpInfo.speakerLocCM * ScreenInfo.numPixels_perCM);
 
 % auditory locations in different units
-ExpInfo.randAudCM     = ExpInfo.speakerLocCM(ExpInfo.randVisIdx);
+ExpInfo.randAudCM     = ExpInfo.speakerLocCM(ExpInfo.randAudIdx);
 ExpInfo.randAudVA     = rad2deg(atan(ExpInfo.randAudCM/ExpInfo.sittingDistance));
 ExpInfo.randAudPixel  = ExpInfo.randAudCM .* ScreenInfo.numPixels_perCM;
 

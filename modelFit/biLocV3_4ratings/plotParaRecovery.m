@@ -21,9 +21,9 @@ clt = [30, 120, 180; % blue
 
 %% load fitting results
 
-num_rep = 30; % experimental repetition per condition
+num_rep = 46; % experimental repetition per condition
 num_run = 7; % run of fits
-num_sample = 10; % sample of GT
+num_sample = 100; % sample of GT
 flnm = sprintf('recoveryResults_rep%i_sample%i_run%i.mat', num_rep, num_sample, num_run);
 
 if ~exist(fullfile(results_dir, flnm),'file') 
@@ -43,7 +43,7 @@ num_para = numel(paraID);
 lb = saveConfModel{1,1}.paraInfo.lb;
 ub = saveConfModel{1,1}.paraInfo.ub;
 
-for d                = [1,3]%1:num_model
+for d                = 1:num_model
 
     figure;
     set(gcf, 'Position', [1 188 1500 789]);
@@ -113,6 +113,6 @@ for d                = [1,3]%1:num_model
     lgd = legend([s1, s2],{'Loc only', 'Loc & Conf'});
     lgd.Layout.Tile = 'east';
 
-%     saveas(gca, fullfile(pwd, 's1_model_debug', sprintf('recovery_model-%s_rep-%i', ds_conf{d}, num_rep)), 'png')
+    saveas(gca, fullfile(out_dir, sprintf('recovery_model-%s_rep-%i', ds_conf{d}, num_rep)), 'png')
 
 end
