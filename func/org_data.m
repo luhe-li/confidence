@@ -68,8 +68,9 @@ switch exp
 
         % A
         load(fullfile(data_dir, selectedFiles(1).name));
-        deg_per_CM  = ExpInfo.LRmostVisualAngle / ExpInfo.LRmostSpeakers2center;
-        a_org_target = reshape([sortedResp.target_cm] .* deg_per_CM,[ExpInfo.nRep, ExpInfo.nLevel])'; % convert target to pixel, center as 0
+%         deg_per_CM  = ExpInfo.LRmostVisualAngle / ExpInfo.LRmostSpeakers2center;
+%         a_org_target = reshape([sortedResp.target_cm] .* deg_per_CM,[ExpInfo.nRep, ExpInfo.nLevel])'; % convert target to pixel, center as 0
+        a_org_target = reshape([sortedResp.target_deg],[ExpInfo.nRep, ExpInfo.nLevel])'; % convert target to pixel, center as 0
         temp = reshape([sortedResp.response_deg],[ExpInfo.nRep, ExpInfo.nLevel])';
         org_resp(1,:,:) = temp;
         org_err(1,:,:) = temp - a_org_target;
