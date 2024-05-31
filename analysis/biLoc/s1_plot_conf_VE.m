@@ -1,5 +1,6 @@
-%Data analysis of localization confidence
-%Compares confidence between unimodal and bimodal conditions
+% Data analysis of localization confidence
+% Compares confidence between unimodal and bimodal conditions
+
 clear; clc; close all;
 sub_slc     = 9;
 ses_slc     = 1;
@@ -133,7 +134,7 @@ for cue = 1:num_cue
     end
 
 end
-
+ 
 flnm = sprintf('conf_sub%i_ses%i-%i', sub_slc, min(ses_slc), max(ses_slc));
 saveas(gca, fullfile(out_dir, flnm),'png')
 
