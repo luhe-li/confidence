@@ -12,11 +12,13 @@ addpath(genpath(fullfile(project_dir,'func')))
 
 % organize data
 [bi_resp, bi_conf, ~, ExpInfo, ~, ScreenInfo] = org_data(sub_slc,ses_slc,'biLoc');
-[uni_resp, uni_conf] = org_data(sub_slc,[],'uniLoc');
+[uni_resp, uni_conf, ~, uniExpInfo] = org_data(sub_slc,[],'uniLoc');
 
 %% reorganize uni and bi confidence
 
-deg_per_px  = rad2deg(atan(170 / 2 / ExpInfo.sittingDistance)) .* 2 / ScreenInfo.xaxis;
+% sV for bimodal is remapped. Convert them from pixel to VA
+% deg_per_px  = rad2deg(atan(170 / 2 / ExpInfo.sittingDistance)) .* 2 / ScreenInfo.xaxis;
+deg_per_px = ExpInfo.LRmostVisualAngle * 2 / ScreenInfo.xaxis;
 sA    = ExpInfo.speakerLocVA(ExpInfo.audIdx);
 remapped_sV = ExpInfo.targetPixel .* deg_per_px;
 
@@ -41,10 +43,19 @@ end
 
 %% reorganize ventriloquist effect
 
-mean_uni_resp = mean(uni_resp, 3); % condition (A,V1,V2) x loc (4)
-loc_a = repmat(mean_uni_resp(1,:)', [1, numel(remapped_sV)]);
-% loc_a = repmat(sA',[1, numel(remapped_sV)]);
-remap_loc_v = repmat(remapped_sV, [numel(sA), 1]);
+% if tested auditory locations are the same between uni and bi modal,
+% subtract uni_response for VE
+if  sum(ExpInfo.audIdx == uniExpInfo.audLevel) == 4
+    mean_uni_resp = mean(uni_resp, 3); % condition (A,V1,V2) x loc (4)
+    loc_a = repmat(mean_uni_resp(1,:)', [1, numel(remapped_sV)]);
+    remap_loc_v = repmat(remapped_sV, [numel(sA), 1]);
+% if different, they are not comparable, use interpolated unimodal
+% locations
+else
+    mean_uni_resp = mean(uni_resp, 3); % condition (A,V1,V2) x loc (4)
+    loc_a = repmat(sA',[1, numel(remapped_sV)]);
+    remap_loc_v = repmat(remapped_sV, [numel(sA), 1]);
+end
 
 % reshape into dimensions of bi
 uni_loc(:,:,1,1:2) = repmat(loc_a, [1,1,1,2]);
