@@ -92,7 +92,7 @@ AssertOpenGL();
 GetSecs();
 WaitSecs(0.1);
 KbCheck();
-ListenChar(1); % change from 2 to 1 because if 2 then NO keyboard will be usable after quitting with escape.
+ListenChar(2); % change from 2 to 1 because if 2 then NO keyboard will be usable after quitting with escape.
 
 Screen('Preference', 'VisualDebugLevel', 1);
 Screen('Preference', 'SkipSyncTests', 1);
