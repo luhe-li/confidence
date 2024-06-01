@@ -127,16 +127,16 @@ ExpInfo.randVisCM     = ExpInfo.speakerLocCM(ExpInfo.randVisIdx);
 ExpInfo.randVisVA    = rad2deg(atan(ExpInfo.randVisCM/ExpInfo.sittingDistance));
 ExpInfo.randVisPixel = ExpInfo.randVisCM .* ScreenInfo.numPixels_perCM;
 
-% % convert visual locations from index to perceptually matching pixel
-% load([sprintf('AVbias_sub%i', ExpInfo.subjID) '.mat'])
-% 
-% x = ExpInfo.speakerLocPixel(ExpInfo.randAudIdx);
-% coefsA = squeeze(Transfer.PxCoeff(1, :));
-% fitRA = x .* coefsA(2) + coefsA(1);
-% fitSV = fitRA - ScreenInfo.xmid; 
-% ExpInfo.targetPixel                  = unique(fitSV);
-% [~, ~, ic]                           = unique(ExpInfo.randAVIdx(2,:));
-% ExpInfo.randVisPixel                 = ExpInfo.targetPixel(ic');
+% convert visual locations from index to perceptually matching pixel
+load([sprintf('AVbias_sub%i', ExpInfo.subjID) '.mat'])
+
+x = ExpInfo.speakerLocPixel(ExpInfo.randAudIdx);
+coefsA = squeeze(Transfer.PxCoeff(1, :));
+fitRA = x .* coefsA(2) + coefsA(1);
+fitSV = fitRA - ScreenInfo.xmid; 
+ExpInfo.targetPixel                  = unique(fitSV);
+[~, ~, ic]                           = unique(ExpInfo.randAVIdx(2,:));
+ExpInfo.randVisPixel                 = ExpInfo.targetPixel(ic');
 
 % split all the trials into blocks
 if ExpInfo.practice == 1

@@ -1,5 +1,5 @@
 
-% Updated: 24/0/28 
+% Updated: 24/05/28 
 % In the unimodal localization task, participants localized
 % visual and auditory stimuli presented alone in separate sessions. Each
 % trial began with a fixation cross presented straight ahead for 500 ms,
@@ -127,7 +127,7 @@ ScreenInfo.y2_ub = ScreenInfo.yaxis-ScreenInfo.liftingYaxis+7;
 
 % choose auditory locations out of 16 speakers, level/index is speaker
 % order (left to right: 1-16)
-ExpInfo.audLevel = 6:11;
+ExpInfo.audLevel = [5,6,8,9,11,12];
 ExpInfo.nLevel = numel(ExpInfo.audLevel);
 for tt = 1:ExpInfo.nRep
     ExpInfo.randA(:,tt) = randperm(ExpInfo.nLevel)';
@@ -191,7 +191,7 @@ duration_gwn                = length(audioSamples)*AudInfo.stimDura;
 timeline_gwn                = linspace(1,duration_gwn,duration_gwn);
 sineWindow_gwn              = sin(standardFrequency_gwn/2*2*pi*timeline_gwn/AudInfo.fs);
 carrierSound_gwn            = randn(1, numel(timeline_gwn));
-AudInfo.intensity_GWN       = 0.5; % too loud for debugging, originally 15
+AudInfo.intensity_GWN       = 1; % too loud for debugging, originally 15
 AudInfo.GaussianWhiteNoise  = [AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn;...
                             AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn];
 pahandle                    = PsychPortAudio('Open', our_device, [], [], [], 2); % open device
@@ -200,9 +200,9 @@ pahandle                    = PsychPortAudio('Open', our_device, [], [], [], 2);
 
 if strcmp(ExpInfo.session, 'A')
     testSpeaker = 8;
-    input_on = ['<',num2str(1),':',num2str(testSpeaker),'>']; %arduino takes input in this format
+    input_on = ['<',num2str(1),':',num2str(testSpeaker),'>']; 
     fprintf(Arduino,input_on);
-    PsychPortAudio('FillBuffer',pahandle, AudInfo.GaussianWhiteNoise) % Parameters
+    PsychPortAudio('FillBuffer',pahandle, AudInfo.GaussianWhiteNoise) 
     PsychPortAudio('Start',pahandle,1,0,0);
     WaitSecs(0.1);
     input_off = ['<',num2str(0),':',num2str(testSpeaker),'>'];

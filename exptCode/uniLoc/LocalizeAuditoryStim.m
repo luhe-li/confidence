@@ -28,6 +28,7 @@ WaitSecs(0.1);
 input_off = ['<',num2str(0),':',num2str(ExpInfo.randAudIdx(i)),'>'];
 fprintf(Arduino,input_off);
 PsychPortAudio('Stop',pahandle);
+WaitSecs(0.1);
 
 %% response
 
@@ -38,7 +39,7 @@ HideCursor;
 resp = 1;
 tic;
 stopRecorded = 0;
-x = 0;
+x = -1;
 while resp
     cache = x;
     [x,~,~] = GetMouse(windowPtr);
