@@ -92,7 +92,13 @@ AssertOpenGL();
 GetSecs();
 WaitSecs(0.1);
 KbCheck();
-ListenChar(2); % change from 2 to 1 because if 2 then NO keyboard will be usable after quitting with escape.
+ListenChar(1); % change from 2 to 1 because if 2 then NO keyboard will be usable after quitting with escape.
+% STOP CHANGING THIS TO TWO 
+% S T O P!    D O I N G!    T H A T!
+% ListenChar(        ONE!        );
+% There isn't even a keyboard with a index of two what are you even listening to 
+% DO NOT CHANGE THIS TO TWO
+
 
 Screen('Preference', 'VisualDebugLevel', 1);
 Screen('Preference', 'SkipSyncTests', 1);

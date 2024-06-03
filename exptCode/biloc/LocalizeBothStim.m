@@ -94,7 +94,7 @@ HideCursor;
 resp = 1;
 tic;
 stopRecorded = 0;
-x = 0;
+x = -1;
 while resp
     cache = x;
     [x,~,~] = GetMouse(windowPtr); 

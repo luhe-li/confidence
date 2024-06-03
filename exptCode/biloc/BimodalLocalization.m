@@ -18,7 +18,7 @@ switch ExpInfo.practice
         ExpInfo.numBlocks                    = 8;
     case 2
         outFileName                          = sprintf('biLoc_practice_sub%i_ses%i', ExpInfo.subjID, ExpInfo.session);
-        ExpInfo.nRep                         = 1; % number of trial per condition level
+        ExpInfo.nRep                         = 2; % number of trial per condition level
         ExpInfo.numBlocks                    = 2;
 end
 
@@ -58,7 +58,12 @@ AssertOpenGL();
 GetSecs();
 WaitSecs(0.1);
 KbCheck();
-ListenChar(2);
+ListenChar(1); % change from 2 to 1 because if 2 then NO keyboard will be usable after quitting with escape.
+% STOP CHANGING THIS TO TWO 
+% S T O P!    D O I N Gsssssssssss!    T H A T!
+% ListenChar(        ONE!        );
+% There isn't even a keyboard with a index of two what are you even listening to 
+% DO NOT CHANGE THIS TO TWO
 
 Screen('Preference', 'VisualDebugLevel', 1);
 Screen('Preference', 'SkipSyncTests', 1);
@@ -162,7 +167,6 @@ ExpInfo.tIFI = ScreenInfo.ifi;
 % ExpInfo.tStim                        = ExpInfo.frameStim * (1/60);
 % ExpInfo.ITI                          = 0.3;
 
-
 %% Auditory set up
 
 % get correct sound card
@@ -173,29 +177,38 @@ our_device                           = devices(end).DeviceIndex;
 % Gaussian white noise
 AudInfo.fs                           = 44100;
 audioSamples                         = linspace(1,AudInfo.fs,AudInfo.fs);
-standardFrequency_gwn                = 20;
+standardFrequency_gwn                = 100;
 AudInfo.stimDura                     = ExpInfo.tStimFrame * ExpInfo.tIFI; % in sec
 duration_gwn                         = length(audioSamples)*AudInfo.stimDura;
 timeline_gwn                         = linspace(1,duration_gwn,duration_gwn);
 sineWindow_gwn                       = sin(standardFrequency_gwn/2*2*pi*timeline_gwn/AudInfo.fs);
 carrierSound_gwn                     = randn(1, numel(timeline_gwn));
-AudInfo.intensity_GWN                = 0.5; % too loud for debugging, orginally 15
+AudInfo.intensity_GWN                = 1; % too loud for debugging, orginally 15
 AudInfo.GaussianWhiteNoise           = [AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn;...
     AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn];
 pahandle                             = PsychPortAudio('Open', our_device, [], [], [], 2);%open device
 
 %% audio test / warm-up
+duration_warm                = length(audioSamples);
+timeline_warm                = linspace(1,duration_warm,duration_warm);
+sineWindow_warm              = sin(standardFrequency_gwn/2*2*pi*timeline_warm/AudInfo.fs);
+carrierSound_warm            = randn(1, numel(timeline_warm));
 
-testSpeaker = 8;
+AudInfo.WarmupWhiteNoise  = [AudInfo.intensity_GWN.*sineWindow_warm.*carrierSound_warm; AudInfo.intensity_GWN.*sineWindow_warm.*carrierSound_warm];
+
+aa = [6,8,9,11];
+for i = 1:4
+testSpeaker = aa(i);
 input_on = ['<',num2str(1),':',num2str(testSpeaker),'>']; %arduino takes input in this format
 fprintf(Arduino,input_on);
 PsychPortAudio('FillBuffer',pahandle, AudInfo.GaussianWhiteNoise);
 PsychPortAudio('Start',pahandle,1,0,0);
-WaitSecs(0.1);
+WaitSecs(1);
 input_off = ['<',num2str(0),':',num2str(testSpeaker),'>'];
 fprintf(Arduino,input_off);
 PsychPortAudio('Stop',pahandle);
-
+WaitSecs(1);
+end
 %% make visual stimuli
 
 VSinfo.SD_yaxis                      = 5; %SD of the blob in cm (vertical)

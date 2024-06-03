@@ -25,7 +25,7 @@ sineWindow_gwn              = sin(standardFrequency_gwn/2*2*pi*timeline_gwn/AudI
 carrierSound_gwn            = randn(1, numel(timeline_gwn));
 AudInfo.intensity_GWN       = 1; % too loud for debugging, originally 15
 AudInfo.GaussianWhiteNoise  = [AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn;
-    AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn];
+    zeros(1,duration_gwn)];
 pahandle                    = PsychPortAudio('Open', our_device, [], [], [], 2);%open device
 
 % aa = reshape([6:11; 6:11;6:11],1,[]);
