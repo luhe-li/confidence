@@ -127,7 +127,7 @@ ScreenInfo.y2_ub = ScreenInfo.yaxis-ScreenInfo.liftingYaxis+7;
 
 % choose auditory locations out of 16 speakers, level/index is speaker
 % order (left to right: 1-16)
-ExpInfo.audLevel = [6,8,9,11];%[6,8,9,11];
+ExpInfo.audLevel = [6,11];%[6,8,9,11];
 ExpInfo.nLevel = numel(ExpInfo.audLevel);
 for tt = 1:ExpInfo.nRep
     ExpInfo.randA(:,tt) = randperm(ExpInfo.nLevel)';
@@ -171,13 +171,8 @@ ExpInfo.numTrialsPerBlock = ExpInfo.breakTrials(1);
 % define durations
 ExpInfo.tFixation = 0.5;
 ExpInfo.tBlank1 = 0.3;
-switch ExpInfo.mode
-    case 1 % experiment mode
-        ExpInfo.tStimFrame = 3; % in frame
-    case 2 % debug mode
-        ExpInfo.tStimFrame = 180; % in frame
-end
 
+ExpInfo.tStimFrame = 180; % in frame
 ExpInfo.ITI = 0.3;
 ExpInfo.tIFI = ScreenInfo.ifi;
 
