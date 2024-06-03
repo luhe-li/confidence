@@ -23,31 +23,36 @@ numCores = feature('numcores'); % number of cores locally
 fprintf('Number of cores: %i  \n', numCores);
 num_run = numCores - 1; % runs of fitting
 
-%% part 1: fit unimodal loc and conf
+%% joint fit
 
 % organize data
 % condition (A,V1,V2) x loc (4) x rep
-[data.uni_resp, data.uni_conf, ~, data.uniExpInfo] = org_data(sub_slc,[],'uniLoc');
+[~, ~, ~, data.uniExpInfo, ~, ~, data.uni_loc, data.uni_conf] = org_data(sub_slc,[],'uniLoc');
 
 % motor noise
 data.sigMotor = get_point_sigM(sub_slc);
 
-% general setting for all modelsmodel.num_run         = num_run;
+% general setting for all models
+model.num_run         = num_run;
 model.num_sec         = num_run*2; % number of samples in the parameter space, must be larger than num_run
-model.x               = (-512:1:512) * deg_per_px;
-model.sA              = data.uniExpInfo.audLevel;
-model.sV              = model.sA;
-model.num_rep         = data.uniExpInfo.nRep;
+model.uni_sA          = data.uniExpInfo.audLevel;
+model.uni_sV          = model.uni_sA;
+model.uni_nrep        = data.uniExpInfo.nRep;
 
 OPTIONS.TolMesh = 1e-5;
 OPTIONS.Display = 'off';
 
 % initiate
 model.mode                  = 'initiate';
-Val = nllUniLocConf([], model, data);
+Val = nllUniBiLocConf([], model, data);
 
 % optimize
 model.mode                  = 'optimize';
+
+% test
+p = [1:14]./14;
+test = nllUniBiLocConf(p, model, data);
+
 NLL                         = NaN(1, model.num_runs);
 estP                        = NaN(model.num_runs, Val.num_para);
 

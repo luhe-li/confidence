@@ -1,0 +1,144 @@
+function out = nllUniBiLocConf(freeParam, model, data)
+
+switch model.mode
+
+    case 'initiate'
+
+        out.paraID                   = {'aA','bA','\sigma_{V1,uni}','\sigma_{A,uni}','\sigma_{V2,uni}','\sigma_{V1,bi}','\sigma_{A,bi}','\sigma_{V2,bi}','\sigma_{P}','p_{common}','\sigma_{C}','c1','\delta_{c2}','\delta_{c3}'};
+        out.num_para                 = length(out.paraID);
+
+        % hard bounds, the range for LB, UB, larger than soft bounds
+        paraH.aA                     = [ 0.5,     3]; % degree
+        paraH.bA                     = [ -10,    10]; % degree
+        paraH.sigV1uni               = [1e-2,     3]; % degree
+        paraH.sigAuni                = [   1,    10]; % degree
+        paraH.sigV2uni               = [   1,    10]; % degree
+        paraH.sigV1                  = [1e-2,     3]; % degree
+        paraH.sigA                   = [   1,    10]; % degree
+        paraH.sigV2                  = [   1,    10]; % degree
+        paraH.sigP                   = [   1,    20]; % degrees
+        paraH.pC1                    = [1e-3,1-1e-3]; % weight
+        paraH.sigC                   = [ 0.1,     3]; % measurement noise of confidence
+        paraH.c1                     = [ 0.5,     5];
+        paraH.dc2                    = [0.01,     2];
+        paraH.dc3                    = [0.01,     2];
+
+        % soft bounds, the range for PLB, PUB
+        paraS.aA                     = [ 0.9,     1]; % degree
+        paraS.bA                     = [  -2,     2]; % degree
+        paraS.sigV1uni               = [ 0.1,     2]; % degree
+        paraS.sigAuni                = [   3,     8]; % degree
+        paraS.sigV2uni               = [   3,     8]; % degree
+        paraS.sigV1                  = [ 0.1,     2]; % degree
+        paraS.sigA                   = [   3,     8]; % degree
+        paraS.sigV2                  = [   3,     8]; % degree
+        paraS.sigP                   = [   5,    10]; % degrees
+        paraS.pC1                    = [ 0.5,   0.7]; % weight
+        paraS.sigC                   = [ 0.1,     2]; % measurement noise of confidence
+        paraS.c1                     = [   1,     2];
+        paraS.dc2                    = [ 0.1,   0.5];
+        paraS.dc3                    = [ 0.1,   0.5];
+
+        % reorganize parameter bounds to feed to bads
+        fn                           = fieldnames(paraH);
+        for k                        = 1:numel(fn)
+            out.lb(:,k)                  = paraH.(fn{k})(1);
+            out.ub(:,k)                  = paraH.(fn{k})(2);
+            out.plb(:,k)                 = paraS.(fn{k})(1);
+            out.pub(:,k)                 = paraS.(fn{k})(2);
+        end
+        out.paraS                    = paraS; out.paraH = paraH;
+
+        % get grid initializations
+        out.init                     = getInit(out.lb, out.ub, model.num_sec, model.num_run);
+
+    case {'optimize'}
+
+        % fixed parameter values for reducing model
+        mu_P = 0;
+        lapse = 0.02;
+        aV = 1;
+        bV = 0;
+
+        % free parameters
+        aA                           = freeParam(1);
+        bA                           = freeParam(2);
+        sigV1uni                     = freeParam(3);
+        sigAuni                      = freeParam(4);
+        sigV2uni                     = freeParam(5);
+        sigV1                        = freeParam(6);
+        sigA                         = freeParam(7);
+        sigV2                        = freeParam(8);
+        sigP                         = freeParam(9);
+        pCommon                      = freeParam(10);
+        sigC                         = freeParam(11);
+        c1                           = freeParam(12);
+        dc2                          = freeParam(13);
+        dc3                          = freeParam(14);
+
+        sigVsuni = [sigV1uni, sigV2uni];
+        sigVs = [sigV1, sigV2];
+        num_sigVs = numel(sigVs);
+        c2 = c1 + dc2;
+        c3 = c1 + dc2 + dc3;
+        sigMotor = data.sigMotor;
+
+        %% unimodal
+
+        % separate trials of V1 and V2
+        V1_bool = ~~rem(data.uniExpInfo.randV,2);
+        V2_bool = ~rem(data.uniExpInfo.randV,2);
+
+        %the mean of measurement distributions (auditory measurements are biased)
+        s_A_prime_uni      = aA.*data.uniExpInfo.randAudVA + bA;
+        s_V_prime_uni1      = aV.*data.uniExpInfo.randVisVA(V1_bool) + bV;
+        s_V_prime_uni2      = aV.*data.uniExpInfo.randVisVA(V2_bool) + bV;
+
+        %to calculate the mean of the response distributions
+        c_A                = (1/sigAuni^2)/(1/sigAuni^2+1/sigP^2);
+        c_V1               = (1/sigV1uni^2)/(1/sigV1uni^2+1/sigP^2);
+        c_V2               = (1/sigV2uni^2)/(1/sigV2uni^2+1/sigP^2);
+        f_A                = (mu_P/sigP^2)/(1/sigAuni^2+1/sigP^2);
+        f_V1               = (mu_P/sigP^2)/(1/sigV1uni^2+1/sigP^2);
+        f_V2               = (mu_P/sigP^2)/(1/sigV2uni^2+1/sigP^2);
+        mu_shat_A_uni      = c_A.*s_A_prime_uni + f_A;
+        mu_shat_V1_uni     = c_V1.*s_V_prime_uni1 + f_V1;
+        mu_shat_V2_uni     = c_V2.*s_V_prime_uni2 + f_V2;
+        R1.mu_shat_A_uni   = unique(mu_shat_A_uni);
+        R1.mu_shat_V1_uni   = unique(mu_shat_V1_uni);
+        R1.mu_shat_V2_uni   = unique(mu_shat_V2_uni);
+
+        %the variances of estimate distributions
+        sigma_shat_A       = c_A*sigAuni;
+        sigma_shat_V1      = c_V1*sigV1uni;
+        sigma_shat_V2      = c_V2*sigV2uni;
+        R1.sigma_shat_A_wN = sqrt(sigma_shat_A^2 + sigMotor^2);
+        R1.sigma_shat_V1_wN = sqrt(sigma_shat_V1^2 + sigMotor^2);
+        R1.sigma_shat_V2_wN = sqrt(sigma_shat_V2^2 + sigMotor^2);
+
+        %unimodal localization task
+        nLL_unimodal    = calculateNLL_unimodal([mu_shat_A_uni; mu_shat_V1_uni; mu_shat_V2_uni], ...
+            [R1.sigma_shat_A_wN; R1.sigma_shat_V1_wN; R1.sigma_shat_V2_wN], data.uni_loc);
+
+        %
+
+
+
+
+
+
+
+end
+
+    function nLL_unimodal = calculateNLL_unimodal(mu, sig, x)
+        %we assume that response distributions are Gaussian, centered at mu
+        %with variance equal to (sigma_shat^2 + sigma_r^2)
+        %mu, sig, x all consist of 3 rows (1st row: A; 2nd row: V)
+        LL = arrayfun(@(idx) length(mu(idx,:))*(-0.5*log(2*pi*sig(idx)^2))-...
+            sum((x(idx,:) - mu(idx,:)).^2)./(2*sig(idx)^2), 1:3);
+        %log(1/sqrt(2*pi*sigma^2)*e^(-(x-mu)^2/(2*sigma^2))) =
+        %-0.5log(2*pi*sigma^2) - (x-mu)^2/(2*sigma^2)
+        nLL_unimodal = sum(-LL(:));
+    end
+
+end

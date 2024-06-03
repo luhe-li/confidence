@@ -99,10 +99,10 @@ switch exp
         V2_bool = ~rem(ExpInfo.randV,2);
         r = [Resp.response_deg];
         c = [Resp.conf];
-        resp(2,:) = r(V1_bool);
-        resp(3,:) = r(V2_bool);
-        conf(2,:) = c(V1_bool);
-        conf(3,:) = c(V2_bool);
+        resp(2,:,:) = r(V1_bool);
+        resp(3,:,:) = r(V2_bool);
+        conf(2,:,:) = c(V1_bool);
+        conf(3,:,:) = c(V2_bool);
 
 
     case 'pointTask'
