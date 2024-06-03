@@ -24,7 +24,12 @@ input_on = ['<',num2str(1),':',num2str(ExpInfo.randAudIdx(i)),'>']; %arduino tak
 fprintf(Arduino,input_on);
 PsychPortAudio('FillBuffer',pahandle, AudInfo.GaussianWhiteNoise);
 PsychPortAudio('Start',pahandle,1,0,0);
-WaitSecs(3.5);
+switch ExpInfo.mode
+    case 1 % experiment mode
+        WaitSecs(0.1);
+    case 2 % debug mode
+        WaitSecs(3.5);
+end
 input_off = ['<',num2str(0),':',num2str(ExpInfo.randAudIdx(i)),'>'];
 fprintf(Arduino,input_off);
 PsychPortAudio('Stop',pahandle);
@@ -50,7 +55,7 @@ while resp
         [0,0,ScreenInfo.xaxis, ScreenInfo.yaxis]);
     Screen('DrawLine', windowPtr, [255 255 255],x, yLoc-3, x, yLoc+3, 1);
     Screen('Flip', windowPtr);
-    
+
     locdiff = abs(cache - x);
     if locdiff ~= 0
         stopRecorded = 0;
@@ -58,7 +63,7 @@ while resp
         mouseStopT = GetSecs();
         stopRecorded = 1;
     end
-    
+
     % Check the keyboard
     [keyIsDown, startTime, keyCode] = KbCheck();
     if keyIsDown
