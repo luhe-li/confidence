@@ -162,7 +162,7 @@ switch model.mode
         end
 
         %% sum nll
-        
+
         out = nLL_uni_loc + nLL_uni_conf + sum(nLL_bimodal(:));
 
 end
@@ -209,7 +209,7 @@ end
             CI, mu_P, sigMotor, lapse, data_resp, data_conf, model)
 
         nLL_bimodal = 0;
-        sA_prime   = model.sA.*aA + bA; %the mean of biased auditory measurements
+        sA_prime   = model.bi_sA.*aA + bA; %the mean of biased auditory measurements
 
         for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
 
@@ -218,9 +218,8 @@ end
                 model.numBins_A);
             mDist_AV_A = norm_dst(x1_grid, sA_prime(p), sigA, 0);
 
-            sV_prime  = model.sV.*aV+bV;
+            sV_prime  = model.bi_sV.*aV+bV;
             for q = 1:length(sV_prime) %for each AV pair with s_V' = s_V_prime(q)
-
 
                 x2_grid    = linspace(sV_prime(q) - model.num_SD*sigV,...
                     sV_prime(q) + model.num_SD*sigV,...
@@ -274,8 +273,10 @@ end
 
                 elseif strcmp(model.strategy_conf, 'Heuristic')
 
-                    var(1,:,:) = repmat(CI.J_A, size(Post_C1));
-                    var(2,:,:) = repmat(CI.J_V, size(Post_C1));
+                    var(1,:,:) = repmat(CI.J_P * sigA/CI.constC2_1, size(Post_C1));
+                    var(1,:,:) = repmat(CI.J_P * sigV/CI.constC2_2, size(Post_C1));
+                   %  var(1,:,:) = repmat(CI.J_A, size(Post_C1));
+                   %  var(2,:,:) = repmat(CI.J_V, size(Post_C1));
 
                 end
 
@@ -358,3 +359,21 @@ end
             end
         end
     end
+
+end
+
+function [Post_C1, Post_C2, L_C1, L_C2] = calculatePostC1C2(X1, X2, CI, mu_P, pC1)
+%likelihood of a common cause and seperate causes
+L_C1     = 1/(2*pi*sqrt(CI.constC1))*exp(-0.5*((X1 - X2).^2.*CI.J_P +...
+    (X1 - mu_P).^2*CI.J_V + (X2 - mu_P).^2.*CI.J_A)./CI.constC1);
+L_C2     = 1/(2*pi*sqrt(CI.constC2_1*CI.constC2_2))*exp(-0.5*...
+    ((X1 - mu_P).^2./CI.constC2_1+(X2 - mu_P).^2./CI.constC2_2));
+normTerm = L_C1.*pC1 + L_C2.*(1-pC1);
+%posterior of a common cause
+Post_C1  = L_C1.*pC1./normTerm;
+Post_C2  = 1 - Post_C1;
+end
+
+function p = norm_dst(x,mu,sigma,t)
+p = 1/sqrt(2*pi*sigma^2).*exp(-(x-mu).^2./(2*sigma^2)) + t;
+end

@@ -43,10 +43,17 @@ end
 
 %% reorganize ventriloquist effect
 
+% reorganize audlevel for 11 and 12 because they tested 6 uni locations
+if sub_slc == 11 || sub_slc == 12
+    a_loc_slc = 2:5;
+else
+    a_loc_slc = 1:4;
+end
+
 % if tested auditory locations are the same between uni and bi modal,
 % subtract uni_response for VE
-if  sum(ExpInfo.audIdx == uniExpInfo.audLevel) == 4
-    mean_uni_resp = mean(uni_resp, 3); % condition (A,V1,V2) x loc (4)
+if  sum(ExpInfo.audIdx == uniExpInfo.audLevel(a_loc_slc)) == 4
+    mean_uni_resp = mean(uni_resp(:,a_loc_slc,:), 3); % condition (A,V1,V2) x loc (4)
     loc_a = repmat(mean_uni_resp(1,:)', [1, numel(remapped_sV)]);
     remap_loc_v = repmat(remapped_sV, [numel(sA), 1]);
 % if different, they are not comparable, use interpolated unimodal
