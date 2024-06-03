@@ -93,12 +93,6 @@ GetSecs();
 WaitSecs(0.1);
 KbCheck();
 ListenChar(1); % change from 2 to 1 because if 2 then NO keyboard will be usable after quitting with escape.
-% STOP CHANGING THIS TO TWO 
-% S T O P!    D O I N G!    T H A T!
-% ListenChar(        ONE!        );
-% There isn't even a keyboard with a index of two what are you even listening to 
-% DO NOT CHANGE THIS TO TWO
-
 
 Screen('Preference', 'VisualDebugLevel', 1);
 Screen('Preference', 'SkipSyncTests', 1);
@@ -133,7 +127,7 @@ ScreenInfo.y2_ub = ScreenInfo.yaxis-ScreenInfo.liftingYaxis+7;
 
 % choose auditory locations out of 16 speakers, level/index is speaker
 % order (left to right: 1-16)
-ExpInfo.audLevel = [5,6,8,9,11,12];
+ExpInfo.audLevel = [6,11];%[6,8,9,11];
 ExpInfo.nLevel = numel(ExpInfo.audLevel);
 for tt = 1:ExpInfo.nRep
     ExpInfo.randA(:,tt) = randperm(ExpInfo.nLevel)';
@@ -177,7 +171,7 @@ ExpInfo.numTrialsPerBlock = ExpInfo.breakTrials(1);
 % define durations
 ExpInfo.tFixation = 0.5;
 ExpInfo.tBlank1 = 0.3;
-ExpInfo.tStimFrame = 3; % in frame
+ExpInfo.tStimFrame = 180; % in frame
 ExpInfo.ITI = 0.3;
 ExpInfo.tIFI = ScreenInfo.ifi;
 
@@ -191,7 +185,7 @@ our_device=devices(end).DeviceIndex;
 % Gaussian white noise
 AudInfo.fs                  = 44100;
 audioSamples                = linspace(1,AudInfo.fs,AudInfo.fs);
-standardFrequency_gwn       = 20;
+standardFrequency_gwn       = 100;
 AudInfo.stimDura            = ExpInfo.tStimFrame * ExpInfo.tIFI; % in sec
 duration_gwn                = length(audioSamples)*AudInfo.stimDura;
 timeline_gwn                = linspace(1,duration_gwn,duration_gwn);
@@ -205,7 +199,8 @@ pahandle                    = PsychPortAudio('Open', our_device, [], [], [], 2);
 %% audio test / warm-up
 
 if strcmp(ExpInfo.session, 'A')
-    testSpeaker = 8;
+    for i = 1:16
+    testSpeaker = i;
     input_on = ['<',num2str(1),':',num2str(testSpeaker),'>']; 
     fprintf(Arduino,input_on);
     PsychPortAudio('FillBuffer',pahandle, AudInfo.GaussianWhiteNoise) 
@@ -214,6 +209,8 @@ if strcmp(ExpInfo.session, 'A')
     input_off = ['<',num2str(0),':',num2str(testSpeaker),'>'];
     fprintf(Arduino,input_off);
     PsychPortAudio('Stop',pahandle);
+    WaitSecs(0.5)
+    end
 end
 
 %% make visual stimuli
@@ -249,12 +246,7 @@ cloud_temp                           = mvnpdf([X(:) Y(:)],[median(x) median(y)],
 VSinfo.Cloud                         = reshape(cloud_temp,length(x),length(y)) .* (VSinfo.maxBrightness/max(cloud_temp));
 
 %% Run the experiment
-instruction = "In the following session, you will be presented an auditory or visual stimulus on each trial." + ...
-    "\nAfter the presentation, please use the cursor to locate the center of the sound source \n or the center of the visual cloud of dots." + ...
-    "\nPress key A, S, D, or F to report your confidence in the localization task. \n" + ...
-    "\nA = Very Low  S = Low  D = High  F = Very High" + ...
-    "\nThe key press is used to register localization response." + ...
-    "\nPress any key to start the unimodal localization task.";
+instruction = ['In the following session, you will be presented \nan auditory or visual stimulus on each trial.','\nAfter the presentation, please use the cursor \nto locate the center of the sound source \n or the center of the visual cloud of dots, not the mode of the cloud.','\nPress key A, S, D, or F to report your confidence in this localization response. ','\nA = Very Low  S = Low  D = High  F = Very High','\nThe key press is used to register localization response.','\nPlease use the whole confidence range.','\nPlease use the same strategy to report your confidence in every session.','\nPress any key to start the unimodal localization task.'];
 %start the experiment
 c                   = clock;
 ExpInfo.start       = sprintf('%04d/%02d/%02d_%02d:%02d:%02d',c(1),c(2),c(3),c(4),c(5),ceil(c(6)));
@@ -262,7 +254,7 @@ ExpInfo.start       = sprintf('%04d/%02d/%02d_%02d:%02d:%02d',c(1),c(2),c(3),c(4
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
     [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
 DrawFormattedText(windowPtr, instruction ,...
-    'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis,[255 255 255]);
+    'center',ScreenInfo.yaxis-500,[255 255 255]);
 Screen('Flip',windowPtr);
 KbWait(-3);
 WaitSecs(1);
@@ -300,11 +292,11 @@ for i = 1:ExpInfo.nTrials
         Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
             [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
         DrawFormattedText(windowPtr, blockInfo,...
-            'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis-30,...
-            [255 255 255]);
-        DrawFormattedText(windowPtr, '\nPress any button to resume the experiment.',...
             'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis,...
             [255 255 255]);
+%         DrawFormattedText(windowPtr, '\nPress any button to resume the experiment.',...
+%             'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis,...
+%             [255 255 255]);
         Screen('Flip',windowPtr); KbWait(-3); WaitSecs(1);
         
     end
