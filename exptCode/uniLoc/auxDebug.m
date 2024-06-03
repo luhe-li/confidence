@@ -10,7 +10,7 @@ clear; close all;  rng('Shuffle');
 PsychDefaultSetup(2);
 
 % get correct sound card
-InitializePsychSound
+InitializePsychSound;
 devices = PsychPortAudio('GetDevices');
 our_device=devices(end).DeviceIndex;
 
