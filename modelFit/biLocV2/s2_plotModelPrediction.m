@@ -9,6 +9,7 @@ m = 2;
 flnm = sprintf('FitResults_%s_sub%i_ses%i-%i', models{m}, sub, min(ses), max(ses));
 
 %% manage path
+
 cur_dir      = pwd;
 [project_dir, ~]= fileparts(fileparts(cur_dir));
 addpath(genpath(fullfile(project_dir,'func')))
