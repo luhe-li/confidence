@@ -2,7 +2,7 @@ clear; clc; close all;
 
 %% set up
 
-sub_slc = 11;
+sub_slc = 14;
 
 % session
 ses_labels = {'-A','-V'};
@@ -12,7 +12,7 @@ cond_label = {'A','V-high reliability','V-low reliability'};
 num_cond = numel(cond_label);
 
 % fixed parameters
-num_loc = 6;
+num_loc = 4;
 num_rep = 20;
 
 save_fig = 0;
