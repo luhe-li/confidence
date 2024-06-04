@@ -130,8 +130,8 @@ switch model.mode
                 end
             end
 
-            out.pred_bi_loc = org_loc;
-            out.pred_bi_conf = org_conf;
+            out.bi_loc = org_loc;
+            out.bi_conf = org_conf;
 
         end
 

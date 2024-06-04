@@ -46,11 +46,11 @@ pred = nllLocConf(p, model, data);
 pred.biExpInfo = data.biExpInfo;
 
 [pred_mean_conf, pred_std_mean_conf, pred_uni_pconf, ~,...
-    pred_mean_ve, pred_std_ve, ~] = analyze_data(sub,ses,pred);
+    pred_mean_ve, pred_std_ve, ~] = analyze_data(sub_slc, ses_slc, pred);
 
 %% analyze real data
 
 [mean_conf, std_mean_conf, uni_pconf, abs_diff,...
-    mean_ve, std_ve, raw_diff] = analyze_data(sub,ses);
+    mean_ve, std_ve, raw_diff] = analyze_data(sub_slc, ses_slc);
 
 
