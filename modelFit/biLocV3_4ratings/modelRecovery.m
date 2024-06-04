@@ -36,7 +36,7 @@ switch useCluster
     case false
 
         % number of cores locally
-        numCores                    = 8;
+        numCores = feature('numcores'); % number of cores locally
         fprintf('Number of cores: %i  \n', numCores);
         simd = 3;
 
@@ -293,8 +293,7 @@ for i_sample = 1:num_sample
 
         % general setting for all models
         model.num_run         = num_run;
-        model.num_sec         = 20; % number of samples in the parameter space, must be larger than num_run
-        model.x               = (-512:1:512) * deg_per_px;
+        model.num_sec         = num_run*2; % number of samples in the parameter space, must be larger than num_run
         model.sA              = sA;
         model.sV              = model.sA;
         model.num_rep         = num_rep;
@@ -311,8 +310,8 @@ for i_sample = 1:num_sample
         %                 OPTIONS.MaxFunctionEvaluations = 10000;
 
         data.gt               = [i_gt, c1, c2-c1, c3-c2];
-        data.org_resp         = org_loc;
-        data.org_conf         = org_conf;
+        data.bi_loc           = org_loc;
+        data.bi_conf          = org_conf;
         data.sigMotor         = fixP.sigMotor;
         saveData{simd,fitd,i_sample}         = data;
 

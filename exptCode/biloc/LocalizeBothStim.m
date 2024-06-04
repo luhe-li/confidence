@@ -90,11 +90,12 @@ end
 % perception response
 yLoc = ScreenInfo.yaxis-ScreenInfo.liftingYaxis;
 Screen('TextSize',windowPtr,20);
+SetMouse(randi(ScreenInfo.xaxis*2,1), yLoc*2, windowPtr);
 HideCursor;
 resp = 1;
 tic;
 stopRecorded = 0;
-x = 0;
+x = -1;
 while resp
     cache = x;
     [x,~,~] = GetMouse(windowPtr); 

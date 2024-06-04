@@ -1,4 +1,4 @@
-function [org_resp, org_conf, org_err, ExpInfo, org_sigVs, ScreenInfo] = org_data(sub_slc,ses_slc,exp)
+function [org_resp, org_conf, org_err, ExpInfo, org_sigVs, ScreenInfo, resp, conf] = org_data(sub_slc,ses_slc,exp)
 
 [org_resp, org_conf, org_err, org_sigVs] = deal([]);
 
@@ -76,6 +76,10 @@ switch exp
         org_err(1,:,:) = temp - a_org_target;
         org_conf(1,:,:) = reshape([sortedResp.conf],[ExpInfo.nRep, ExpInfo.nLevel])';
 
+        % unsorted trials
+        resp(1,:) = [Resp.response_deg];
+        conf(1,:) = [Resp.conf];
+
         % V
         load(fullfile(data_dir, selectedFiles(2).name));
         v1_org_target = reshape([sortedReli1Resp.target_deg],[ExpInfo.nRep, ExpInfo.nLevel])';
@@ -89,6 +93,17 @@ switch exp
         org_resp(3,:,:) = temp3;
         org_err(3,:,:) = temp3 - v2_org_target;
         org_conf(3,:,:) = reshape([sortedReli2Resp.conf],[ExpInfo.nRep, ExpInfo.nLevel])';
+
+        % % unsorted trials, separated by V1 and V2
+        V1_bool = ~~rem(ExpInfo.randV,2);
+        V2_bool = ~rem(ExpInfo.randV,2);
+        r = [Resp.response_deg];
+        c = [Resp.conf];
+        resp(2,:) = r(V1_bool);
+        resp(3,:) = r(V2_bool);
+        conf(2,:) = c(V1_bool);
+        conf(3,:) = c(V2_bool);
+
 
     case 'pointTask'
         flnm        = sprintf('point_sub%i_ses-Pointing', sub_slc);

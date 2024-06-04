@@ -10,7 +10,7 @@ switch model.mode
         % hard bounds, the range for LB, UB, larger than soft bounds
         paraH.aA                     = [ 0.5,     3]; % degree
         paraH.bA                     = [ -10,    10]; % degree
-        paraH.sigV1                  = [1e-2,     3]; % degree
+        paraH.sigV1                  = [1e-2,     5]; % degree
         paraH.sigA                   = [ 0.1,    10]; % degree
         paraH.sigV2                  = [ 0.1,    10]; % degree
         paraH.sigP                   = [   1,    30]; % degrees
@@ -79,7 +79,7 @@ switch model.mode
 
             % auditory locations (4) x visual locations (4) x postcues (2)
             % x rep
-            data_resp = squeeze(data.org_resp(:,:,:,ii,:));
+            data_resp = squeeze(data.bi_loc(:,:,:,ii,:));
 
             [nLL_bimodal(ii), R{ii}] = calculateNLLloc(...
                 aA, bA, aV, bV, sigA, sigV, pCommon, ...
@@ -106,7 +106,7 @@ function [nLL_bimodal, R] = calculateNLLloc(...
     CI, mu_P, sigMotor, data_resp, model)
 
 nLL_bimodal = 0;
-sA_prime   = model.sA.*aA + bA; %the mean of biased auditory measurements
+sA_prime   = model.bi_sA.*aA + bA; %the mean of biased auditory measurements
 
 for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
 
@@ -115,7 +115,7 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
         model.numBins_A);
     mDist_AV_A = norm_dst(x1_grid, sA_prime(p), sigA, 0);
 
-    sV_prime  = model.sV.*aV+bV;
+    sV_prime  = model.bi_sV.*aV+bV;
     for q = 1:length(sV_prime) %for each AV pair with s_V' = s_V_prime(q)
 
         x2_grid    = linspace(sV_prime(q) - model.num_SD*sigV,...

@@ -10,6 +10,7 @@ load(fullfile(data_dir, flnm));
 
 %% Calculate motor noise
 err = [sortedResp.target_pixel] - [sortedResp.response_pixel] + ScreenInfo.xmid;
+
 % First 4 participants ran into bug that the first trial was skipped, hence
 % the response of the first trial was omitted
 if sub_slc <= 4

@@ -1,3 +1,4 @@
+
 clear; close all; rng('shuffle');
 
 %% set environment
@@ -311,8 +312,8 @@ if ~exist(fullfile(out_dir, flnm),'file') || recompute
                 OPTIONS.Display = 'off';
 
                 data.gt               = [i_gt, c1, c2-c1, c3-c2];
-                data.org_resp         = org_loc;
-                data.org_conf         = org_conf;
+                data.bi_loc           = org_loc;
+                data.bi_conf          = org_conf;
                 data.sigMotor         = fixP.sigMotor;
                 saveData{d,i}         = data;
 
