@@ -52,9 +52,19 @@ if  sum(ExpInfo.audIdx == uniExpInfo.audLevel) == 4
 % if different, they are not comparable, use interpolated unimodal
 % locations
 else
-    mean_uni_resp = mean(uni_resp, 3); % condition (A,V1,V2) x loc (4)
-    loc_a = repmat(sA',[1, numel(remapped_sV)]);
+    % load([sprintf('AVbias_sub%i', ExpInfo.subjID) '.mat'])
+    % coefsA = squeeze(Transfer.degCoeff(1, :));
+    mean_uni_resp = mean(uni_resp, 3);
+    sArep = repmat(ExpInfo.speakerLocVA(uniExpInfo.audLevel)',1,uniExpInfo.nRep);
+    uni_a_resp = squeeze(uni_resp(1,:,:));
+    mdlA = fitlm(sArep(:),uni_a_resp(:));
+    coefsA = table2array(mdlA.Coefficients(:,1));
+    interpolate_a_resp = ExpInfo.speakerLocVA(ExpInfo.audIdx) .* coefsA(2) + coefsA(1); % condition (A,V1,V2) x loc (4)
+    loc_a = repmat(interpolate_a_resp',[1, numel(remapped_sV)]);
     remap_loc_v = repmat(remapped_sV, [numel(sA), 1]);
+    % useful line for debug bias:
+    % figure
+    % plot(ExpInfo.speakerLocVA(uniExpInfo.audLevel),mean_uni_resp(1,:),'-o'); hold on; plot(ExpInfo.speakerLocVA(ExpInfo.audIdx),interpolate_a_resp,'-o')
 end
 
 % reshape into dimensions of bi
