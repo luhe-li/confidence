@@ -70,7 +70,7 @@ if exist(fullfile(outDir, [outFileName '.mat']), 'file')
 end
 
 % switch between debug mode
-ExpInfo.mode  = 2; %input('Experiment mode: 1; Debug mode: 2#: ');
+ExpInfo.mode  = 1; %input('Experiment mode: 1; Debug mode: 2#: ');
 switch ExpInfo.mode
     case 1 % experiment mode
         windowSize = [];
