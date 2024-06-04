@@ -1,0 +1,75 @@
+clear; close all; rng('shuffle');
+
+sub_slc = 12;
+ses_slc = 1; % bimodal sessions
+
+models = {'Heuristic','Suboptimal','Optimal'};
+d = 3;
+
+num_run = 7;
+
+%% manage path
+
+cur_dir               = pwd;
+[project_dir, ~]      = fileparts(fileparts(cur_dir));
+out_dir               = fullfile(cur_dir, mfilename);
+result_dir            = fullfile(cur_dir, 'modelFit');
+if ~exist(out_dir,'dir') mkdir(out_dir); end
+addpath(genpath(fullfile(project_dir, 'func')))
+addpath(genpath(result_dir))
+
+%% plot set up
+
+lw = 2;
+fontSZ = 15;
+titleSZ = 20;
+dotSZ = 80;
+clt = [30, 120, 180; % blue
+    227, 27, 27;  % dark red
+    repmat(125, 1, 3)]./255;
+%     251, 154, 153]./255; % light red
+
+%% load best fitting parameters
+
+flnm = sprintf('fitResults_sub%i_bises%i_run%i', sub_slc, max(ses_slc), num_run);
+files = dir(fullfile(result_dir, [flnm '*.mat']));
+load(files(end).name);
+
+% use the best-fitting parameter
+p = saveConfModel{d}.bestP;
+
+% set model parameters as the experiment
+sA = unique(data.biExpInfo.randAudVA);
+sV = unique(data.biExpInfo.randVisVA);
+fixP.model_ind = d;
+fixP.sigMotor = data.bi_conf;
+fixP.num_rep = saveConfModel{d}.modelInfo.bi_nrep;
+
+%% simulate predicted data
+cue_label             = {'Post-cue: A','Post-cue: V'};
+num_cue               = numel(cue_label);
+rel_label             = {'High reliability','Low reliability'};
+num_rel         = numel(rel_label);
+[pred_loc, org_conf] = deal(NaN(numel(sA), numel(sV), num_cue, num_rel, fixP.num_rep));
+
+for a = 1:numel(sA)
+
+    for v = 1:numel(sV)
+
+        for r = 1:num_rel
+
+            fixP.sA = sA(a);
+            fixP.sV = sV(v);
+            fixP.model_ind = d;
+
+            [pred_loc(a,v,:,r,:), org_conf(a,v,:,r,:)] = simAllModels(...
+                aA, bA, sigA, sigVs(r), muP, sigP, pCommon, sigC, c1, c2, c3, lapse, fixP);
+
+        end
+
+    end
+
+end
+
+
+

@@ -1,5 +1,5 @@
 function [mean_conf, std_mean_conf, uni_pconf, abs_diff,...
-    mean_ve, std_ve, raw_diff] = analyze_data(sub_slc, ses_slc, pred)
+    mean_ve, std_ve, raw_diff] = analyze_data(sub_slc, ses_slc)
 
 % mean_conf, std_mean_conf: abs_diff x cue x reliability
 % uni_pconf: condition (A,V1,V2) x abs_diff
@@ -11,9 +11,9 @@ cur_dir      = pwd;
 addpath(genpath(fullfile(project_dir,'func')))
 
 % organize data
-if ~exist('pred' ,'var')
-    [bi_resp, bi_conf, ~, ExpInfo, ~, ScreenInfo] = org_data(sub_slc,ses_slc,'biLoc');
-    audIdx  = ExpInfo.audIdx;
+if ~exist(pred)
+[bi_resp, bi_conf, ~, ExpInfo, ~, ScreenInfo] = org_data(sub_slc,ses_slc,'biLoc');
+audIdx  = ExpInfo.audIdx;
     targetPixel = ExpInfo.targetPixel;
 else 
     bi_resp = pred.bi_resp;
@@ -27,9 +27,9 @@ end
 
 % sV for bimodal is remapped. Convert them from pixel to VA
 % deg_per_px  = rad2deg(atan(170 / 2 / ExpInfo.sittingDistance)) .* 2 / ScreenInfo.xaxis;
-deg_per_px = uniExpInfo.LRmostVisualAngle * 2 / 1024;
-sA    = uniExpInfo.speakerLocVA(audIdx);
-remapped_sV = targetPixel .* deg_per_px;
+deg_per_px = ExpInfo.LRmostVisualAngle * 2 / ScreenInfo.xaxis;
+sA    = ExpInfo.speakerLocVA(audIdx);
+remapped_sV = ExpInfo.targetPixel .* deg_per_px;
 
 % percentage of reporting confidence in unimodal task
 uni_pconf = mean(mean(uni_conf,3),2); % condition (A,V1,V2) x loc (4)
@@ -45,7 +45,7 @@ for cue = 1:2
             est = squeeze(conf_by_diff{diff}(cue, rel, :))';
             p = sum(est)/numel(est);
             mean_conf(diff, cue, rel) = p;
-            std_mean_conf(diff, cue, rel) = std(est)/sqrt(numel(est));
+            std_mean_conf(diff, cue, rel) = sqrt((p*(1-p))/numel(est));
         end
     end
 end
@@ -61,7 +61,7 @@ end
 
 % if tested auditory locations are the same between uni and bi modal,
 % subtract uni_response for VE
-if  sum(audIdx == uniExpInfo.audLevel(a_loc_slc)) == 4 % this condition does not interpolate auditory responses
+if  sum(ExpInfo.audIdx == uniExpInfo.audLevel(a_loc_slc)) == 4 % this condition does not interpolate auditory responses
     mean_uni_resp = mean(uni_resp(:,a_loc_slc,:), 3); % condition (A,V1,V2) x loc (4)
     loc_a = repmat(mean_uni_resp(1,:)', [1, numel(remapped_sV)]);
     remap_loc_v = repmat(remapped_sV, [numel(sA), 1]);
@@ -73,16 +73,16 @@ else  % this condition interpolates auditory responses
     % There is no need to load bias data because we can calculate it here.
     % This allows fake unimodal data to be used.
     mean_uni_resp = mean(uni_resp, 3);
-    sArep = repmat(uniExpInfo.speakerLocVA(uniExpInfo.audLevel)',1,uniExpInfo.nRep);
+    sArep = repmat(ExpInfo.speakerLocVA(uniExpInfo.audLevel)',1,uniExpInfo.nRep);
     uni_a_resp = squeeze(uni_resp(1,:,:));
     mdlA = fitlm(sArep(:),uni_a_resp(:));
     coefsA = table2array(mdlA.Coefficients(:,1));
-    interpolate_a_resp = uniExpInfo.speakerLocVA(audIdx) .* coefsA(2) + coefsA(1); % condition (A,V1,V2) x loc (4)
+    interpolate_a_resp = ExpInfo.speakerLocVA(ExpInfo.audIdx) .* coefsA(2) + coefsA(1); % condition (A,V1,V2) x loc (4)
     loc_a = repmat(interpolate_a_resp',[1, numel(remapped_sV)]);
     remap_loc_v = repmat(remapped_sV, [numel(sA), 1]);
     % useful line for debug bias:
     % figure
-    % plot(uniExpInfo.speakerLocVA(uniExpInfo.audLevel),mean_uni_resp(1,:),'-o'); hold on; plot(uniExpInfo.speakerLocVA(audIdx),interpolate_a_resp,'-o')
+    % plot(ExpInfo.speakerLocVA(uniExpInfo.audLevel),mean_uni_resp(1,:),'-o'); hold on; plot(ExpInfo.speakerLocVA(ExpInfo.audIdx),interpolate_a_resp,'-o')
 end
 
 % reshape into dimensions of bi
