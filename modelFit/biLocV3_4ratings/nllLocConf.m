@@ -49,7 +49,7 @@ switch model.mode
     case {'optimize','predict'}
 
         % fixed parameter values for reducing model
-        mu_P = 0;
+        muP = 0;
         lapse = 0.02;
         aV = 1;
         bV = 0;
@@ -73,42 +73,65 @@ switch model.mode
         c3 = c1 + dc2 + dc3;
         sigMotor = data.sigMotor;
 
-        R = cell(1, num_sigVs);
-        nLL_bimodal = NaN(1, num_sigVs);
-
-        for ii = 1:num_sigVs
-
-            sigV = sigVs(ii);
-
-            % constants
-            CI.J_A            = sigA^2;
-            CI.J_V            = sigV^2;
-            CI.J_P            = sigP^2;
-            CI.constC1        = CI.J_A*CI.J_V + CI.J_A*CI.J_P + CI.J_V*CI.J_P;
-            CI.constC1_shat   = 1/CI.J_A  + 1/CI.J_V + 1/CI.J_P;
-            CI.constC2_1      = CI.J_A + CI.J_P;
-            CI.constC2_1_shat = 1/CI.J_A + 1/CI.J_P;
-            CI.constC2_2      = CI.J_V + CI.J_P;
-            CI.constC2_2_shat = 1/CI.J_V + 1/CI.J_P;
-
-            % auditory locations (4) x visual locations (4) x postcues (2)
-            % x rep
-            data_resp = squeeze(data.bi_loc(:,:,:,ii,:));
-            data_conf = squeeze(data.bi_conf(:,:,:,ii,:));
-
-            [nLL_bimodal(ii), R{ii}] = calculateNLL_bimodal(...
-                aA, bA, aV, bV, sigA, sigV, sigC, pCommon, c1, c2, c3,...
-                CI, mu_P, sigMotor, lapse, data_resp, data_conf, model);
-
-        end
-
         if strcmp(model.mode, 'optimize')
+
+            R = cell(1, num_sigVs);
+            nLL_bimodal = NaN(1, num_sigVs);
+
+            for ii = 1:num_sigVs
+
+                sigV = sigVs(ii);
+
+                % constants
+                CI.J_A            = sigA^2;
+                CI.J_V            = sigV^2;
+                CI.J_P            = sigP^2;
+                CI.constC1        = CI.J_A*CI.J_V + CI.J_A*CI.J_P + CI.J_V*CI.J_P;
+                CI.constC1_shat   = 1/CI.J_A  + 1/CI.J_V + 1/CI.J_P;
+                CI.constC2_1      = CI.J_A + CI.J_P;
+                CI.constC2_1_shat = 1/CI.J_A + 1/CI.J_P;
+                CI.constC2_2      = CI.J_V + CI.J_P;
+                CI.constC2_2_shat = 1/CI.J_V + 1/CI.J_P;
+
+                % auditory locations (4) x visual locations (4) x postcues (2)
+                % x rep
+                data_resp = squeeze(data.bi_loc(:,:,:,ii,:));
+                data_conf = squeeze(data.bi_conf(:,:,:,ii,:));
+
+                [nLL_bimodal(ii), R{ii}] = calculateNLL_bimodal(...
+                    aA, bA, aV, bV, sigA, sigV, sigC, pCommon, c1, c2, c3,...
+                    CI, muP, sigMotor, lapse, data_resp, data_conf, model);
+
+            end
 
             out = sum(nLL_bimodal(:));
 
         elseif strcmp(model.mode, 'predict')
 
-            out = R;
+            sA = model.bi_sA;
+            sV = model.bi_sV;
+            fixP.num_rep = model.bi_nrep;
+            fixP.model_ind = model.model_slc;
+            fixP.sigMotor = sigMotor;
+
+            [org_loc, org_conf] = deal(NaN(numel(sA), numel(sV), numel(model.modality), numel(sigVs), model.bi_nrep));
+
+            for a = 1:numel(sA)
+                for v = 1:numel(sV)
+                    for r = 1:numel(sigVs)
+
+                        fixP.sA = sA(a);
+                        fixP.sV = sV(v);
+
+                        [org_loc(a,v,:,r,:), org_conf(a,v,:,r,:)] = simAllModels(...
+                            aA, bA, sigA, sigVs(r), muP, sigP, pCommon, sigC, c1, c2, c3, lapse, fixP);
+
+                    end
+                end
+            end
+
+            out.pred_bi_loc = org_loc;
+            out.pred_bi_conf = org_conf;
 
         end
 
