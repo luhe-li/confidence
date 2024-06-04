@@ -27,7 +27,7 @@ end
 
 % sV for bimodal is remapped. Convert them from pixel to VA
 % deg_per_px  = rad2deg(atan(170 / 2 / ExpInfo.sittingDistance)) .* 2 / ScreenInfo.xaxis;
-deg_per_px = uniExpInfo.LRmostVisualAngle * 2 / ScreenInfo.xaxis;
+deg_per_px = uniExpInfo.LRmostVisualAngle * 2 / 1024;
 sA    = uniExpInfo.speakerLocVA(audIdx);
 remapped_sV = targetPixel .* deg_per_px;
 
