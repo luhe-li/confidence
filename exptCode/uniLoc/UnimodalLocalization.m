@@ -70,22 +70,21 @@ if exist(fullfile(outDir, [outFileName '.mat']), 'file')
 end
 
 % switch between debug mode
-ExpInfo.mode  = 1; %input('Experiment mode: 1; Debug mode: 2#: ');
+ExpInfo.mode  = 2; %input('Experiment mode: 1; Debug mode: 2#: ');
 switch ExpInfo.mode
     case 1 % experiment mode
         windowSize = [];
         opacity = 1;
         HideCursor();
-        if strcmp(ExpInfo.session, 'A')
-            %Arduino = serial('/dev/cu.usbmodemFD131','BaudRate',115200); % make sure this value matches with the baudrate in the arduino code
-            Arduino = serial('/dev/cu.usbmodem14101','BaudRate',115200);
-            fopen(Arduino);
-        end
     case 2 % debug mode
         windowSize = [100 100 1000 600]; % open a smaller window
         opacity = 0.4;
 end
-
+if strcmp(ExpInfo.session, 'A')
+    %Arduino = serial('/dev/cu.usbmodemFD131','BaudRate',115200); % make sure this value matches with the baudrate in the arduino code
+    Arduino = serial('/dev/cu.usbmodem14101','BaudRate',115200);
+    fopen(Arduino);
+end
 %% Screen Setup
 PsychDefaultSetup(2);
 AssertOpenGL();

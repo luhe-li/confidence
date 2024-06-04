@@ -3,7 +3,7 @@ clear; clc; close all;
 
 %% set up
 
-sub = 11;
+sub = 14;
 
 %% manage path
 
@@ -21,17 +21,17 @@ nRep = ExpInfo.nRep;
 targIdx = unique([ExpInfo.randAudIdx]);
 targDegs = unique(ExpInfo.speakerLocVA(ExpInfo.randAudIdx));
 targPx = unique(ExpInfo.speakerLocPixel(ExpInfo.randAudIdx));
-targNum = length(targIdx)-2;
+targNum = length(targIdx);
 rA = NaN(targNum,nRep);
 for i = 1:targNum
-    targInd   = targIdx(i+1);
+    targInd   = targIdx(i);
     estDegsA  = [sortedResp.response_deg];
     rA(i,:) = estDegsA([sortedResp.target_idx] == targInd);
 end
 
 %% fit a linear line to both
 
-x = repmat(targDegs(2:targNum+1)',1,nRep);
+x = repmat(targDegs(1:targNum)',1,nRep);
 
 mdlA = fitlm(x(:),rA(:));
 coefsA = table2array(mdlA.Coefficients(:,1));
@@ -42,13 +42,13 @@ Transfer.degCoeff(1, :) = coefsA;
 rA = NaN(targNum,nRep);
 
 for i = 1:targNum
-    targInd   = targIdx(i+1);
+    targInd   = targIdx(i);
     estPxA  = [sortedResp.response_pixel];
 
     rA(i,:) = estPxA([sortedResp.target_idx] == targInd);
 end
 
-x = repmat(targPx(2:targNum+1)',1,nRep);
+x = repmat(targPx(1:targNum)',1,nRep);
 
 mdlA = fitlm(x(:),rA(:));
 coefsA = table2array(mdlA.Coefficients(:,1));

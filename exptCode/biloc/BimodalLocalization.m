@@ -196,9 +196,8 @@ carrierSound_warm            = randn(1, numel(timeline_warm));
 
 AudInfo.WarmupWhiteNoise  = [AudInfo.intensity_GWN.*sineWindow_warm.*carrierSound_warm; AudInfo.intensity_GWN.*sineWindow_warm.*carrierSound_warm];
 
-aa = [6,8,9,11];
-for i = 1:4
-testSpeaker = aa(i);
+
+testSpeaker = 8;
 input_on = ['<',num2str(1),':',num2str(testSpeaker),'>']; %arduino takes input in this format
 fprintf(Arduino,input_on);
 PsychPortAudio('FillBuffer',pahandle, AudInfo.GaussianWhiteNoise);
@@ -208,7 +207,7 @@ input_off = ['<',num2str(0),':',num2str(testSpeaker),'>'];
 fprintf(Arduino,input_off);
 PsychPortAudio('Stop',pahandle);
 WaitSecs(1);
-end
+
 %% make visual stimuli
 
 VSinfo.SD_yaxis                      = 5; %SD of the blob in cm (vertical)
