@@ -10,18 +10,18 @@ switch model.mode
         % hard bounds, the range for LB, UB, larger than soft bounds
         paraH.aA                     = [ 0.5,     3]; % degree
         paraH.bA                     = [ -10,    10]; % degree
-        paraH.sigV1uni               = [1e-2,     3]; % degree
-        paraH.sigAuni                = [   1,    10]; % degree
-        paraH.sigV2uni               = [   1,    10]; % degree
-        paraH.sigV1                  = [1e-2,     3]; % degree
-        paraH.sigA                   = [   1,    10]; % degree
-        paraH.sigV2                  = [   1,    10]; % degree
+        paraH.sigV1uni               = [1e-2,     5]; % degree
+        paraH.sigAuni                = [   1,    15]; % degree
+        paraH.sigV2uni               = [   1,    15]; % degree
+        paraH.sigV1                  = [1e-2,     5]; % degree
+        paraH.sigA                   = [   1,    15]; % degree
+        paraH.sigV2                  = [   1,    15]; % degree
         paraH.sigP                   = [   1,    20]; % degrees
         paraH.pC1                    = [1e-3,1-1e-3]; % weight
-        paraH.sigC                   = [ 0.1,     3]; % measurement noise of confidence
+        paraH.sigC                   = [ 0.1,    10]; % measurement noise of confidence
         paraH.c1                     = [ 0.5,     5];
-        paraH.dc2                    = [0.01,     2];
-        paraH.dc3                    = [0.01,     2];
+        paraH.dc2                    = [0.01,     5];
+        paraH.dc3                    = [0.01,     5];
 
         % soft bounds, the range for PLB, PUB
         paraS.aA                     = [ 0.9,     1]; % degree
@@ -274,7 +274,7 @@ end
                 elseif strcmp(model.strategy_conf, 'Heuristic')
 
                     var(1,:,:) = repmat(CI.J_P * sigA/CI.constC2_1, size(Post_C1));
-                    var(1,:,:) = repmat(CI.J_P * sigV/CI.constC2_2, size(Post_C1));
+                    var(2,:,:) = repmat(CI.J_P * sigV/CI.constC2_2, size(Post_C1));
                    %  var(1,:,:) = repmat(CI.J_A, size(Post_C1));
                    %  var(2,:,:) = repmat(CI.J_V, size(Post_C1));
 

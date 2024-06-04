@@ -35,6 +35,8 @@ data.sigMotor = get_point_sigM(sub_slc);
 
 %% joint fit
 
+flnm = sprintf('fitResults_sub%i_bises%i_run%i.mat', sub_slc, max(ses_slc), num_run);
+
 % general setting for all models
 model.num_run         = num_run;
 model.num_sec         = num_run*2; % number of samples in the parameter space, must be larger than num_run
@@ -47,7 +49,7 @@ model.uni_nrep        = data.uniExpInfo.nRep;
 % bi expt info for model
 model.bi_sA          = data.biExpInfo.speakerLocVA(data.biExpInfo.audIdx);
 model.bi_sV          = unique(data.biExpInfo.randVisVA);
-model.uni_nrep       = size(data.bi_loc, 5); % total number of trials per condition
+model.bi_nrep       = size(data.bi_loc, 5); % total number of trials per condition
 
 % model setting for bimodal fitting
 model.num_SD          = 5;
@@ -56,7 +58,7 @@ model.numBins_V       = 15;
 model.modality        = {'A','V'};
 model.strategy_loc    = 'MA';
 OPTIONS.TolMesh = 1e-5;
-% OPTIONS.Display = 'off';
+OPTIONS.Display = 'off';
 
 % confidence model setting
 ds_conf               = {'Heuristic','Suboptimal','Optimal'};
@@ -69,19 +71,23 @@ Val = nllUniBiLocConf([], model, data);
 model.mode                  = 'optimize';
 
 
-for d = 3:-1:1%1:3
+%%
+
+for d = 1:3
 
     % switch confidence strategies
     model.strategy_conf         = ds_conf{d};
 
 %     % test
-%     p = [1:14]./14;
+%     p = [2.0384765625 8.4609375 0.393773634133617 7.46044921875 1.00048828125 3.07917391262143 3.15380859375 13.9228515625 1.0009765625 0.38486328125 4.99698573405884 3.96142578125 3.080859375 3.8484375];
 %     test = nllUniBiLocConf(p, model, data);
+
+    fprintf('[%s] Start fitting sub-%i, ses1-%i, M%i\n', mfilename, sub_slc, max(ses_slc), d);
 
     NLL                         = NaN(1, model.num_run);
     estP                        = NaN(model.num_run, Val.num_para);
 
-    for i                    = 1:model.num_run
+    parfor i                    = 1:model.num_run
 
         [estP(i,:),NLL(i)] = bads(@(p) nllUniBiLocConf(p, model, data),...
             Val.init(i,:), Val.lb,...
@@ -92,5 +98,14 @@ for d = 3:-1:1%1:3
     % find the parameter with the least NLL
     [minNLL, best_idx]    = min(NLL);
     bestP                 = estP(best_idx, :);
+
+    % save all fitting results
+    saveModel{d}.paraInfo = Val;
+    saveModel{d}.estP = estP;
+    saveModel{d}.NLL = NLL;
+    saveModel{d}.bestP = bestP;
+    saveModel{d}.minNLL = minNLL;
+
+    save(fullfile(out_dir, flnm), 'saveModel')
 
 end
