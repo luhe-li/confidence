@@ -2,7 +2,7 @@ clear; clc; close all;
 
 %% set up
 
-sub_slc = 14;
+sub_slc = 13;
 
 % session
 ses_labels = {'-A','-V'};
@@ -15,7 +15,7 @@ num_cond = numel(cond_label);
 num_loc = 4;
 num_rep = 20;
 
-save_fig = 0;
+save_fig = 1;
 
 %% manage path
 
