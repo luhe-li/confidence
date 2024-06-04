@@ -12,7 +12,7 @@ addpath(genpath(fullfile(project_dir,'func')))
 
 % organize data
 if ~exist('pred' ,'var')
-    [bi_resp, bi_conf, ~, ExpInfo, ~, ScreenInfo] = org_data(sub_slc,ses_slc,'biLoc');
+    [bi_resp, bi_conf, ~, ExpInfo, ~, ~] = org_data(sub_slc,ses_slc,'biLoc');
     audIdx  = ExpInfo.audIdx;
     targetPixel = ExpInfo.targetPixel;
 else 
@@ -61,7 +61,7 @@ end
 
 % if tested auditory locations are the same between uni and bi modal,
 % subtract uni_response for VE
-if  sum(audIdx == uniExpInfo.audLevel(a_loc_slc)) == 4 % this condition does not interpolate auditory responses
+if  0%sum(audIdx == uniExpInfo.audLevel(a_loc_slc)) == 4 % this condition does not interpolate auditory responses
     mean_uni_resp = mean(uni_resp(:,a_loc_slc,:), 3); % condition (A,V1,V2) x loc (4)
     loc_a = repmat(mean_uni_resp(1,:)', [1, numel(remapped_sV)]);
     remap_loc_v = repmat(remapped_sV, [numel(sA), 1]);

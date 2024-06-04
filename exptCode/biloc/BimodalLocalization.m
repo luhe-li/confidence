@@ -125,12 +125,7 @@ ExpInfo.randAudIdx    = ExpInfo.randAVIdx(1,:);
 ExpInfo.randAudCM     = ExpInfo.speakerLocCM(ExpInfo.randAudIdx);
 ExpInfo.randAudVA     = rad2deg(atan(ExpInfo.randAudCM/ExpInfo.sittingDistance));
 ExpInfo.randAudPixel  = ExpInfo.randAudCM .* ScreenInfo.numPixels_perCM;
-
-% visual locations in different units
 ExpInfo.randVisIdx    = ExpInfo.randAVIdx(2,:);
-ExpInfo.randVisCM     = ExpInfo.speakerLocCM(ExpInfo.randVisIdx);
-ExpInfo.randVisVA    = rad2deg(atan(ExpInfo.randVisCM/ExpInfo.sittingDistance));
-ExpInfo.randVisPixel = ExpInfo.randVisCM .* ScreenInfo.numPixels_perCM;
 
 % convert visual locations from index to perceptually matching pixel
 load([sprintf('AVbias_sub%i', ExpInfo.subjID) '.mat'])
@@ -142,6 +137,10 @@ fitSV = fitRA - ScreenInfo.xmid;
 ExpInfo.targetPixel                  = unique(fitSV);
 [~, ~, ic]                           = unique(ExpInfo.randAVIdx(2,:));
 ExpInfo.randVisPixel                 = ExpInfo.targetPixel(ic');
+
+% visual locations in different units
+ExpInfo.randVisCM     = ExpInfo.randVisPixel ./ ScreenInfo.numPixels_perCM;
+ExpInfo.randVisVA    = rad2deg(atan(ExpInfo.randVisCM/ExpInfo.sittingDistance));
 
 % split all the trials into blocks
 if ExpInfo.practice == 1
