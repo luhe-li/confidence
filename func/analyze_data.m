@@ -94,7 +94,7 @@ org_uni_loc(:,:,2,1:2) = repmat(loc_v, [1,1,1,2]);
 
 % loc at uni minus loc at bi
 ve = mean(bi_loc, 5) - org_uni_loc;
-std_ve = std(bi_loc,[], 5);
+std_ve = std(bi_loc,[], 5) ./ sqrt(size(bi_loc,5));
 
 % diff x cue x reliability
 [mean_ve, raw_diff] = org_by_raw_diffs_4D(ve, bi_sA);

@@ -2,7 +2,7 @@ function plot_spread_VE(bi_resp,aud_locs,raw_diff,remapped_vis_locs,cue,reliabil
 lw = 3;
 cueLabel = [{'Audio'},{'Visual'}];
 resp_rel = squeeze(mean(bi_resp(:,:,cue,reliability,:),5));
-resp_rel_std = std(squeeze(bi_resp(:,:,cue,reliability,:)),[],3);
+resp_rel_se = std(squeeze(bi_resp(:,:,cue,reliability,:)),[],3) ./ sqrt(size(bi_resp,5));
 
 % uni resp unneeded. if use, add an argument in function input
 % if size(uni_resp,2) == 6
@@ -35,7 +35,7 @@ yline(0,'--');
 plot(-15:15, -15:15,'k--')
 for i = 1:length(diff_vec)
     diff_i = diff_vec(i);
-    Eb(i) = errorbar(stim_locs_mat(round(index) == diff_i),resp_rel(round(index) == diff_i),resp_rel_std(round(index) == diff_i),'-o' ...
+    Eb(i) = errorbar(stim_locs_mat(round(index) == diff_i),resp_rel(round(index) == diff_i),resp_rel_se(round(index) == diff_i),'-o' ...
         ,'Color',cMap_locR(cue,i,:),'lineWidth', lw,'MarkerSize',15,...
          'MarkerEdgeColor',cMap_locR(cue,i,:),'MarkerFaceColor',...
          cMap_locR(cue,i,:));
