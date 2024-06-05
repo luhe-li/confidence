@@ -9,13 +9,13 @@ switch model.mode
 
         % hard bounds, the range for LB, UB, larger than soft bounds
         paraH.aA                     = [ 0.5,     3]; % degree
-        paraH.bA                     = [ -10,    10]; % degree
+        paraH.bA                     = [  -5,     5]; % degree
         paraH.sigV1                  = [1e-2,     5]; % degree
-        paraH.sigA                   = [   1,    10]; % degree
-        paraH.sigV2                  = [   1,    10]; % degree
+        paraH.sigA                   = [   1,    20]; % degree
+        paraH.sigV2                  = [   1,    10]; % degre
         paraH.sigP                   = [model.sig_p_lb, model.sig_p_ub]; % degrees
         paraH.pC1                    = [1e-3,1-1e-3]; % weight
-        paraH.sigC                   = [ 0.1,     3]; % measurement noise of confidence
+        paraH.sigC                   = [0.01,     8]; % measurement noise of confidence
         paraH.c1                     = [model.c_lb, model.c_ub];
         paraH.dc2                    = [0.01, model.c_ub];
         paraH.dc3                    = [0.01, model.c_ub];
@@ -29,9 +29,9 @@ switch model.mode
         paraS.sigP                   = [model.sig_p_lb, model.sig_p_ub]; % degrees
         paraS.pC1                    = [ 0.5,   0.7]; % weight
         paraS.sigC                   = [ 0.1,     2]; % measurement noise of confidence
-        paraS.c1                     = [model.c_lb, model.c_lb+0.5];
-        paraS.dc2                    = [0.1, 0.5];
-        paraS.dc3                    = [0.1, 0.5];
+        paraS.c1                     = [model.c_lb, model.c_ub];
+        paraS.dc2                    = [0.1, model.c_ub];
+        paraS.dc3                    = [0.1, model.c_ub];
 
         % reorganize parameter bounds to feed to bads
         fn                           = fieldnames(paraH);
@@ -208,8 +208,10 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
 
         elseif strcmp(model.strategy_conf, 'Heuristic')
 
-            var(1,:,:) = repmat(CI.J_A, size(Post_C1));
-            var(2,:,:) = repmat(CI.J_V, size(Post_C1));
+            var(1,:,:) = repmat(CI.J_P * sigA/CI.constC2_1, size(Post_C1));
+            var(2,:,:) = repmat(CI.J_P * sigV/CI.constC2_2, size(Post_C1));
+%             var(1,:,:) = repmat(CI.J_A, size(Post_C1));
+%             var(2,:,:) = repmat(CI.J_V, size(Post_C1));
 
         end
 

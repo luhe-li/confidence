@@ -9,9 +9,9 @@ switch model.mode
 
         % hard bounds, the range for LB, UB, larger than soft bounds
         paraH.aA                     = [ 0.5,     3]; % degree
-        paraH.bA                     = [ -10,    10]; % degree
+        paraH.bA                     = [  -5,     5]; % degree
         paraH.sigV1                  = [1e-2,     5]; % degree
-        paraH.sigA                   = [ 0.1,    10]; % degree
+        paraH.sigA                   = [ 0.1,    20]; % degree
         paraH.sigV2                  = [ 0.1,    10]; % degree
         paraH.sigP                   = [   1,    30]; % degrees
         paraH.pC1                    = [1e-3,1-1e-3]; % weight

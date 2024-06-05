@@ -24,6 +24,7 @@ plot(aud_locs, remapped_vis_locs,'Color',ones(1,3).*0.5,...
                     'lineWidth',lw,'lineStyle','--'); hold on
 xline(0,'--');
 yline(0,'--');
+plot([-15:15], [-15:15],'k--')
 for i = 1:length(diff_vec)
     diff_i = diff_vec(i);
     Eb(i) = errorbar(aud_locs_mat(index == diff_i),a_rel(index == diff_i),a_rel_std(index == diff_i),'-o' ...

@@ -2,7 +2,7 @@
 % Compares confidence between unimodal and bimodal conditions
 
 clear; clc; close all;
-sub_slc     = 13;
+sub_slc     = 15;
 ses_slc     = 1;
 
 % manage path
@@ -137,7 +137,6 @@ end
 flnm = sprintf('conf_sub%i_ses%i-%i', sub_slc, min(ses_slc), max(ses_slc));
 saveas(gca, fullfile(out_dir, flnm),'png')
 
-
 %% Ventriloquist effect
 figure
 t = tiledlayout(1,2);
@@ -170,8 +169,13 @@ for cue = 1:numel(cueIdx)
     end
 end
 flnm = sprintf('ve_sub%i_ses%i-%i', sub_slc, min(ses_slc), max(ses_slc));
-% saveas(gca, fullfile(out_dir, flnm),'png')
+saveas(gca, fullfile(out_dir, flnm),'png')
 %% VE spread view
+
 cue = 1;
 reliability = 1;
 plot_spread_VE(bi_resp,aud_locs,raw_diff,remapped_vis_locs,cue,reliability)
+
+
+flnm = sprintf('loc_sub%i_ses%i-%i', sub_slc, min(ses_slc), max(ses_slc));
+saveas(gca, fullfile(out_dir, flnm),'png')

@@ -168,36 +168,31 @@ switch model.mode
 
         elseif strcmp(model.mode, 'predict')
 
-            fixP.uni_sA = model.uni_sA;
-            fixP.uni_sV = model.uni_sV;
-            bi_sA = model.bi_sA;
-            bi_sV = model.bi_sV;
-            fixP.uni_nrep = model.uni_nrep;
-            fixP.bi_nrep = model.bi_nrep;
+            sA = model.bi_sA;
+            sV = model.bi_sV;
+            fixP.num_rep = model.bi_nrep;
             fixP.model_ind = model.model_slc;
             fixP.sigMotor = sigMotor;
 
-            [out.uni_loc, out.uni_conf] = simUni(...
-            aA, bA, sigA_uni, sigV1_uni, sigV2_uni, muP, sigP, sigC, c1, c2, c3, lapse, fixP);
-
-            [bi_loc, bi_conf] = deal(NaN(numel(sA), numel(sV), numel(model.modality), numel(sigVs), model.bi_nrep));
+            [org_loc, org_conf] = deal(NaN(numel(sA), numel(sV), numel(model.modality), numel(sigVs), model.bi_nrep));
 
             for aa = 1:numel(sA)
                 for vv = 1:numel(sV)
                     for rr = 1:numel(sigVs)
 
-                        fixP.bi_sA = bi_sA(aa);
-                        fixP.bi_sV = bi_sV(vv);
+                        fixP.sA = sA(aa);
+                        fixP.sV = sV(vv);
 
-                        [bi_loc(aa,vv,:,rr,:), bi_conf(aa,vv,:,rr,:)] = simAllModels(...
+                        [org_loc(aa,vv,:,rr,:), org_conf(aa,vv,:,rr,:)] = simAllModels(...
                             aA, bA, sigA, sigVs(rr), muP, sigP, pCommon, sigC, c1, c2, c3, lapse, fixP);
 
                     end
                 end
             end
 
-            out.bi_loc = bi_loc;
-            out.bi_conf = bi_conf;
+            out.bi_loc = org_loc;
+            out.bi_conf = org_conf;
+
 
         end
 

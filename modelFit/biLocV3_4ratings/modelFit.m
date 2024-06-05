@@ -1,6 +1,6 @@
 clear; close all; rng('shuffle');
 
-sub_slc = 12;
+sub_slc = 11;
 ses_slc = 1; % bimodal sessions
 
 %% manage path
@@ -133,8 +133,7 @@ for sub = sub_slc
         [minNLL, best_idx]    = min(NLL);
         bestP                 = estP(best_idx, :);
 
-        % save all fitting results
-        saveConfModel{d}.modelInfo = model;
+        % save all fitting result
         saveConfModel{d}.paraInfo = Val;
         saveConfModel{d}.estP = estP;
         saveConfModel{d}.NLL = NLL;
