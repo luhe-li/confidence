@@ -51,17 +51,11 @@ bi_resp = pred.bi_loc;
 aud_locs = model.bi_sA;
 remapped_vis_locs = model.bi_sV;
 raw_diff = unique(aud_locs - aud_locs');
-figure;
-plotInd = 1;
-for i = 1:2
-    for j = 1:2
-        subplot(2,2,plotInd)
-        cue = i;
-        reliability = j;
-        plot_spread_VE(bi_resp,aud_locs,raw_diff,remapped_vis_locs,cue,reliability)
-        plotInd = plotInd + 1;
-    end
-end
+cue = 1;
+reliability = 1;
+
+plot_spread_VE(bi_resp,aud_locs,raw_diff,remapped_vis_locs,cue,reliability)
+
 %% plot VE
 
 % analyze data prediction 

@@ -1,5 +1,7 @@
 function [mean_conf, std_mean_conf, uni_pconf, abs_diff,...
-    mean_ve, std_ve, raw_diff] = analyze_data(sub_slc, ses_slc, pred, interpolateUni)
+    mean_ve, std_ve, raw_diff] = analyze_data_V2(pred, interpolateUni)
+
+% Use both uni and bi predictions
 
 % mean_conf, std_mean_conf: abs_diff x cue x reliability
 % uni_pconf: condition (A,V1,V2) x abs_diff
@@ -12,25 +14,12 @@ cur_dir      = pwd;
 [project_dir, ~]= fileparts(fileparts(cur_dir));
 addpath(genpath(fullfile(project_dir,'func')))
 
-% load unimodal prediction if it exists
-if exist('pred.uni_loc','var')
-    uni_loc = pred.uni_loc;
-    uni_conf = pred.uni_conf;
-else % load unimodal data if there's no prediction
-    [uni_loc, uni_conf, ~, ~] = org_data(sub_slc,[],'uniLoc');
-    if exist('pred','var') % load bimodal prediction if it exists
-        bi_loc = pred.bi_loc;
-        bi_conf = pred.bi_conf;
-        biExpInfo = pred.biExpInfo;
-    else % load bimodal data if there's no prediction
-        [bi_loc, bi_conf, ~, biExpInfo] = org_data(sub_slc,ses_slc,'biLoc');
-        [uni_loc, uni_conf, ~, ~] = org_data(sub_slc,[],'uniLoc');
-    end
-end
+bi_loc = pred.bi_loc;
+bi_conf = pred.bi_conf;
+biExpInfo = pred.biExpInfo;
+uni_loc = pred.uni_loc;
+uni_conf = pred.uni_conf;
 
-% load uni data anyway
-
-% get stimulus loactions
 % get stimulus loactions;
 bi_sA = unique(biExpInfo.randAudVA);
 bi_sV = unique(biExpInfo.randVisVA);

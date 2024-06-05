@@ -2,7 +2,7 @@
 % Compares confidence between unimodal and bimodal conditions
 
 clear; clc; close all;
-sub_slc     = 15;
+sub_slc     = 11;
 ses_slc     = 1;
 
 % manage path
@@ -96,86 +96,90 @@ clt = [30, 120, 180; % blue
 % end
 
 %% Is confidence modulated by cue discrepancy and cue reliability?
-figure; hold on
-t = tiledlayout(2, 1);
-title(t,sprintf('rep: %i', num_rep))
-xlabel(t, 'Absolute audiovisual discrepancy (deg)');
-ylabel(t, 'Proportion of confidence report');
-t.TileSpacing = 'compact';
-t.Padding = 'compact';
-
-for cue = 1:num_cue
-
-    nexttile
-    title(cue_label{cue})
-    hold on
-    xticks(round(abs_diff))
-    ylim([-0.1, 4.1])
-    xlim([min(abs_diff), max(abs_diff)])
-
-    for rel = 1:num_rel
-
-        % plot data
-        %         plot(abs_diff, squeeze(mean_conf(:, cue, rel)), 'o-', 'Color',clt(rel+1,:));
-        plot(abs_diff, mean_conf(:, cue, rel), 'Color',clt(rel+1,:))
-        patch([abs_diff, fliplr(abs_diff)], ...
-            [mean_conf(:, cue, rel)' - std_mean_conf(:, cue, rel)', ...
-            fliplr(mean_conf(:, cue, rel)' + std_mean_conf(:, cue, rel)')], ...
-            clt(rel+1,:),'EdgeColor','none','FaceAlpha',0.1)
-
-        % plot unimodal p_confidence
-        if cue == 1
-            yline(uni_pconf(1),'--','Color',repmat(0.5,1,3))
-        else
-            yline(uni_pconf(rel+1),'--','Color',clt(rel+1,:))
-        end
-
-    end
-
-end
-
-flnm = sprintf('conf_sub%i_ses%i-%i', sub_slc, min(ses_slc), max(ses_slc));
-saveas(gca, fullfile(out_dir, flnm),'png')
-
-%% Ventriloquist effect
-figure
-t = tiledlayout(1,2);
-xlabel(t, 'Audiovisual discrepancy (deg)');
+% figure; hold on
+% t = tiledlayout(2, 1);
+% title(t,sprintf('rep: %i', num_rep))
+% xlabel(t, 'Absolute audiovisual discrepancy (deg)');
 % ylabel(t, 'Proportion of confidence report');
-t.TileSpacing = 'compact';
-t.Padding = 'compact';
-
-for cue = 1:numel(cueIdx)
-    nexttile
-    title(cue_label{cue})
-    axis equal
-    hold on
-    for rel = 1:numel(visReliIdx)
-
-        plot(raw_diff, mean_ve(:, cue, rel),'-o', 'Color',clt(rel+1,:));
-        patch([raw_diff, fliplr(raw_diff)], ...
-            [mean_ve(:, cue, rel)' - std_ve(:,cue, rel)', ...
-            fliplr(mean_ve(:, cue, rel)' + std_ve(:,cue, rel)')],...
-            clt(rel+1,:),'EdgeColor','none','FaceAlpha',0.1, ...
-            'HandleVisibility', 'off');
-
-        yline(0,'--')
-
-        if cue == 1
-            plot(raw_diff, raw_diff,'k--')
-        else
-            plot(raw_diff, -raw_diff,'k--')
-        end
+% t.TileSpacing = 'compact';
+% t.Padding = 'compact';
+% 
+% for cue = 1:num_cue
+% 
+%     nexttile
+%     title(cue_label{cue})
+%     hold on
+%     xticks(round(abs_diff))
+%     ylim([-0.1, 4.1])
+%     xlim([min(abs_diff), max(abs_diff)])
+% 
+%     for rel = 1:num_rel
+% 
+%         % plot data
+%         %         plot(abs_diff, squeeze(mean_conf(:, cue, rel)), 'o-', 'Color',clt(rel+1,:));
+%         plot(abs_diff, mean_conf(:, cue, rel), 'Color',clt(rel+1,:))
+%         patch([abs_diff, fliplr(abs_diff)], ...
+%             [mean_conf(:, cue, rel)' - std_mean_conf(:, cue, rel)', ...
+%             fliplr(mean_conf(:, cue, rel)' + std_mean_conf(:, cue, rel)')], ...
+%             clt(rel+1,:),'EdgeColor','none','FaceAlpha',0.1)
+% 
+%         % plot unimodal p_confidence
+%         if cue == 1
+%             yline(uni_pconf(1),'--','Color',repmat(0.5,1,3))
+%         else
+%             yline(uni_pconf(rel+1),'--','Color',clt(rel+1,:))
+%         end
+% 
+%     end
+% 
+% end
+% 
+% flnm = sprintf('conf_sub%i_ses%i-%i', sub_slc, min(ses_slc), max(ses_slc));
+% saveas(gca, fullfile(out_dir, flnm),'png')
+% 
+% %% Ventriloquist effect
+% figure
+% t = tiledlayout(1,2);
+% xlabel(t, 'Audiovisual discrepancy (deg)');
+% % ylabel(t, 'Proportion of confidence report');
+% t.TileSpacing = 'compact';
+% t.Padding = 'compact';
+% 
+% for cue = 1:numel(cueIdx)
+%     nexttile
+%     title(cue_label{cue})
+%     axis equal
+%     hold on
+%     for rel = 1:numel(visReliIdx)
+% 
+%         plot(raw_diff, mean_ve(:, cue, rel),'-o', 'Color',clt(rel+1,:));
+%         patch([raw_diff, fliplr(raw_diff)], ...
+%             [mean_ve(:, cue, rel)' - std_ve(:,cue, rel)', ...
+%             fliplr(mean_ve(:, cue, rel)' + std_ve(:,cue, rel)')],...
+%             clt(rel+1,:),'EdgeColor','none','FaceAlpha',0.1, ...
+%             'HandleVisibility', 'off');
+% 
+%         yline(0,'--')
+% 
+%         if cue == 1
+%             plot(raw_diff, raw_diff,'k--')
+%         else
+%             plot(raw_diff, -raw_diff,'k--')
+%         end
+%     end
+% end
+% flnm = sprintf('ve_sub%i_ses%i-%i', sub_slc, min(ses_slc), max(ses_slc));
+% saveas(gca, fullfile(out_dir, flnm),'png')
+%% VE spread view
+plotInd = 1;
+for i = 1:2
+    for j = 1:2
+        subplot(2,2,plotInd)
+        cue = i;
+        reliability = j;
+        plot_spread_VE(bi_resp,aud_locs,raw_diff,remapped_vis_locs,cue,reliability)
+        plotInd = plotInd + 1;
     end
 end
-flnm = sprintf('ve_sub%i_ses%i-%i', sub_slc, min(ses_slc), max(ses_slc));
-saveas(gca, fullfile(out_dir, flnm),'png')
-%% VE spread view
-
-cue = 1;
-reliability = 1;
-plot_spread_VE(bi_resp,aud_locs,raw_diff,remapped_vis_locs,cue,reliability)
-
-
-flnm = sprintf('loc_sub%i_ses%i-%i', sub_slc, min(ses_slc), max(ses_slc));
-saveas(gca, fullfile(out_dir, flnm),'png')
+% flnm = sprintf('loc_sub%i_ses%i-%i', sub_slc, min(ses_slc), max(ses_slc));
+% saveas(gca, fullfile(out_dir, flnm),'png')

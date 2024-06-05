@@ -12,22 +12,22 @@ cur_dir      = pwd;
 [project_dir, ~]= fileparts(fileparts(cur_dir));
 addpath(genpath(fullfile(project_dir,'func')))
 
-% load unimodal prediction if it exists
-if exist('pred.uni_loc','var')
-    uni_loc = pred.uni_loc;
-    uni_conf = pred.uni_conf;
-else % load unimodal data if there's no prediction
-    [uni_loc, uni_conf, ~, ~] = org_data(sub_slc,[],'uniLoc');
-    if exist('pred','var') % load bimodal prediction if it exists
-        bi_loc = pred.bi_loc;
-        bi_conf = pred.bi_conf;
-        biExpInfo = pred.biExpInfo;
-    else % load bimodal data if there's no prediction
-        [bi_loc, bi_conf, ~, biExpInfo] = org_data(sub_slc,ses_slc,'biLoc');
-        [uni_loc, uni_conf, ~, ~] = org_data(sub_slc,[],'uniLoc');
+% load bimodal data if it doesn't exist
+if ~exist('pred' ,'var')
+    [bi_loc, bi_conf, ~, biExpInfo] = org_data(sub_slc,ses_slc,'biLoc');
+    [uni_loc, uni_conf, ~, uniExpInfo] = org_data(sub_slc,[],'uniLoc');
+% or use predicted data
+else
+    if exist('pred.uni_loc','var')
+        uni_loc = pred.uni_loc;
+        uni_conf = pred.uni_conf;
+    else
+        [uni_loc, uni_conf, ~, uniExpInfo] = org_data(sub_slc,[],'uniLoc');
     end
+    bi_loc = pred.bi_loc;
+    bi_conf = pred.bi_conf;
+    biExpInfo = pred.biExpInfo;
 end
-
 % load uni data anyway
 
 % get stimulus loactions

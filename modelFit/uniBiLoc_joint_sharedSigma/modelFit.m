@@ -3,7 +3,7 @@
 
 clear; close all; rng('shuffle');
 
-sub_slc = 15;
+sub_slc = 13;
 ses_slc = 1; % bimodal sessions
 
 %% manage path
@@ -42,7 +42,7 @@ for sub = sub_slc
     %% organize data
 
     % condition (A,V1,V2) x loc (4) x rep
-    [~, ~, ~, data.uniExpInfo, ~, ~, data.uni_loc, data.uni_conf] = org_data(sub,[],'uniLoc');
+    [data.org_uni_loc, data.org_uni_conf, ~, data.uniExpInfo, ~, ~, data.uni_loc, data.uni_conf, data.coefsA] = org_data(sub,[],'uniLoc');
 
     % sA(4) x sV(4) x post-cue(A, V) x reliability(high, low) x rep
     [data.bi_loc, data.bi_conf, ~, data.biExpInfo] = org_data(sub,ses_slc,'biLoc');
@@ -73,9 +73,9 @@ for sub = sub_slc
         % optimize
         model.mode                  = 'optimize';
 
-        %     % test
-        %     p = [2.0384765625 8.4609375 0.393773634133617 7.46044921875 1.00048828125 3.07917391262143 3.15380859375 13.9228515625 1.0009765625 0.38486328125 4.99698573405884 3.96142578125 3.080859375 3.8484375];
-        %     test = nllUniBiLocConf(p, model, data);
+%             % test
+%             p = [ 1.7090   12.0101    5.6956    9.0483    0.4485    1.0075    1.7248    1.4398    1.3167    0.0600    5.0000];
+%             test = nllUniBiLocConf(p, model, data);
 
         NLL                         = NaN(1, model.num_run);
         estP                        = NaN(model.num_run, Val.num_para);

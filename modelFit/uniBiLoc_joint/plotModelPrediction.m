@@ -4,7 +4,6 @@ sub_slc = 15;
 ses_slc = 1; % bimodal sessions
 
 models = {'Heuristic','Suboptimal','Optimal'};
-% d = 3;
 
 %% manage path
 
@@ -25,7 +24,6 @@ dotSZ = 80;
 clt = [30, 120, 180; % blue
     227, 27, 27;  % dark red
     repmat(125, 1, 3)]./255;
-%     251, 154, 153]./255; % light red
 
 %% predict data
 
@@ -35,33 +33,16 @@ files = dir(fullfile(result_dir, flnm));
 load(files(end).name);
 
 % winning model?
-[~, d] = min([saveConfModel{1}.minNLL, saveConfModel{2}.minNLL, saveConfModel{3}.minNLL]);
+[~, d] = min([saveModel{1}.minNLL, saveModel{2}.minNLL, saveModel{3}.minNLL]);
 
 % use the best-fitting parameter and winning model
-p = saveConfModel{d}.bestP;
+p = saveModel{d}.bestP;
 model.mode = 'predict';
 model.model_slc             = d;
 model.strategy_conf         = models{d};
-pred = nllLocConf(p, model, data);
+pred = nllUniBiLocConf(p, model, data);
 disp(p)
 
-%% plot bimodal localization response as a function of stimulus location
-
-bi_resp = pred.bi_loc;
-aud_locs = model.bi_sA;
-remapped_vis_locs = model.bi_sV;
-raw_diff = unique(aud_locs - aud_locs');
-figure;
-plotInd = 1;
-for i = 1:2
-    for j = 1:2
-        subplot(2,2,plotInd)
-        cue = i;
-        reliability = j;
-        plot_spread_VE(bi_resp,aud_locs,raw_diff,remapped_vis_locs,cue,reliability)
-        plotInd = plotInd + 1;
-    end
-end
 %% plot VE
 
 % analyze data prediction 
@@ -126,6 +107,7 @@ end
 
 saveas(gca, fullfile(out_dir, sprintf('sub%i_bestfittingM%i_loc', sub_slc, d)), 'png')
 
+
 %% plot confidence report
 
 figure; hold on
@@ -173,3 +155,19 @@ for cue = 1:num_cue
 end
 
 saveas(gca, fullfile(out_dir, sprintf('sub%i_bestfittingM%i_conf', sub_slc, d)), 'png')
+%% plot bimodal localization response as a function of stimulus location
+
+bi_resp = pred.bi_loc;
+aud_locs = model.bi_sA;
+remapped_vis_locs = model.bi_sV;
+raw_diff = unique(aud_locs - aud_locs');
+plotInd = 1;
+for i = 1:2
+    for j = 1:2
+        subplot(2,2,plotInd)
+        cue = i;
+        reliability = j;
+        plot_spread_VE(bi_resp,aud_locs,raw_diff,remapped_vis_locs,cue,reliability)
+        plotInd = plotInd + 1;
+    end
+end

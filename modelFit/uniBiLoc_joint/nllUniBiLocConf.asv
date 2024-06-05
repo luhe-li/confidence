@@ -52,7 +52,7 @@ switch model.mode
         % get grid initializations
         out.init                     = getInit(out.lb, out.ub, model.num_sec, model.num_run);
 
-    case {'optimize'}
+    case {'optimize','predict'}
 
         % fixed parameter values for reducing model
         mu_P = 0;
@@ -83,116 +83,121 @@ switch model.mode
         sigMotor = data.sigMotor;
 
         if strcmp(model.mode, 'optimize')
-        %% unimodal localization
+            %% unimodal localization
 
-        % separate trials of V1 and V2
-        V1_bool = ~~rem(data.uniExpInfo.randV,2);
-        V2_bool = ~rem(data.uniExpInfo.randV,2);
+            % separate trials of V1 and V2
+            V1_bool = ~~rem(data.uniExpInfo.randV,2);
+            V2_bool = ~rem(data.uniExpInfo.randV,2);
 
-        %the mean of measurement distributions (auditory measurements are biased)
-        s_A_prime_uni      = aA.*data.uniExpInfo.randAudVA + bA;
-        s_V_prime_uni1      = aV.*data.uniExpInfo.randVisVA(V1_bool) + bV;
-        s_V_prime_uni2      = aV.*data.uniExpInfo.randVisVA(V2_bool) + bV;
+            %the mean of measurement distributions (auditory measurements are biased)
+            s_A_prime_uni      = aA.*data.uniExpInfo.randAudVA + bA;
+            s_V_prime_uni1      = aV.*data.uniExpInfo.randVisVA(V1_bool) + bV;
+            s_V_prime_uni2      = aV.*data.uniExpInfo.randVisVA(V2_bool) + bV;
 
-        %to calculate the mean of the response distributions
-        c_A                = (1/sigAuni^2)/(1/sigAuni^2+1/sigP^2);
-        c_V1               = (1/sigV1uni^2)/(1/sigV1uni^2+1/sigP^2);
-        c_V2               = (1/sigV2uni^2)/(1/sigV2uni^2+1/sigP^2);
-        f_A                = (mu_P/sigP^2)/(1/sigAuni^2+1/sigP^2);
-        f_V1               = (mu_P/sigP^2)/(1/sigV1uni^2+1/sigP^2);
-        f_V2               = (mu_P/sigP^2)/(1/sigV2uni^2+1/sigP^2);
-        mu_shat_A_uni      = c_A.*s_A_prime_uni + f_A;
-        mu_shat_V1_uni     = c_V1.*s_V_prime_uni1 + f_V1;
-        mu_shat_V2_uni     = c_V2.*s_V_prime_uni2 + f_V2;
-        R1.mu_shat_A_uni   = unique(mu_shat_A_uni);
-        R1.mu_shat_V1_uni   = unique(mu_shat_V1_uni);
-        R1.mu_shat_V2_uni   = unique(mu_shat_V2_uni);
+            %to calculate the mean of the response distributions
+            c_A                = (1/sigAuni^2)/(1/sigAuni^2+1/sigP^2);
+            c_V1               = (1/sigV1uni^2)/(1/sigV1uni^2+1/sigP^2);
+            c_V2               = (1/sigV2uni^2)/(1/sigV2uni^2+1/sigP^2);
+            f_A                = (mu_P/sigP^2)/(1/sigAuni^2+1/sigP^2);
+            f_V1               = (mu_P/sigP^2)/(1/sigV1uni^2+1/sigP^2);
+            f_V2               = (mu_P/sigP^2)/(1/sigV2uni^2+1/sigP^2);
+            mu_shat_A_uni      = c_A.*s_A_prime_uni + f_A;
+            mu_shat_V1_uni     = c_V1.*s_V_prime_uni1 + f_V1;
+            mu_shat_V2_uni     = c_V2.*s_V_prime_uni2 + f_V2;
+            R1.mu_shat_A_uni   = unique(mu_shat_A_uni);
+            R1.mu_shat_V1_uni  = unique(mu_shat_V1_uni);
+            R1.mu_shat_V2_uni  = unique(mu_shat_V2_uni);
 
-        %the variances of estimate distributions
-        sigma_shat_A       = c_A*sigAuni;
-        sigma_shat_V1      = c_V1*sigV1uni;
-        sigma_shat_V2      = c_V2*sigV2uni;
-        R1.sigma_shat_A_wN = sqrt(sigma_shat_A^2 + sigMotor^2);
-        R1.sigma_shat_V1_wN = sqrt(sigma_shat_V1^2 + sigMotor^2);
-        R1.sigma_shat_V2_wN = sqrt(sigma_shat_V2^2 + sigMotor^2);
+            %the variances of estimate distributions
+            sigma_shat_A       = c_A*sigAuni;
+            sigma_shat_V1      = c_V1*sigV1uni;
+            sigma_shat_V2      = c_V2*sigV2uni;
+            R1.sigma_shat_A_wN = sqrt(sigma_shat_A^2 + sigMotor^2);
+            R1.sigma_shat_V1_wN = sqrt(sigma_shat_V1^2 + sigMotor^2);
+            R1.sigma_shat_V2_wN = sqrt(sigma_shat_V2^2 + sigMotor^2);
 
-        %unimodal localization task
-        nLL_uni_loc    = calculateNLL_uniLoc([mu_shat_A_uni; mu_shat_V1_uni; mu_shat_V2_uni], ...
-            [R1.sigma_shat_A_wN; R1.sigma_shat_V1_wN; R1.sigma_shat_V2_wN], data.uni_loc);
+            %unimodal localization task
+            nLL_uni_loc    = calculateNLL_uniLoc([mu_shat_A_uni; mu_shat_V1_uni; mu_shat_V2_uni], ...
+                [R1.sigma_shat_A_wN; R1.sigma_shat_V1_wN; R1.sigma_shat_V2_wN], data.uni_loc);
 
-        %% unimodal confidence
+            %% unimodal confidence
 
-        % normalize variance by the corresponding modality noise to
-        % approximate uncertainty
-        norm_var_A = 1/(1/sigP^2 + 1/sigAuni^2)/sigAuni;
-        norm_var_V1 = 1/(1/sigP^2 + 1/sigV1uni^2)/sigV1uni;
-        norm_var_V2 = 1/(1/sigP^2 + 1/sigV2uni^2)/sigV2uni;
+            % normalize variance by the corresponding modality noise to
+            % approximate uncertainty
+            norm_var_A = 1/(1/sigP^2 + 1/sigAuni^2)/sigAuni;
+            norm_var_V1 = 1/(1/sigP^2 + 1/sigV1uni^2)/sigV1uni;
+            norm_var_V2 = 1/(1/sigP^2 + 1/sigV2uni^2)/sigV2uni;
 
-        % unimodal confidence task
-        nLL_uni_conf = calculateNLL_uniConf([norm_var_A, norm_var_V1, norm_var_V2],...
-            sigC, c1, c2, c3, lapse, data.uni_conf);
+            % unimodal confidence task
+            nLL_uni_conf = calculateNLL_uniConf([norm_var_A, norm_var_V1, norm_var_V2],...
+                sigC, c1, c2, c3, lapse, data.uni_conf);
 
-        %% bimodal localization + confidence
+            %% bimodal localization + confidence
 
-        nLL_bimodal = NaN(1, num_sigVs);
+            nLL_bimodal = NaN(1, num_sigVs);
 
-        for vv = 1:num_sigVs
+            for vv = 1:num_sigVs
 
-            sigV = sigVs(vv);
+                sigV = sigVs(vv);
 
-            % constants
-            CI.J_A            = sigA^2;
-            CI.J_V            = sigV^2;
-            CI.J_P            = sigP^2;
-            CI.constC1        = CI.J_A*CI.J_V + CI.J_A*CI.J_P + CI.J_V*CI.J_P;
-            CI.constC1_shat   = 1/CI.J_A  + 1/CI.J_V + 1/CI.J_P;
-            CI.constC2_1      = CI.J_A + CI.J_P;
-            CI.constC2_1_shat = 1/CI.J_A + 1/CI.J_P;
-            CI.constC2_2      = CI.J_V + CI.J_P;
-            CI.constC2_2_shat = 1/CI.J_V + 1/CI.J_P;
+                % constants
+                CI.J_A            = sigA^2;
+                CI.J_V            = sigV^2;
+                CI.J_P            = sigP^2;
+                CI.constC1        = CI.J_A*CI.J_V + CI.J_A*CI.J_P + CI.J_V*CI.J_P;
+                CI.constC1_shat   = 1/CI.J_A  + 1/CI.J_V + 1/CI.J_P;
+                CI.constC2_1      = CI.J_A + CI.J_P;
+                CI.constC2_1_shat = 1/CI.J_A + 1/CI.J_P;
+                CI.constC2_2      = CI.J_V + CI.J_P;
+                CI.constC2_2_shat = 1/CI.J_V + 1/CI.J_P;
 
-            % auditory locations (4) x visual locations (4) x postcues (2)
-            % x rep
-            data_resp = squeeze(data.bi_loc(:,:,:,vv,:));
-            data_conf = squeeze(data.bi_conf(:,:,:,vv,:));
+                % auditory locations (4) x visual locations (4) x postcues (2)
+                % x rep
+                data_resp = squeeze(data.bi_loc(:,:,:,vv,:));
+                data_conf = squeeze(data.bi_conf(:,:,:,vv,:));
 
-            [nLL_bimodal(vv)] = calculateNLL_bimodal(...
-                aA, bA, aV, bV, sigA, sigV, sigC, pCommon, c1, c2, c3,...
-                CI, mu_P, sigMotor, lapse, data_resp, data_conf, model);
+                [nLL_bimodal(vv)] = calculateNLL_bimodal(...
+                    aA, bA, aV, bV, sigA, sigV, sigC, pCommon, c1, c2, c3,...
+                    CI, mu_P, sigMotor, lapse, data_resp, data_conf, model);
 
-        end
+            end
 
-        %% sum nll
+            %% sum nll
 
-        out = nLL_uni_loc + nLL_uni_conf + sum(nLL_bimodal(:));
+            out = nLL_uni_loc + nLL_uni_conf + sum(nLL_bimodal(:));
 
         elseif strcmp(model.mode, 'predict')
 
-            sA = model.bi_sA;
-            sV = model.bi_sV;
-            fixP.num_rep = model.bi_nrep;
+            fixP.uni_sA = model.uni_sA;
+            fixP.uni_sV = model.uni_sV;
+            bi_sA = model.bi_sA;
+            bi_sV = model.bi_sV;
+            fixP.uni_nrep = model.uni_nrep;
+            fixP.bi_nrep = model.bi_nrep;
             fixP.model_ind = model.model_slc;
             fixP.sigMotor = sigMotor;
 
-            [org_loc, org_conf] = deal(NaN(numel(sA), numel(sV), numel(model.modality), numel(sigVs), model.bi_nrep));
+            [out.uni_loc, out.uni_conf] = simUni(...
+                aA, bA, sigAuni, sigV1uni, sigV2_uni, muP, sigP, sigC, c1, c2, c3, lapse, fixP);
+
+            [bi_loc, bi_conf] = deal(NaN(numel(sA), numel(sV), numel(model.modality), numel(sigVs), model.bi_nrep));
 
             for aa = 1:numel(sA)
                 for vv = 1:numel(sV)
                     for rr = 1:numel(sigVs)
 
-                        fixP.sA = sA(aa);
-                        fixP.sV = sV(vv);
+                        fixP.bi_sA = bi_sA(aa);
+                        fixP.bi_sV = bi_sV(vv);
 
-                        [org_loc(aa,vv,:,rr,:), org_conf(aa,vv,:,rr,:)] = simAllModels(...
+                        [bi_loc(aa,vv,:,rr,:), bi_conf(aa,vv,:,rr,:)] = simAllModels(...
                             aA, bA, sigA, sigVs(rr), muP, sigP, pCommon, sigC, c1, c2, c3, lapse, fixP);
 
                     end
                 end
             end
 
-            out.bi_loc = org_loc;
-            out.bi_conf = org_conf;
-
+            out.bi_loc = bi_loc;
+            out.bi_conf = bi_conf;
 
         end
 
@@ -306,8 +311,8 @@ end
 
                     var(1,:,:) = repmat(CI.J_P * sigA/CI.constC2_1, size(Post_C1));
                     var(2,:,:) = repmat(CI.J_P * sigV/CI.constC2_2, size(Post_C1));
-                   %  var(1,:,:) = repmat(CI.J_A, size(Post_C1));
-                   %  var(2,:,:) = repmat(CI.J_V, size(Post_C1));
+                    %  var(1,:,:) = repmat(CI.J_A, size(Post_C1));
+                    %  var(2,:,:) = repmat(CI.J_V, size(Post_C1));
 
                 end
 

@@ -15,7 +15,7 @@ shatV2 = (mV2*sigP^2 + muP*sigV2_uni^2)./(1/sigV2_uni^2 + 1/sigP^2);
 
 loc(1,:,:) = randn(size(shatA)).*fixP.sigMotor + shatA;
 loc(2,:,:) = randn(size(shatV1)).*fixP.sigMotor + shatV1;
-loc(3,:,:) = randn(size(shatV1)).*fixP.sigMotor + shatV2;
+loc(3,:,:) = randn(size(shatV2)).*fixP.sigMotor + shatV2;
 
 % conf
 norm_var(1,:,:) = repmat(sigA_uni * sigP^2 / (sigP^2 + sigA_uni^2), [1, size(loc, 2, 3)]);
