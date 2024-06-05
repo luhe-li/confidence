@@ -196,16 +196,20 @@ carrierSound_warm            = randn(1, numel(timeline_warm));
 AudInfo.WarmupWhiteNoise  = [AudInfo.intensity_GWN.*sineWindow_warm.*carrierSound_warm; AudInfo.intensity_GWN.*sineWindow_warm.*carrierSound_warm];
 
 
-testSpeaker = 8;
-input_on = ['<',num2str(1),':',num2str(testSpeaker),'>']; %arduino takes input in this format
-fprintf(Arduino,input_on);
-PsychPortAudio('FillBuffer',pahandle, AudInfo.GaussianWhiteNoise);
-PsychPortAudio('Start',pahandle,1,0,0);
-WaitSecs(1);
-input_off = ['<',num2str(0),':',num2str(testSpeaker),'>'];
-fprintf(Arduino,input_off);
-PsychPortAudio('Stop',pahandle);
-WaitSecs(1);
+
+    for i = 1:2:16
+    testSpeaker = i;
+    input_on = ['<',num2str(1),':',num2str(testSpeaker),'>']; 
+    fprintf(Arduino,input_on);
+    PsychPortAudio('FillBuffer',pahandle, AudInfo.GaussianWhiteNoise) 
+    PsychPortAudio('Start',pahandle,1,0,0);
+    WaitSecs(0.1);
+    input_off = ['<',num2str(0),':',num2str(testSpeaker),'>'];
+    fprintf(Arduino,input_off);
+    PsychPortAudio('Stop',pahandle);
+    WaitSecs(0.5)
+    end
+
 
 %% make visual stimuli
 
