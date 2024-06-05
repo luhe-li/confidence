@@ -2,7 +2,7 @@ clear; clc; close all;
 
 %% set up
 
-sub_slc = 11;
+sub_slc = 13;
 
 % session
 ses_labels = {'-A','-V'};
@@ -12,7 +12,7 @@ cond_label = {'A','V-high reliability','V-low reliability'};
 num_cond = numel(cond_label);
 
 % fixed parameters
-num_loc = 6;
+num_loc = 4;
 num_rep = 20;
 
 save_fig = 1;
@@ -222,21 +222,21 @@ for i = 1:numel(sub_slc)
     end
 end
 
-% %%
-%     figure;
-%     set(gca, 'LineWidth', lw, 'FontSize', fontSZ, 'TickDir', 'out')
-%     set(gcf, 'Position',[0 0 500 400])
-%     hold on
-%     
-%     b = bar([1:num_cond], mean(respVar(i,:),1));
-%     for jj = 1:num_cond
-%         b.FaceColor = 'flat';
-%         b.CData(jj,:) = clt(jj,:);
-%     end
-%     b.EdgeColor = 'none';
-%     ylabel('Reponse S.D. (deg)')
-%     xticks(1:num_cond)
-%     xtickangle(30)
-%     xticklabels(cond_label)
-%     title('Group average')
+%%
+    figure;
+    set(gca, 'LineWidth', lw, 'FontSize', fontSZ, 'TickDir', 'out')
+    set(gcf, 'Position',[0 0 500 400])
+    hold on
+    
+    b = bar([1:num_cond], mean(respVar(i,:),1));
+    for jj = 1:num_cond
+        b.FaceColor = 'flat';
+        b.CData(jj,:) = clt(jj,:);
+    end
+    b.EdgeColor = 'none';
+    ylabel('Reponse S.D. (deg)')
+    xticks(1:num_cond)
+    xtickangle(30)
+    xticklabels(cond_label)
+    title('Group average')
 
