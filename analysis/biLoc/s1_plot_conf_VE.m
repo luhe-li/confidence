@@ -140,7 +140,7 @@ saveas(gca, fullfile(out_dir, flnm),'png')
 %% Ventriloquist effect
 figure
 t = tiledlayout(1,2);
-% xlabel(t, 'Audiovisual discrepancy (pixel)');
+xlabel(t, 'Audiovisual discrepancy (deg)');
 % ylabel(t, 'Proportion of confidence report');
 t.TileSpacing = 'compact';
 t.Padding = 'compact';

@@ -176,10 +176,10 @@ for i = 1:numel(sub_slc)
 
 
 end
-    if save_fig
-        flnm = sprintf('sub%i_bias',sub);
-        saveas(gca, fullfile(out_dir, flnm),'png')
-    end
+if save_fig
+    flnm = sprintf('sub%i_bias',sub);
+    saveas(gca, fullfile(out_dir, flnm),'png')
+end
 
 %% 3. plot response variance to check reliability manipulation
 
