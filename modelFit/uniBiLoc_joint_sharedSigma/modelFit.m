@@ -42,7 +42,7 @@ for sub = sub_slc
     %% organize data
 
     % condition (A,V1,V2) x loc (4) x rep
-    [~, ~, ~, data.uniExpInfo, ~, ~, data.uni_loc, data.uni_conf, data.coefsA] = org_data(sub,[],'uniLoc');
+    [data.org_uni_loc, data.org_uni_conf, ~, data.uniExpInfo, ~, ~, data.uni_loc, data.uni_conf, data.coefsA] = org_data(sub,[],'uniLoc');
 
     % sA(4) x sV(4) x post-cue(A, V) x reliability(high, low) x rep
     [data.bi_loc, data.bi_conf, ~, data.biExpInfo] = org_data(sub,ses_slc,'biLoc');

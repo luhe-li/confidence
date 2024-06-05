@@ -84,8 +84,8 @@ lim = max(model.uni_sA,[],'all');
 for j = 1:3
 
     % data
-    e = errorbar(model.uni_sA, mean(data.org_uni_loc,1), ...
-        std(data.org_uni_loc, [], 2)./size(data.org_uni_loc,2),'LineWidth',lw,'Color',clt(j,:));
+    e = errorbar(model.uni_sA, mean(data.uni_loc,2), ...
+        std(data.uni_loc, [], 2)./size(uni_loc,2),'LineWidth',lw,'Color',clt(j,:));
     e.CapSize = 0; %e.Color = clt(2,:);
 
     % prediction
