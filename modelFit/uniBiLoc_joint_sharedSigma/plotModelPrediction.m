@@ -47,14 +47,58 @@ model.bi_nrep = 1e3;
 pred = nllUniBiLocConf(p, model, data);
 disp(p)
 
-%% plot VE
+%% plot bimodal localization response as a function of stimulus location
 
-% analyze data prediction 
+%TO-DO: use predicted unimodal data
+
+bi_resp = pred.bi_loc;
+aud_locs = model.bi_sA;
+remapped_vis_locs = model.bi_sV;
+raw_diff = unique(aud_locs - aud_locs');
+figure; set(gcf, 'Position',[10 10 1200 1000])
+plotInd = 1;
+for i = 1:2
+    for j = 1:2
+        subplot(2,2,plotInd)
+        cue = i;
+        reliability = j;
+        plot_spread_VE(bi_resp,aud_locs,raw_diff,remapped_vis_locs,cue,reliability)
+        plotInd = plotInd + 1;
+    end
+end
+sgtitle(sprintf('Sub%i, best-fitting model: %s', sub_slc, models{d}), 'FontSize', titleSZ)
+
+%% plot unimodal localization
+
+figure; 
+set(gcf, 'Position',[10 10 1200 400])
+
+set(gca, 'LineWidth', lw, 'FontSize', fontSZ, 'TickDir', 'out')
+xlabel('Stimulus location', 'FontSize', titleSZ)
+ylabel('Localization','FontSize', titleSZ)
+
+hold on
+
+lim = max(stim_level,[],'all');
+
+for j = 1:3
+
+    % sA = sV for uni ocndition
+    e = errorbar(model.uni_sA, squeeze(pred(i, j, :)),squeeze(respSD(i, j, :)),'LineWidth',lw,'Color',clt(j,:));
+    e.CapSize = 0; %e.Color = clt(2,:);
+
+end
+plot([-lim, lim], [-lim*1.2, lim*1.2],'k--','LineWidth',lw)
+
+
+
+%% analyze data and prediction
+
 pred.biExpInfo = data.biExpInfo;
-interpolateOption = false;
+% interpolateOption = false;
 
 [pred_mean_conf, pred_std_mean_conf, pred_uni_pconf, ~,...
-    pred_mean_ve, pred_std_ve, ~] = analyze_data_V2(pred, interpolateOption);
+    pred_mean_ve, pred_std_ve, ~] = analyze_data(sub_slc, ses_slc, pred);
 
 % analyze real data
 [mean_conf, std_conf, uni_pconf, abs_diff,...

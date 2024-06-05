@@ -62,8 +62,8 @@ bi_loc = randn(size(shat)).*sigMotor + shat;
 % of confidence) given each model
 switch model_ind
     case 1
-        variance(1,:)= repmat(JA, [1, bi_nrep]);
-        variance(2,:)= repmat(JV, [1, bi_nrep]);
+        variance(1,:)= repmat(1/(1/JA + 1/JP), [1, bi_nrep]);
+        variance(2,:)= repmat(1/(1/JV + 1/JP), [1, bi_nrep]);
     case 2
         variance(1,:)= post_C1./(1/JV + 1/JA + 1/JP) + post_C2./(1/JA + 1/JP);
         variance(2,:)= post_C1./(1/JV + 1/JA + 1/JP) + post_C2./(1/JV + 1/JP);
