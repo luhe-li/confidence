@@ -17,7 +17,7 @@ addpath(genpath(result_dir))
 
 %% plot set up
 
-lw = 2;
+lw = 1;
 fontSZ = 15;
 titleSZ = 20;
 dotSZ = 80;
@@ -71,30 +71,35 @@ sgtitle(sprintf('Sub%i, best-fitting model: %s', sub_slc, models{d}), 'FontSize'
 %% plot unimodal localization
 
 figure; 
-set(gcf, 'Position',[10 10 1200 400])
+set(gcf, 'Position',[10 10 1500 500])
 
-subplot(2,3,1)
+subplot(2,3,[1,4])
 set(gca, 'LineWidth', lw, 'FontSize', fontSZ, 'TickDir', 'out')
 xlabel('Stimulus location', 'FontSize', titleSZ)
 ylabel('Localization','FontSize', titleSZ)
 hold on
+axis equal
 % sA = sV for uni task
 lim = max(model.uni_sA,[],'all');
 
 for j = 1:3
 
+    avg_loc = mean(data.org_uni_loc(j,:,:),3);
+    sd_loc = std(data.org_uni_loc(j,:,:), [], 3);
+
     % data
-    e = errorbar(model.uni_sA, mean(data.org_uni_loc,1), ...
-        std(data.org_uni_loc, [], 2)./size(data.org_uni_loc,2),'LineWidth',lw,'Color',clt(j,:));
-    e.CapSize = 0; %e.Color = clt(2,:);
+    plot(model.uni_sA, avg_loc, 'o',...
+        'Color', clt(j,:), 'MarkerFaceColor', clt(j,:), 'MarkerSize', 10);
+    patch([model.uni_sA, fliplr(model.uni_sA)], ...
+        [avg_loc - sd_loc, fliplr(avg_loc + sd_loc)], ...
+                clt(j,:),'EdgeColor','none','FaceAlpha',0.1, ...
+        'HandleVisibility', 'off');
 
     % prediction
-%     plot(model.uni_sA, mean(pred.uni_loc(j,:,:),3),'-','LineWidth',lw,'Color',clt(j,:));
+    plot(model.uni_sA, mean(pred.uni_loc(j,:,:),3),'-','LineWidth',lw,'Color',clt(j,:));
 
 end
 plot([-lim, lim], [-lim*1.2, lim*1.2],'k--','LineWidth',lw)
-
-
 
 %% analyze data and prediction
 
