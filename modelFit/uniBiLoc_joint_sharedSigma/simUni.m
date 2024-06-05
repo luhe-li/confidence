@@ -9,9 +9,9 @@ mA    = randn(1, nrep).*sigA_uni + (fixP.uni_sA' * aA + bA);
 mV1    = randn(1, nrep).*sigV1_uni + fixP.uni_sV';
 mV2    = randn(1, nrep).*sigV2_uni + fixP.uni_sV';
 
-shatA = (mA*sigP^2 + muP*sigA_uni^2)./(1/sigA_uni^2 + 1/sigP^2);
-shatV1 = (mV1*sigP^2 + muP*sigV1_uni^2)./(1/sigV1_uni^2 + 1/sigP^2);
-shatV2 = (mV2*sigP^2 + muP*sigV2_uni^2)./(1/sigV2_uni^2 + 1/sigP^2);
+shatA = (mA*sigP^2 + muP*sigA_uni^2)./(sigA_uni^2 + sigP^2);
+shatV1 = (mV1*sigP^2 + muP*sigV1_uni^2)./(sigV1_uni^2 + sigP^2);
+shatV2 = (mV2*sigP^2 + muP*sigV2_uni^2)./(sigV2_uni^2 + sigP^2);
 
 loc(1,:,:) = randn(size(shatA)).*fixP.sigMotor + shatA;
 loc(2,:,:) = randn(size(shatV1)).*fixP.sigMotor + shatV1;

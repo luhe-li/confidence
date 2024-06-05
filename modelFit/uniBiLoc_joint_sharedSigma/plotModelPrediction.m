@@ -1,7 +1,7 @@
 clear; close all; rng('shuffle');
 
-sub_slc = 13;
-ses_slc = 1; % bimodal sessions
+sub_slc = 15;
+ses_slc = 1:3; % bimodal sessions
 
 models = {'Heuristic','Suboptimal','Optimal'};
 
@@ -18,6 +18,7 @@ addpath(genpath(result_dir))
 %% plot set up
 
 lw = 1;
+pred_lw = 2;
 fontSZ = 15;
 titleSZ = 20;
 dotSZ = 80;
@@ -68,19 +69,20 @@ for i = 1:2
 end
 sgtitle(sprintf('Sub%i, best-fitting model: %s', sub_slc, models{d}), 'FontSize', titleSZ)
 
-%% plot unimodal localization
+%% first panel: plot unimodal localization
 
 figure; 
-set(gcf, 'Position',[10 10 1500 500])
+set(gcf, 'Position',[10 10 1500 800])
 
 subplot(2,3,[1,4])
+title('Unimodal localization', 'FontSize',titleSZ)
 set(gca, 'LineWidth', lw, 'FontSize', fontSZ, 'TickDir', 'out')
 xlabel('Stimulus location', 'FontSize', titleSZ)
 ylabel('Localization','FontSize', titleSZ)
 hold on
-axis equal
+
 % sA = sV for uni task
-lim = max(model.uni_sA,[],'all');
+lim = 15;
 
 for j = 1:3
 
@@ -96,15 +98,14 @@ for j = 1:3
         'HandleVisibility', 'off');
 
     % prediction
-    plot(model.uni_sA, mean(pred.uni_loc(j,:,:),3),'-','LineWidth',lw,'Color',clt(j,:));
+    plot(model.uni_sA, mean(pred.uni_loc(j,:,:),3),'-','LineWidth',pred_lw,'Color',clt(j,:));
 
 end
 plot([-lim, lim], [-lim*1.2, lim*1.2],'k--','LineWidth',lw)
 
-%% analyze data and prediction
+%% second panel: plot unimodal localization
 
 pred.biExpInfo = data.biExpInfo;
-% interpolateOption = false;
 
 [pred_mean_conf, pred_std_mean_conf, pred_uni_pconf, ~,...
     pred_mean_ve, pred_std_ve, ~] = analyze_data(sub_slc, ses_slc, pred);
@@ -118,21 +119,18 @@ num_cue               = numel(cue_label);
 rel_label             = {'High visual reliability','Low visual reliability'};
 num_rel               = numel(rel_label);
 
-figure; hold on
-t = tiledlayout(1, 2);
-title(t,sprintf('Sub%i, best-fitting model: %s', sub_slc, models{d}))
-xlabel(t, 'Audiovisual discrepancy (V-A, deg)');
-ylabel(t, 'Shift of localization');
-t.TileSpacing = 'compact';
-t.Padding = 'compact';
-
+sgtitle(sprintf('Sub%i, best-fitting model: %s', sub_slc, models{d}),'FontSize',titleSZ)
+sp_idx = [2,5];
 for cue = 1:num_cue
 
-    nexttile
+    subplot(2,3,sp_idx(cue))
+    set(gca, 'LineWidth', lw, 'FontSize', fontSZ, 'TickDir', 'out')
+
     title(cue_label{cue})
-    axis equal
     hold on
     xticks(round(raw_diff))
+    xtickangle(45)
+    ylabel('Shift of localization');
 
     for rel = 1:num_rel
 
@@ -145,12 +143,8 @@ for cue = 1:num_cue
             clt(rel+1,:),'EdgeColor','none','FaceAlpha',0.1, ...
             'HandleVisibility', 'off');
 
-%         % Add error bars
-%         errorbar(raw_diff, squeeze(mean_ve(:, cue, rel)), squeeze(std_ve(:, cue, rel)), 'o', ...
-%             'Color', clt(rel+1,:), 'LineStyle', 'none', 'LineWidth', 2, 'CapSize', 0);
-
         % plot prediction
-        l(rel) = plot(raw_diff, squeeze(pred_mean_ve(:, cue, rel)), '-','Color',clt(rel+1,:),'LineWidth',lw);
+        l(rel) = plot(raw_diff, squeeze(pred_mean_ve(:, cue, rel)), '-','Color',clt(rel+1,:),'LineWidth',pred_lw);
 
     end
 
@@ -159,25 +153,18 @@ for cue = 1:num_cue
         plot(raw_diff, raw_diff,'k--')
     else
         plot(raw_diff, -raw_diff,'k--')
-        legend([l(:)],rel_label)
+%         legend([l(:)],rel_label)
+        xlabel('Audiovisual discrepancy (V-A, deg)');
     end
 end
 
-saveas(gca, fullfile(out_dir, sprintf('sub%i_bestfittingM%i_loc', sub_slc, d)), 'png')
-
 %% plot confidence report
-
-figure; hold on
-t = tiledlayout(2, 1);
-title(t,sprintf('Sub%i, best-fitting model: %s', sub_slc, models{d}))
-xlabel(t, 'Absolute audiovisual discrepancy (deg)');
-ylabel(t, 'Proportion of confidence report');
-t.TileSpacing = 'compact';
-t.Padding = 'compact';
 
 for cue = 1:num_cue
 
-    nexttile
+    subplot(2,3,cue*3)
+    set(gca, 'LineWidth', lw, 'FontSize', fontSZ, 'TickDir', 'out')
+
     title(cue_label{cue})
     hold on
     xticks(round(abs_diff))
@@ -198,14 +185,15 @@ for cue = 1:num_cue
             'HandleVisibility', 'off');
 
         % plot prediction
-        l(rel) = plot(abs_diff, squeeze(pred_mean_conf(:, cue, rel)), '-', 'Color',clt(rel+1,:),'LineWidth',lw);
+        l(rel) = plot(abs_diff, squeeze(pred_mean_conf(:, cue, rel)), '-', 'Color',clt(rel+1,:),'LineWidth',pred_lw);
 
         % plot unimodal p_confidence
         if cue == 1
             yline(uni_pconf(1),'--','Color',repmat(0.5,1,3))
         else
             yline(uni_pconf(rel+1),'--','Color',clt(rel+1,:))
-            legend([l(:)],rel_label,'Location','best')
+            xlabel('Absolute audiovisual discrepancy (deg)');
+%             legend([l(:)],rel_label,'Location','best')
         end
 
     end    
