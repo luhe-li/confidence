@@ -1,4 +1,4 @@
-function [org_resp, org_conf, org_err, ExpInfo, org_sigVs, ScreenInfo, resp, conf, coefsA] = org_data(sub_slc,ses_slc,exp)
+function [org_resp, org_conf, org_err, ExpInfo, org_sigVs, ScreenInfo, resp, conf, avBias] = org_data(sub_slc,ses_slc,exp)
 
 [org_resp, org_conf, org_err, org_sigVs] = deal([]);
 
@@ -104,13 +104,19 @@ switch exp
         conf(2,:) = c(V1_bool);
         conf(3,:) = c(V2_bool);
 
-        % calculate AV bias in the same way as transferAV.m, assuming NO
-        % BIAS FOR V
+        % calculate AV bias in the same way as transferAV.m
         sA = unique(ExpInfo.randAudVA);
         sArep = repmat(sA',1,ExpInfo.nRep);
         uni_a_resp = squeeze(org_resp(1,:,:));
         mdlA = fitlm(sArep(:),uni_a_resp(:));
         coefsA = table2array(mdlA.Coefficients(:,1)); % b, a
+
+        sV = unique(ExpInfo.randVisVA);
+        sVrep = repmat(sV',1,ExpInfo.nRep*2);
+        uni_v_resp = reshape(squeeze(org_resp(2:3,:,:),1,[]);
+
+    mdlA = fitlm(sArep(:),uni_a_resp(:));
+    coefsA = table2array(mdlA.Coefficients(:,1));
 
     case 'pointTask'
         flnm        = sprintf('point_sub%i_ses-Pointing', sub_slc);

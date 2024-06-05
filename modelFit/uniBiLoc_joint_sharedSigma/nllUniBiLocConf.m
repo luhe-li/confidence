@@ -4,21 +4,18 @@ switch model.mode
 
     case 'initiate'
 
-        out.paraID                   = {'aA','bA','\sigma_{V1,uni}','\sigma_{A,uni}','\sigma_{V2,uni}','\sigma_{V1,bi}','\sigma_{A,bi}','\sigma_{V2,bi}','\sigma_{P}','p_{common}','\sigma_{C}','c1','\delta_{c2}','\delta_{c3}'};
+        out.paraID                   = {'aA','bA','\sigma_{V1}','\sigma_{A}','\sigma_{V2}','\sigma_{P}','p_{common}','\sigma_{C}','c1','\delta_{c2}','\delta_{c3}'};
         out.num_para                 = length(out.paraID);
 
         % hard bounds, the range for LB, UB, larger than soft bounds
         paraH.aA                     = [ 0.5,     3]; % degree
-        paraH.bA                     = [ -10,    10]; % degree
-        paraH.sigV1uni               = [1e-2,     5]; % degree
-        paraH.sigAuni                = [   1,    15]; % degree
-        paraH.sigV2uni               = [   1,    15]; % degree
+        paraH.bA                     = [  -5,     5]; % degree
         paraH.sigV1                  = [1e-2,     5]; % degree
-        paraH.sigA                   = [   1,    15]; % degree
-        paraH.sigV2                  = [   1,    15]; % degree
+        paraH.sigA                   = [   1,    10]; % degree
+        paraH.sigV2                  = [   1,    10]; % degree
         paraH.sigP                   = [   1,    20]; % degrees
         paraH.pC1                    = [1e-3,1-1e-3]; % weight
-        paraH.sigC                   = [ 0.1,    10]; % measurement noise of confidence
+        paraH.sigC                   = [ 0.1,     5]; % measurement noise of confidence
         paraH.c1                     = [ 0.5,     5];
         paraH.dc2                    = [0.01,     5];
         paraH.dc3                    = [0.01,     5];
@@ -26,9 +23,6 @@ switch model.mode
         % soft bounds, the range for PLB, PUB
         paraS.aA                     = [ 0.9,     1]; % degree
         paraS.bA                     = [  -2,     2]; % degree
-        paraS.sigV1uni               = [ 0.1,     2]; % degree
-        paraS.sigAuni                = [   3,     8]; % degree
-        paraS.sigV2uni               = [   3,     8]; % degree
         paraS.sigV1                  = [ 0.1,     2]; % degree
         paraS.sigA                   = [   3,     8]; % degree
         paraS.sigV2                  = [   3,     8]; % degree
@@ -63,18 +57,15 @@ switch model.mode
         % free parameters
         aA                           = freeParam(1);
         bA                           = freeParam(2);
-        sigV1uni                     = freeParam(3);
-        sigAuni                      = freeParam(4);
-        sigV2uni                     = freeParam(5);
-        sigV1                        = freeParam(6);
-        sigA                         = freeParam(7);
-        sigV2                        = freeParam(8);
-        sigP                         = freeParam(9);
-        pCommon                      = freeParam(10);
-        sigC                         = freeParam(11);
-        c1                           = freeParam(12);
-        dc2                          = freeParam(13);
-        dc3                          = freeParam(14);
+        sigV1                        = freeParam(3);
+        sigA                         = freeParam(4);
+        sigV2                        = freeParam(5);
+        sigP                         = freeParam(6);
+        pCommon                      = freeParam(7);
+        sigC                         = freeParam(8);
+        c1                           = freeParam(9);
+        dc2                          = freeParam(10);
+        dc3                          = freeParam(11);
 
         sigVs = [sigV1, sigV2];
         num_sigVs = numel(sigVs);
@@ -95,12 +86,12 @@ switch model.mode
             s_V_prime_uni2      = aV.*data.uniExpInfo.randVisVA(V2_bool) + bV;
 
             %to calculate the mean of the response distributions
-            c_A                = (1/sigAuni^2)/(1/sigAuni^2+1/sigP^2);
-            c_V1               = (1/sigV1uni^2)/(1/sigV1uni^2+1/sigP^2);
-            c_V2               = (1/sigV2uni^2)/(1/sigV2uni^2+1/sigP^2);
-            f_A                = (muP/sigP^2)/(1/sigAuni^2+1/sigP^2);
-            f_V1               = (muP/sigP^2)/(1/sigV1uni^2+1/sigP^2);
-            f_V2               = (muP/sigP^2)/(1/sigV2uni^2+1/sigP^2);
+            c_A                = (1/sigA^2)/(1/sigA^2+1/sigP^2);
+            c_V1               = (1/sigV1^2)/(1/sigV1^2+1/sigP^2);
+            c_V2               = (1/sigV2^2)/(1/sigV2^2+1/sigP^2);
+            f_A                = (muP/sigP^2)/(1/sigA^2+1/sigP^2);
+            f_V1               = (muP/sigP^2)/(1/sigV1^2+1/sigP^2);
+            f_V2               = (muP/sigP^2)/(1/sigV2^2+1/sigP^2);
             mu_shat_A_uni      = c_A.*s_A_prime_uni + f_A;
             mu_shat_V1_uni     = c_V1.*s_V_prime_uni1 + f_V1;
             mu_shat_V2_uni     = c_V2.*s_V_prime_uni2 + f_V2;
@@ -109,9 +100,9 @@ switch model.mode
             R1.mu_shat_V2_uni  = unique(mu_shat_V2_uni);
 
             %the variances of estimate distributions
-            sigma_shat_A       = c_A*sigAuni;
-            sigma_shat_V1      = c_V1*sigV1uni;
-            sigma_shat_V2      = c_V2*sigV2uni;
+            sigma_shat_A       = c_A*sigA;
+            sigma_shat_V1      = c_V1*sigV1;
+            sigma_shat_V2      = c_V2*sigV2;
             R1.sigma_shat_A_wN = sqrt(sigma_shat_A^2 + sigMotor^2);
             R1.sigma_shat_V1_wN = sqrt(sigma_shat_V1^2 + sigMotor^2);
             R1.sigma_shat_V2_wN = sqrt(sigma_shat_V2^2 + sigMotor^2);
@@ -124,9 +115,9 @@ switch model.mode
 
             % normalize variance by the corresponding modality noise to
             % approximate uncertainty
-            norm_var_A = 1/(1/sigP^2 + 1/sigAuni^2)/sigAuni;
-            norm_var_V1 = 1/(1/sigP^2 + 1/sigV1uni^2)/sigV1uni;
-            norm_var_V2 = 1/(1/sigP^2 + 1/sigV2uni^2)/sigV2uni;
+            norm_var_A = 1/(1/sigP^2 + 1/sigA^2)/sigA;
+            norm_var_V1 = 1/(1/sigP^2 + 1/sigV1^2)/sigV1;
+            norm_var_V2 = 1/(1/sigP^2 + 1/sigV2^2)/sigV2;
 
             % unimodal confidence task
             nLL_uni_conf = calculateNLL_uniConf([norm_var_A, norm_var_V1, norm_var_V2],...
@@ -178,7 +169,7 @@ switch model.mode
             fixP.sigMotor = sigMotor;
 
             [out.uni_loc, out.uni_conf] = simUni(...
-                aA, bA, sigAuni, sigV1uni, sigV2uni, muP, sigP, sigC, c1, c2, c3, lapse, fixP);
+                aA, bA, sigA, sigV1, sigV2, muP, sigP, sigC, c1, c2, c3, lapse, fixP);
 
             [bi_loc, bi_conf] = deal(NaN(numel(bi_sA), numel(bi_sV), numel(model.modality), numel(sigVs), model.bi_nrep));
 

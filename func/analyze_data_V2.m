@@ -1,5 +1,7 @@
 function [mean_conf, std_mean_conf, uni_pconf, abs_diff,...
-    mean_ve, std_ve, raw_diff] = analyze_data(sub_slc, ses_slc, pred, interpolateUni)
+    mean_ve, std_ve, raw_diff] = analyze_data_V2(pred, interpolateUni)
+
+% Use both uni and bi predictions
 
 % mean_conf, std_mean_conf: abs_diff x cue x reliability
 % uni_pconf: condition (A,V1,V2) x abs_diff
@@ -12,24 +14,16 @@ cur_dir      = pwd;
 [project_dir, ~]= fileparts(fileparts(cur_dir));
 addpath(genpath(fullfile(project_dir,'func')))
 
-% load bimodal data if it doesn't exist
-if ~exist('pred' ,'var')
-    [bi_loc, bi_conf, ~, biExpInfo] = org_data(sub_slc,ses_slc,'biLoc');
+bi_loc = pred.bi_loc;
+bi_conf = pred.bi_conf;
+biExpInfo = pred.biExpInfo;
+uni_loc = pred.uni_loc;
+uni_conf = pred.uni_conf;
 
-% or use predicted data
-else 
-    bi_loc = pred.bi_loc;
-    bi_conf = pred.bi_conf;
-    biExpInfo = pred.biExpInfo;
-end    
-% load uni data anyway
-[uni_resp, uni_conf, ~, uniExpInfo] = org_data(sub_slc,[],'uniLoc');
-
-% get stimulus loactions
-uni_sA = unique(uniExpInfo.randAudVA);
-uni_sV = unique(uniExpInfo.randVisVA);
+% get stimulus loactions;
 bi_sA = unique(biExpInfo.randAudVA);
 bi_sV = unique(biExpInfo.randVisVA);
+uni_sA = bi_sA;
 
 %% reorganize uni and bi confidence
 
@@ -54,13 +48,6 @@ end
 
 %% reorganize ventriloquist effect
 
-% reorganize audlevel for 11 and 12 because they tested 6 uni locations
-if sub_slc == 11 || sub_slc == 12
-    bi_idx = 2:5;
-else
-    bi_idx = 1:4;
-end
-
 % interpolates auditory responses as a straight line
 if interpolateUni || ~isequal(uni_sA, bi_sA)
 
@@ -68,12 +55,13 @@ if interpolateUni || ~isequal(uni_sA, bi_sA)
     % coefsA = squeeze(Transfer.degCoeff(1, :));
     % There is no need to load bias data because we can calculate it here.
     % This allows fake unimodal data to be used.
-    mean_uni_resp = mean(uni_resp, 3);
-    sArep = repmat(uni_sA',1,uniExpInfo.nRep);
-    uni_a_resp = squeeze(uni_resp(1,:,:));
+    mean_uni_resp = mean(uni_loc, 3);
+%     sArep = repmat(bi_sA',1,uniExpInfo.nRep);
+    sArep = repmat(bi_sA',1,20); 
+    uni_a_resp = squeeze(uni_loc(1,:,:));
     mdlA = fitlm(sArep(:),uni_a_resp(:));
     coefsA = table2array(mdlA.Coefficients(:,1));
-    interpolate_a_resp = uni_sA(bi_idx) .* coefsA(2) + coefsA(1); % condition (A,V1,V2) x loc (4)
+    interpolate_a_resp = uni_sA .* coefsA(2) + coefsA(1); % condition (A,V1,V2) x loc (4)
     loc_a = repmat(interpolate_a_resp',[1, numel(bi_sV)]);
     loc_v = repmat(bi_sV, [numel(bi_sA), 1]);
     % useful line for debug bias:
@@ -83,18 +71,18 @@ if interpolateUni || ~isequal(uni_sA, bi_sA)
 % use mean uni loc responses 
 else
 
-    mean_uni_resp = mean(uni_resp(:,bi_idx,:), 3); % condition (A,V1,V2) x loc (4)
+    mean_uni_resp = mean(uni_loc, 3); % condition (A,V1,V2) x loc (4)
     loc_a = repmat(mean_uni_resp(1,:)', [1, numel(bi_sV)]);
     loc_v = repmat(bi_sV, [numel(bi_sA), 1]);
 
 end
 
 % reshape into dimensions of bi
-uni_loc(:,:,1,1:2) = repmat(loc_a, [1,1,1,2]);
-uni_loc(:,:,2,1:2) = repmat(loc_v, [1,1,1,2]);
+org_uni_loc(:,:,1,1:2) = repmat(loc_a, [1,1,1,2]);
+org_uni_loc(:,:,2,1:2) = repmat(loc_v, [1,1,1,2]);
 
 % loc at uni minus loc at bi
-ve = mean(bi_loc, 5) - uni_loc;
+ve = mean(bi_loc, 5) - org_uni_loc;
 std_ve = std(bi_loc,[], 5);
 
 % diff x cue x reliability
