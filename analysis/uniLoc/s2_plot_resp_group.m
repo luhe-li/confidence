@@ -135,14 +135,14 @@ for i = 1:numel(sub_slc)
 
     end
 
-    if save_fig
-        flnm = sprintf('sub%i_raw',sub);
-        saveas(gca, fullfile(out_dir, flnm),'png')
-    end
+
     hold off
 
 end
-
+if save_fig
+    flnm = sprintf('sub%i_raw',sub);
+    saveas(gca, fullfile(out_dir, flnm),'png')
+end
 
 %% 2. plot response mean to check audiovisual bias
 
@@ -173,13 +173,13 @@ for i = 1:numel(sub_slc)
     legend(cond_label,'Location','northwest');
     legend boxoff
     hold off
+
+
+end
     if save_fig
         flnm = sprintf('sub%i_bias',sub);
         saveas(gca, fullfile(out_dir, flnm),'png')
     end
-
-end
-
 
 %% 3. plot response variance to check reliability manipulation
 
