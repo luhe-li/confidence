@@ -4,7 +4,7 @@ switch model.mode
 
     case 'initiate'
 
-        out.paraID                   = {'\sigma_{V1}','\sigma_{A}','\sigma_{V2}','\sigma_{P}','p_{common}','\sigma_{C}','c1','\delta_{c2}','\delta_{c3}','lapse','muP'};
+        out.paraID                   = {'\sigma_{V1}','\sigma_{A}','\sigma_{V2}','\sigma_{P}','p_{common}','\sigma_{C, A}','\sigma_{C, V}','c1','\delta_{c2}','\delta_{c3}','\mu_{P}'};
         out.num_para                 = length(out.paraID);
 
         % hard bounds, the range for LB, UB, larger than soft bounds
@@ -13,12 +13,12 @@ switch model.mode
         paraH.sigV2                  = [   1,    10]; % degree
         paraH.sigP                   = [   1,    20]; % degrees
         paraH.pC1                    = [1e-3,1-1e-3]; % weight
-        paraH.sigC                   = [ 0.1,    15]; % measurement noise of confidence
+        paraH.sigCA                   = [ 0.1,    15]; % measurement noise of confidence
+        paraH.sigCV                   = [ 0.1,    15]; % measurement noise of confidence
         paraH.c1                     = [ 0.5,     5];
         paraH.dc2                    = [0.01,     5];
         paraH.dc3                    = [0.01,     5];
-        paraH.lapse                  = [1e-3,  0.06];
-        paraH.muP                    = [ -10,     10];
+        paraH.muP                    = [ -10,    10];
 
         % soft bounds, the range for PLB, PUB
         paraS.sigV1                  = [ 0.1,     2]; % degree
@@ -26,11 +26,11 @@ switch model.mode
         paraS.sigV2                  = [   3,     8]; % degree
         paraS.sigP                   = [   5,    10]; % degrees
         paraS.pC1                    = [ 0.5,   0.7]; % weight
-        paraS.sigC                   = [ 0.1,     2]; % measurement noise of confidence
+        paraS.sigCA                   = [ 0.1,     2]; % measurement noise of confidence
+        paraS.sigCV                   = [ 0.1,     2]; % measurement noise of confidence
         paraS.c1                     = [   1,     2];
         paraS.dc2                    = [ 0.1,   0.5];
         paraS.dc3                    = [ 0.1,   0.5];
-        paraS.lapse                  = [0.01,  0.03];
         paraS.muP                    = [  -1,     1];
 
         % reorganize parameter bounds to feed to bads
@@ -54,12 +54,12 @@ switch model.mode
         sigV2                        = freeParam(3);
         sigP                         = freeParam(4);
         pCommon                      = freeParam(5);
-        sigC                         = freeParam(6);
+        sigCA                         = freeParam(6);
+        sigCV                         = freeParam(6);
         c1                           = freeParam(7);
         dc2                          = freeParam(8);
         dc3                          = freeParam(9);
-        lapse                        = freeParam(10);
-        muP                          = freeParam(11);
+        muP                          = freeParam(10);
         
         % convert
         sigVs = [sigV1, sigV2];
@@ -71,7 +71,7 @@ switch model.mode
         sigMotor = data.sigMotor;
         aA = data.coefsA(2);
         bA = data.coefsA(1);
-%         lapse = 0.02;
+        lapse = 0.06;
 %         muP = 0;
         aV = 1;
         bV = 0;
@@ -124,7 +124,7 @@ switch model.mode
 
             % unimodal confidence task
             nLL_uni_conf = calculateNLL_uniConf([norm_var_A, norm_var_V1, norm_var_V2],...
-                sigC, c1, c2, c3, lapse, data.uni_conf);
+                [sigCA, sigCV, sigCV], c1, c2, c3, lapse, data.uni_conf);
 
             %% bimodal localization + confidence
 
@@ -151,7 +151,7 @@ switch model.mode
                 data_conf = squeeze(data.bi_conf(:,:,:,vv,:));
 
                 [nLL_bimodal(vv)] = calculateNLL_bimodal(...
-                    aA, bA, aV, bV, sigA, sigV, sigC, pCommon, c1, c2, c3,...
+                    aA, bA, aV, bV, sigA, sigV, sigCA, sigCV, pCommon, c1, c2, c3,...
                     CI, muP, sigMotor, lapse, data_resp, data_conf, model);
 
             end
@@ -172,7 +172,7 @@ switch model.mode
             fixP.sigMotor = sigMotor;
 
             [out.uni_loc, out.uni_conf] = simUni(...
-                aA, bA, sigA, sigV1, sigV2, muP, sigP, sigC, c1, c2, c3, lapse, fixP);
+                aA, bA, sigA, sigV1, sigV2, muP, sigP, sigCA, sigCV, c1, c2, c3, lapse, fixP);
 
             [bi_loc, bi_conf] = deal(NaN(numel(bi_sA), numel(bi_sV), numel(model.modality), numel(sigVs), model.bi_nrep));
 
@@ -184,7 +184,7 @@ switch model.mode
                         fixP.bi_sV = bi_sV(vv);
 
                         [bi_loc(aa,vv,:,rr,:), bi_conf(aa,vv,:,rr,:)] = simAllModels(...
-                            aA, bA, sigA, sigVs(rr), muP, sigP, pCommon, sigC, c1, c2, c3, lapse, fixP);
+                            aA, bA, sigA, sigVs(rr), muP, sigP, pCommon, sigCA, sigCV, c1, c2, c3, lapse, fixP);
 
                     end
                 end
@@ -235,7 +235,7 @@ end
     end
 
     function [nLL_bimodal] = calculateNLL_bimodal(...
-            aA, bA, aV, bV, sigA, sigV, sigC, pCommon, c1, c2, c3,...
+            aA, bA, aV, bV, sigA, sigV, sigCA, sigCV, pCommon, c1, c2, c3,...
             CI, mu_P, sigMotor, lapse, data_resp, data_conf, model)
 
         nLL_bimodal = 0;
@@ -319,7 +319,9 @@ end
                 % and an S.D. of confidence measurement noise (sigC), evaluated at
                 % each criteria.
                 m = norm_var;
-                v = sigC;
+%                 v = sigC;
+                v(1,:,:) = repmat(sigCA, [1, size(m, 2, 3)]);
+                v(2,:,:) = repmat(sigCV, [1, size(m, 2, 3)]);
                 mu = log((m.^2)./sqrt(v+m.^2));
                 sigma = sqrt(log(v./(m.^2)+1));
                 temp_p4 = logncdf(c1, mu, sigma);

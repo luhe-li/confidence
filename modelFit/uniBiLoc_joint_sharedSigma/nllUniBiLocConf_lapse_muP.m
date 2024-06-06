@@ -4,19 +4,21 @@ switch model.mode
 
     case 'initiate'
 
-        out.paraID                   = {'\sigma_{V1}','\sigma_{A}','\sigma_{V2}','\sigma_{P}','p_{common}','\sigma_{C}','c1','\delta_{c2}','\delta_{c3}'};
+        out.paraID                   = {'\sigma_{V1}','\sigma_{A}','\sigma_{V2}','\sigma_{P}','p_{common}','\sigma_{C}','c1','\delta_{c2}','\delta_{c3}','lapse','muP'};
         out.num_para                 = length(out.paraID);
 
         % hard bounds, the range for LB, UB, larger than soft bounds
         paraH.sigV1                  = [1e-2,     5]; % degree
-        paraH.sigA                   = [   1,    10]; % degree
+        paraH.sigA                   = [   1,    20]; % degree
         paraH.sigV2                  = [   1,    10]; % degree
         paraH.sigP                   = [   1,    20]; % degrees
         paraH.pC1                    = [1e-3,1-1e-3]; % weight
-        paraH.sigC                   = [ 0.1,     5]; % measurement noise of confidence
+        paraH.sigC                   = [ 0.1,    15]; % measurement noise of confidence
         paraH.c1                     = [ 0.5,     5];
         paraH.dc2                    = [0.01,     5];
         paraH.dc3                    = [0.01,     5];
+        paraH.lapse                  = [1e-3,  0.06];
+        paraH.muP                    = [ -10,    10];
 
         % soft bounds, the range for PLB, PUB
         paraS.sigV1                  = [ 0.1,     2]; % degree
@@ -28,6 +30,8 @@ switch model.mode
         paraS.c1                     = [   1,     2];
         paraS.dc2                    = [ 0.1,   0.5];
         paraS.dc3                    = [ 0.1,   0.5];
+        paraS.lapse                  = [0.01,  0.03];
+        paraS.muP                    = [  -1,     1];
 
         % reorganize parameter bounds to feed to bads
         fn                           = fieldnames(paraH);
@@ -44,12 +48,6 @@ switch model.mode
 
     case {'optimize','predict'}
 
-        % fixed parameter values for reducing model
-        muP = 0;
-        lapse = 0.02;
-        aV = 1;
-        bV = 0;
-
         % free parameters
         sigV1                        = freeParam(1);
         sigA                         = freeParam(2);
@@ -60,6 +58,8 @@ switch model.mode
         c1                           = freeParam(7);
         dc2                          = freeParam(8);
         dc3                          = freeParam(9);
+        lapse                        = freeParam(10);
+        muP                          = freeParam(11);
         
         % convert
         sigVs = [sigV1, sigV2];
@@ -71,6 +71,10 @@ switch model.mode
         sigMotor = data.sigMotor;
         aA = data.coefsA(2);
         bA = data.coefsA(1);
+%         lapse = 0.02;
+%         muP = 0;
+        aV = 1;
+        bV = 0;
 
         if strcmp(model.mode, 'optimize')
             %% unimodal localization

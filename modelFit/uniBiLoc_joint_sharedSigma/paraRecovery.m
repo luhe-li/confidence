@@ -2,7 +2,7 @@
 clear; close all; rng('shuffle');
 
 % sample participant
-sub_slc = 15;
+sub = 15;
 ses_slc = 1:3;
 
 recompute = true;
@@ -65,6 +65,7 @@ end
 cur_dir               = pwd;
 [project_dir, ~]      = fileparts(fileparts(cur_dir));
 out_dir               = fullfile(cur_dir, mfilename);
+result_dir            = fullfile(cur_dir, 'modelFit');
 if ~exist(out_dir,'dir') mkdir(out_dir); end
 addpath(genpath(fullfile(project_dir, 'func')))
 addpath(genpath(fullfile(project_dir, 'bads')))
@@ -96,7 +97,7 @@ model.uni_nrep        = data.uniExpInfo.nRep;
 % bi expt info for model
 model.bi_sA          = unique(data.biExpInfo.randAudVA);
 model.bi_sV          = unique(data.biExpInfo.randVisVA);
-model.bi_nrep        = size(data.bi_loc, 5); % total number of trials per condition
+model.bi_nrep        = data.biExpInfo.nRep * numel(ses_slc); % total number of trials per condition
 
 % model info
 models               = {'Heuristic','Suboptimal','Optimal'};
@@ -118,9 +119,9 @@ if ~exist(fullfile(out_dir, flnm),'file') || recompute
         %% set GT
 
         % load best-fitting parameters
-        flnm = sprintf('fitResults_sub%i_ses%i-%i.mat', sub_slc, min(ses_slc), max(ses_slc));
+        flnm = sprintf('fitResults_sub%i_ses%i-%i.mat', sub, min(ses_slc), max(ses_slc));
         files = dir(fullfile(result_dir, flnm));
-        F = load(files(end).name);
+        F = load(fullfile(result_dir, files(end).name));
 
         % winning model?
         GTs(d,:) = F.saveModel{d}.bestP;
@@ -178,15 +179,13 @@ if ~exist(fullfile(out_dir, flnm),'file') || recompute
             saveModel{d,i_sample}.bestP = bestP;
             saveModel{d,i_sample}.minNLL = minNLL;
 
+            save(fullfile(out_dir, flnm), 'saveModel','model','saveConfModel')
+
         end
 
-        save(fullfile(out_dir, flnm), 'saveModel','model','saveConfModel')
     end
 
-
-
 end
-
 
 function [samples] = sampleGTfromGaussian(mean_values, sem_values, num_sample)
 

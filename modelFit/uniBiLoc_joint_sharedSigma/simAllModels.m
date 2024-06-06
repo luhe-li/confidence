@@ -1,5 +1,5 @@
 function [bi_loc, bi_conf, variance, norm_var, est_var] = simAllModels(...
-    aA, bA, sigA, sigV, muP, sigP, pCommon, sigC, c1, c2, c3, lapse, fixP)
+    aA, bA, sigA, sigV, muP, sigP, pCommon, sigCA, sigCV, c1, c2, c3, lapse, fixP)
 
 %% generative model of bimodal session
 
@@ -82,7 +82,9 @@ norm_var(2,:) = variance(2,:)./sigV;
 
 % make noisy measurements of variance/uncertainty for each modality
 m = norm_var;
-v = sigC;
+% v = sigC;
+v(1,:) = repmat(sigCA, [1, size(m, 2)]);
+v(2,:) = repmat(sigCV, [1, size(m, 2)]);
 mu = log((m.^2)./sqrt(v+m.^2));
 sigma = sqrt(log(v./(m.^2)+1));
 est_var = lognrnd(mu, sigma);

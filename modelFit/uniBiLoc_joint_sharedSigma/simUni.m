@@ -1,5 +1,5 @@
 function [loc, conf] = simUni(...
-        aA, bA, sigA_uni, sigV1_uni, sigV2_uni, muP, sigP, sigC, c1, c2, c3, lapse, fixP)
+        aA, bA, sigA_uni, sigV1_uni, sigV2_uni, muP, sigP, sigCA, sigCV, c1, c2, c3, lapse, fixP)
 
 % simulate for unimodal session
 
@@ -22,7 +22,8 @@ norm_var(1,:,:) = repmat(sigA_uni * sigP^2 / (sigP^2 + sigA_uni^2), [1, size(loc
 norm_var(2,:,:) = repmat(sigV1_uni * sigP^2 / (sigP^2 + sigV1_uni^2), [1, size(loc, 2, 3)]);
 norm_var(3,:,:) = repmat(sigV2_uni * sigP^2 / (sigP^2 + sigV2_uni^2), [1, size(loc, 2, 3)]);
 m = norm_var;
-v = sigC;
+v(1,:,:) = repmat(sigCA,[1, size(norm_var, 2,3)]);
+v(2:3,:,:) = repmat(sigCV,[2, size(norm_var, 2,3)]);
 mu = log((m.^2)./sqrt(v+m.^2));
 sigma = sqrt(log(v./(m.^2)+1));
 est_var = lognrnd(mu, sigma);

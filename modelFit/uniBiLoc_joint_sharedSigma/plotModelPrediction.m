@@ -1,7 +1,7 @@
 clear; close all; rng('shuffle');
 
-sub_slc = 15;
-ses_slc = 1:3; % bimodal sessions
+sub_slc = 13;
+ses_slc = 1:2; % bimodal sessions
 
 models = {'Heuristic','Suboptimal','Optimal'};
 
