@@ -204,7 +204,7 @@ pahandle                    = PsychPortAudio('Open', our_device, [], [], [], 2);
 %% audio test / warm-up
 
 if strcmp(ExpInfo.session, 'A')
-    for i = 1:16
+    for i = 8
     testSpeaker = i;
     input_on = ['<',num2str(1),':',num2str(testSpeaker),'>']; 
     fprintf(Arduino,input_on);
