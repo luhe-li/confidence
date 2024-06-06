@@ -4,7 +4,7 @@
 clear; close all; rng('shuffle');
 
 sub_slc = 13;
-ses_slc = 1; % bimodal sessions
+ses_slc = 1:2; % bimodal sessions
 
 %% manage path
 
@@ -20,7 +20,7 @@ addpath(genpath(fullfile(project_dir, 'modelFit', 'uniBiLoc_joint')))
 
 numCores = feature('numcores'); % number of cores locally
 fprintf('Number of cores: %i  \n', numCores);
-num_run = numCores - 1; % runs of fitting
+num_run = numCores - 5; % runs of fitting
 
 %% joint fit
 
@@ -42,10 +42,10 @@ for sub = sub_slc
     %% organize data
 
     % condition (A,V1,V2) x loc (4) x rep
-    [~, ~, ~, data.uniExpInfo, ~, ~, data.uni_loc, data.uni_conf, data.coefsA] = org_data(sub,[],'uniLoc');
+    [~, ~, ~, data.uniExpInfo, ~, ~, data.uni_loc, ~] = org_data(sub,[],'uniLoc');
 
     % sA(4) x sV(4) x post-cue(A, V) x reliability(high, low) x rep
-    [data.bi_loc, data.bi_conf, ~, data.biExpInfo] = org_data(sub,ses_slc,'biLoc');
+    [data.bi_loc, ~, ~, data.biExpInfo] = org_data(sub,ses_slc,'biLoc');
 
     % motor noise
     data.sigMotor = get_point_sigM(sub);
@@ -74,8 +74,8 @@ for sub = sub_slc
         model.mode                  = 'optimize';
 
         %     % test
-%             p = [2.0384765625 8.4609375 0.393773634133617 7.46044921875 1.00048828125 3.07917391262143 3.15380859375 13.9228515625 1.0009765625 0.38486328125 4.99698573405884 3.96142578125 3.080859375 3.8484375];
-%             test = nllUniBiLocConf(p, model, data);
+        %     p = [2.0384765625 8.4609375 0.393773634133617 7.46044921875 1.00048828125 3.07917391262143 3.15380859375 13.9228515625 1.0009765625 0.38486328125 4.99698573405884 3.96142578125 3.080859375 3.8484375];
+        %     test = nllUniBiLocConf(p, model, data);
 
         NLL                         = NaN(1, model.num_run);
         estP                        = NaN(model.num_run, Val.num_para);

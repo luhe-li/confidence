@@ -2,8 +2,8 @@
 % Compares confidence between unimodal and bimodal conditions
 
 clear; clc; close all;
-sub_slc     = 15;
-ses_slc     = 1:3;
+sub_slc     = 16;
+ses_slc     = 1;
 
 % manage path
 cur_dir      = pwd;

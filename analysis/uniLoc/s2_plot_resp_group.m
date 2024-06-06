@@ -157,7 +157,7 @@ for i = 1:numel(sub_slc)
     xlabel('Stimulus location', 'FontSize', titleSZ)
     ylabel('Estimate','FontSize', titleSZ)
     hold on
-
+    
     lim = max(stim_level,[],'all');
 
     % for each condition
