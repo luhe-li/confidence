@@ -119,6 +119,8 @@ for sub = sub_slc
         NLL                         = NaN(1, model.num_run);
         estP                        = NaN(model.num_run, Val.num_para);
 
+        test = nllUniBiConf(Val.init(1,:), model, data);
+
         for i                    = 1:model.num_run
 
             [estP(i,:),NLL(i)] = bads(@(p) nllUniBiConf(p, model, data),...
