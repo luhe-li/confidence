@@ -37,18 +37,14 @@ load(files(end).name);
 
 % use the best-fitting parameter and winning model
 p = saveModel{d}.bestP;
-model.uni_nrep = 1e3;
-model.bi_nrep = 1e3;
 model.mode = 'predict';
 model.model_slc             = d;
 model.strategy_conf         = models{d};
 pred = nllUniBiLocConf(p, model, data);
 disp(p)
-
-%% unimodal
-
+%%
 figure; 
-set(gcf, 'Position',[10 10, 500 400])
+set(gcf, 'Position',[10 10 1500 800])
 
 % subplot(2,3,[1,4])
 title('Unimodal localization', 'FontSize',titleSZ)
@@ -143,15 +139,15 @@ end
 
 saveas(gca, fullfile(out_dir, sprintf('sub%i_bestfittingM%i_loc', sub_slc, d)), 'png')
 
+
 %% plot bimodal localization response as a function of stimulus location
 
-bi_resp = pred.bi_loc;
+% bi_resp = pred.bi_loc;
+
 aud_locs = model.bi_sA;
 remapped_vis_locs = model.bi_sV;
 raw_diff = unique(aud_locs - aud_locs');
 plotInd = 1;
-figure; 
-set(gcf, 'Position',[10 10, 1500 1000])
 for i = 1:2
     for j = 1:2
         subplot(2,2,plotInd)
