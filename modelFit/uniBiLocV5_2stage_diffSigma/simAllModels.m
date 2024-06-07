@@ -104,7 +104,7 @@ bi_conf(est_var >= c3) = 1;
 % 
 % % normalize 
 % est_var = norm_var./est_sig;
-
+% 
 % % compare variance to criterion s.t. the lowest variance leads to highest
 % % confidence
 % bi_conf = NaN(size(est_var));
@@ -112,7 +112,6 @@ bi_conf(est_var >= c3) = 1;
 % bi_conf(est_var >= c1 & est_var < c2) = 3;
 % bi_conf(est_var >= c2 & est_var < c3) = 2;
 % bi_conf(est_var >= c3) = 1;
-
 
 % add lapse to confidence report
 lapse_trial = rand(size(bi_loc))<lapse;
