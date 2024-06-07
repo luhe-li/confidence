@@ -1,41 +1,10 @@
-function [uni_loc, uni_conf, bi_loc, bi_conf, variance, norm_var, est_var] = simAllModels(...
-    aA, bA, sigAuni, sigVuni, sigA, sigV, muP, sigP, pCommon, sigC, c1, c2, c3, lapse, fixP)
-
-% shared parameters
-model_ind = fixP.model_ind;
-sigMotor = fixP.sigMotor;
-
-%% unimodal session
-
-% loc
-uni_nrep = fixP.uni_nrep;
-uni_mA    = randn(1, uni_nrep).*sigAuni + (fixP.uni_sA * aA + bA);
-uni_mV    = randn(1, uni_nrep).*sigVuni + fixP.uni_sV;
-
-uni_shatA = (uni_mA*sigP^2 + muP*sigAuni^2)./(1/sigAuni^2 + 1/sigP^2);
-uni_shatV = (uni_mV*sigP^2 + muP*sigVuni^2)./(1/sigVuni^2 + 1/sigP^2);
-
-uni_loc(1,:) = randn(size(uni_shatA)).*sigMotor + uni_shatA;
-uni_loc(2,:) = randn(size(uni_shatV)).*sigMotor + uni_shatV;
-
-% conf
-uni_norm_var = sigAuni * sigP^2 / (sigP^2 + sigAuni^2);
-uni_m = uni_norm_var;
-uni_v = sigC;
-uni_mu = log((uni_m.^2)./sqrt(uni_v+uni_m.^2));
-uni_sigma = sqrt(log(uni_v./(uni_m.^2)+1));
-est_uni_var = lognrnd(uni_mu, uni_sigma);
-
-% compare variance to criterion s.t. the lowest variance leads to highest
-% confidence
-uni_conf = NaN(size(est_uni_var));
-uni_conf(est_uni_var < c1) = 4; 
-uni_conf(est_uni_var >= c1 & est_uni_var < c2) = 3;
-uni_conf(est_uni_var >= c2 & est_var < c3) = 2;
-uni_conf(est_var >= c3) = 1;
+function [bi_loc, bi_conf, variance, norm_var, est_var] = simAllModels(...
+    aA, bA, sigA, sigV, muP, sigP, pCommon, sigC, c1, c2, c3, lapse, fixP)
 
 %% generative model of bimodal session
 
+model_ind = fixP.model_ind;
+sigMotor = fixP.sigMotor;
 bi_nrep = fixP.bi_nrep;
 
 %simulate measurements, which are drawn from Gaussian distributions
@@ -93,8 +62,8 @@ bi_loc = randn(size(shat)).*sigMotor + shat;
 % of confidence) given each model
 switch model_ind
     case 1
-        variance(1,:)= repmat(JA, [1, bi_nrep]);
-        variance(2,:)= repmat(JV, [1, bi_nrep]);
+        variance(1,:)= repmat(1/(1/JA + 1/JP), [1, bi_nrep]);
+        variance(2,:)= repmat(1/(1/JV + 1/JP), [1, bi_nrep]);
     case 2
         variance(1,:)= post_C1./(1/JV + 1/JA + 1/JP) + post_C2./(1/JA + 1/JP);
         variance(2,:)= post_C1./(1/JV + 1/JA + 1/JP) + post_C2./(1/JV + 1/JP);

@@ -1,5 +1,8 @@
-% This model fits the unimodal localization and confidence responses in the
-% first stage, and use the same \sigma_c, c1, c2, c3 to fit bimodal data.
+% This model fits the unimodal and bimodal localization data first, and
+% freeze the parameters to fit confidence rating.
+
+% Not the ideal way, but may help clarify necessary confidence model
+% parameters
 
 clear; close all; rng('shuffle');
 
@@ -14,7 +17,6 @@ out_dir               = fullfile(cur_dir, mfilename);
 if ~exist(out_dir,'dir') mkdir(out_dir); end
 addpath(genpath(fullfile(project_dir, 'func')))
 addpath(genpath(fullfile(project_dir, 'bads')))
-addpath(genpath(fullfile(project_dir, 'modelFit', 'uniBiLoc_joint')))
 
 %% set cores
 
@@ -22,7 +24,7 @@ numCores = feature('numcores'); % number of cores locally
 fprintf('Number of cores: %i  \n', numCores);
 num_run = numCores - 5; % runs of fitting
 
-%% joint fit
+%% model set up
 
 % general setting for all models
 model.num_run         = num_run;
@@ -33,8 +35,9 @@ model.numBins_V       = 15;
 model.modality        = {'A','V'};
 model.strategy_loc    = 'MA';
 OPTIONS.TolMesh = 1e-5;
-% OPTIONS.Display = 'off';
+OPTIONS.Display = 'off';
 
+% loop each model
 models               = {'Heuristic','Suboptimal','Optimal'};
 
 for sub = sub_slc
@@ -42,10 +45,10 @@ for sub = sub_slc
     %% organize data
 
     % condition (A,V1,V2) x loc (4) x rep
-    [~, ~, ~, data.uniExpInfo, ~, ~, data.uni_loc, ~] = org_data(sub,[],'uniLoc');
+    [data.org_uni_loc, data.org_uni_conf, ~, data.uniExpInfo, ~, ~, data.uni_loc, data.uni_conf] = org_data(sub,[],'uniLoc');
 
     % sA(4) x sV(4) x post-cue(A, V) x reliability(high, low) x rep
-    [data.bi_loc, ~, ~, data.biExpInfo] = org_data(sub,ses_slc,'biLoc');
+    [data.bi_loc, data.bi_conf, ~, data.biExpInfo] = org_data(sub,ses_slc,'biLoc');
 
     % motor noise
     data.sigMotor = get_point_sigM(sub);
@@ -62,27 +65,63 @@ for sub = sub_slc
 
     for d = 3:-1:1
 
-        fprintf('[%s] Start fitting sub-%i, ses1-%i, M%i\n', mfilename, sub_slc, max(ses_slc), d);
+        fprintf('[%s] Start fitting localization data, sub-%i, ses1-%i, M%i\n', mfilename, sub_slc, max(ses_slc), d);
 
         % switch confidence strategies
         model.strategy_conf         = models{d};
+
         % initiate
         model.mode                  = 'initiate';
-        Val = nllUniBiLocConf([], model, data);
+        Val = nllUniBiLoc([], model, data);
 
         % optimize
         model.mode                  = 'optimize';
 
-        %     % test
-        %     p = [2.0384765625 8.4609375 0.393773634133617 7.46044921875 1.00048828125 3.07917391262143 3.15380859375 13.9228515625 1.0009765625 0.38486328125 4.99698573405884 3.96142578125 3.080859375 3.8484375];
-        %     test = nllUniBiLocConf(p, model, data);
+        NLL                         = NaN(1, model.num_run);
+        estP                        = NaN(model.num_run, Val.num_para);
+
+        parfor n              = 1:model.num_run
+
+            tempModel             = model;
+            tempVal               = Val;
+
+            [estP(n,:),NLL(n),~,~,~]    = bads(@(p) nllUniBiLoc(p, model, data),...
+                Val.init(n,:), Val.lb,...
+                Val.ub, Val.plb, Val.pub, [], OPTIONS);
+
+        end
+
+        % find the parameter with the least NLL
+        [minNLL, best_idx]    = min(NLL);
+        bestP                 = estP(best_idx, :);
+
+        % save all fitting results
+        saveLocModel{d}.paraInfo = Val;
+        saveLocModel{d}.estP = estP;
+        saveLocModel{d}.NLL = NLL;
+        saveLocModel{d}.bestP = bestP;
+        saveLocModel{d}.minNLL = minNLL;
+
+        %% 2. second part: conf
+
+        fprintf('[%s] Start fitting confidence data, sub-%i, ses1-%i, M%i\n', mfilename, sub_slc, max(ses_slc), d);
+
+        % use best param from loc fits
+        model.locP = bestP;
+
+        % initiate
+        model.mode                  = 'initiate';
+        Val = nllUniBiConf([], model, data);
+
+        % optimize
+        model.mode                  = 'optimize';
 
         NLL                         = NaN(1, model.num_run);
         estP                        = NaN(model.num_run, Val.num_para);
 
-        parfor i                    = 1:model.num_run
+        for i                    = 1:model.num_run
 
-            [estP(i,:),NLL(i)] = bads(@(p) nllUniBiLocConf(p, model, data),...
+            [estP(i,:),NLL(i)] = bads(@(p) nllUniBiConf(p, model, data),...
                 Val.init(i,:), Val.lb,...
                 Val.ub, Val.plb, Val.pub, [], OPTIONS);
 
@@ -93,15 +132,15 @@ for sub = sub_slc
         bestP                 = estP(best_idx, :);
 
         % save all fitting result
-        saveModel{d}.paraInfo = Val;
-        saveModel{d}.estP = estP;
-        saveModel{d}.NLL = NLL;
-        saveModel{d}.bestP = bestP;
-        saveModel{d}.minNLL = minNLL;
+        saveConfModel{d}.paraInfo = Val;
+        saveConfModel{d}.estP = estP;
+        saveConfModel{d}.NLL = NLL;
+        saveConfModel{d}.bestP = bestP;
+        saveConfModel{d}.minNLL = minNLL;
 
     end
 
     flnm = sprintf('fitResults_sub%i_ses%i-%i', sub, min(ses_slc), max(ses_slc));
-    save(fullfile(out_dir, flnm), 'saveModel','data','model');
+    save(fullfile(out_dir, flnm), 'saveLocModel','data','saveConfModel','model');
 
 end

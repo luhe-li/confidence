@@ -1,33 +1,31 @@
-function out = nllUniBiLocConf(freeParam, model, data)
+function out = nllUniBiLoc(freeParam, model, data)
 
 switch model.mode
 
     case 'initiate'
 
-        out.paraID                   = {'\sigma_{V1}','\sigma_{A}','\sigma_{V2}','\sigma_{P}','p_{common}','\sigma_{C}','c1','\delta_{c2}','\delta_{c3}'};
+        out.paraID                   = {'aA','bA','\sigma_{V1}','\sigma_{A}','\sigma_{V2}','\sigma_{P}','p_{common}'};
         out.num_para                 = length(out.paraID);
 
         % hard bounds, the range for LB, UB, larger than soft bounds
+        paraH.aA                     = [ 0.1,     3]; % degree
+        paraH.bA                     = [ -10,    10]; % degree
         paraH.sigV1                  = [1e-2,     5]; % degree
-        paraH.sigA                   = [   1,    10]; % degree
-        paraH.sigV2                  = [   1,    10]; % degree
-        paraH.sigP                   = [   1,    20]; % degrees
+        paraH.sigA                   = [   1,    15]; % degree
+        paraH.sigV2                  = [   1,    15]; % degree
+        paraH.sigP                   = [   1,    20]; % degree
         paraH.pC1                    = [1e-3,1-1e-3]; % weight
-        paraH.sigC                   = [ 0.1,     5]; % measurement noise of confidence
-        paraH.c1                     = [ 0.5,     5];
-        paraH.dc2                    = [0.01,     5];
-        paraH.dc3                    = [0.01,     5];
+%         paraH.muP                    = [ -20,    20]; % degree
 
         % soft bounds, the range for PLB, PUB
+        paraS.aA                     = [ 0.9,     1]; % degree
+        paraS.bA                     = [  -2,     2]; % degree
         paraS.sigV1                  = [ 0.1,     2]; % degree
         paraS.sigA                   = [   3,     8]; % degree
         paraS.sigV2                  = [   3,     8]; % degree
-        paraS.sigP                   = [   5,    10]; % degrees
+        paraS.sigP                   = [   5,    10]; % degree
         paraS.pC1                    = [ 0.5,   0.7]; % weight
-        paraS.sigC                   = [ 0.1,     2]; % measurement noise of confidence
-        paraS.c1                     = [   1,     2];
-        paraS.dc2                    = [ 0.1,   0.5];
-        paraS.dc3                    = [ 0.1,   0.5];
+%         paraS.muP                    = [ -20,    20]; % degree
 
         % reorganize parameter bounds to feed to bads
         fn                           = fieldnames(paraH);
@@ -44,33 +42,26 @@ switch model.mode
 
     case {'optimize','predict'}
 
-        % fixed parameter values for reducing model
-        muP = 0;
-        lapse = 0.02;
-        aV = 1;
-        bV = 0;
-
         % free parameters
-        sigV1                        = freeParam(1);
-        sigA                         = freeParam(2);
-        sigV2                        = freeParam(3);
-        sigP                         = freeParam(4);
-        pCommon                      = freeParam(5);
-        sigC                         = freeParam(6);
-        c1                           = freeParam(7);
-        dc2                          = freeParam(8);
-        dc3                          = freeParam(9);
-        
+        aA                           = freeParam(1);
+        bA                           = freeParam(2);
+        sigV1                        = freeParam(3);
+        sigA                         = freeParam(4);
+        sigV2                        = freeParam(5);
+        sigP                         = freeParam(6);
+        pCommon                      = freeParam(7);
+%         muP                          = freeParam(8);
+
         % convert
         sigVs = [sigV1, sigV2];
         num_sigVs = numel(sigVs);
-        c2 = c1 + dc2;
-        c3 = c1 + dc2 + dc3;
 
         % freeze parameters from data
         sigMotor = data.sigMotor;
-        aA = data.coefsA(2);
-        bA = data.coefsA(1);
+        lapse = 0.06;
+        aV = 1;
+        bV = 0;
+        muP = 0;
 
         if strcmp(model.mode, 'optimize')
             %% unimodal localization
@@ -110,18 +101,6 @@ switch model.mode
             nLL_uni_loc    = calculateNLL_uniLoc([mu_shat_A_uni; mu_shat_V1_uni; mu_shat_V2_uni], ...
                 [R1.sigma_shat_A_wN; R1.sigma_shat_V1_wN; R1.sigma_shat_V2_wN], data.uni_loc);
 
-            %% unimodal confidence
-
-            % normalize variance by the corresponding modality noise to
-            % approximate uncertainty
-            norm_var_A = 1/(1/sigP^2 + 1/sigA^2)/sigA;
-            norm_var_V1 = 1/(1/sigP^2 + 1/sigV1^2)/sigV1;
-            norm_var_V2 = 1/(1/sigP^2 + 1/sigV2^2)/sigV2;
-
-            % unimodal confidence task
-            nLL_uni_conf = calculateNLL_uniConf([norm_var_A, norm_var_V1, norm_var_V2],...
-                sigC, c1, c2, c3, lapse, data.uni_conf);
-
             %% bimodal localization + confidence
 
             nLL_bimodal = NaN(1, num_sigVs);
@@ -144,17 +123,16 @@ switch model.mode
                 % auditory locations (4) x visual locations (4) x postcues (2)
                 % x rep
                 data_resp = squeeze(data.bi_loc(:,:,:,vv,:));
-                data_conf = squeeze(data.bi_conf(:,:,:,vv,:));
 
                 [nLL_bimodal(vv)] = calculateNLL_bimodal(...
-                    aA, bA, aV, bV, sigA, sigV, sigC, pCommon, c1, c2, c3,...
-                    CI, muP, sigMotor, lapse, data_resp, data_conf, model);
+                    aA, bA, aV, bV, sigA, sigV, pCommon, ...
+                    CI, muP, sigMotor, data_resp, model);
 
             end
 
             %% sum nll
 
-            out = nLL_uni_loc + nLL_uni_conf + sum(nLL_bimodal(:));
+            out = nLL_uni_loc + sum(nLL_bimodal(:));
 
         elseif strcmp(model.mode, 'predict')
 
@@ -193,6 +171,7 @@ switch model.mode
 
 end
 
+
     function nLL_uni_loc = calculateNLL_uniLoc(mu, sig, x)
         %we assume that response distributions are Gaussian, centered at mu
         %with variance equal to (sigma_shat^2 + sigma_r^2)
@@ -204,35 +183,10 @@ end
         nLL_uni_loc = sum(-LL(:));
     end
 
-    function nLL_uni_conf = calculateNLL_uniConf(m, v, c1, c2, c3, lapse, data)
-
-        % convert to lognormal parameters
-        mu = log((m.^2)./sqrt(v+m.^2))';
-        sigma = sqrt(log(v./(m.^2)+1))';
-        temp_p4 = logncdf(c1, mu, sigma);
-        temp_p3 = logncdf(c2, mu, sigma) - logncdf(c1, mu, sigma);
-        temp_p2 = logncdf(c3, mu, sigma) - logncdf(c2, mu, sigma);
-
-        % add lapse
-        p4_conf = lapse./4 + (1-lapse) .* temp_p4 + 1e-20;
-        p3_conf = lapse./4 + (1-lapse) .* temp_p3 + 1e-20;
-        p2_conf = lapse./4 + (1-lapse) .* temp_p2 + 1e-20;
-        p1_conf = 1 - p2_conf - p3_conf - p4_conf;
-
-        % organize probability into a matrix index (A, V1, V2 x p1, p2, p3, p4)
-        p_conf = [p1_conf, p2_conf, p3_conf, p4_conf];
-
-        for modality = 1:3
-            p = p_conf(modality,:);
-            LL(modality, :) = log(p(data(modality,:)));
-        end
-
-        nLL_uni_conf = sum(-LL(:));
-    end
 
     function [nLL_bimodal] = calculateNLL_bimodal(...
-            aA, bA, aV, bV, sigA, sigV, sigC, pCommon, c1, c2, c3,...
-            CI, mu_P, sigMotor, lapse, data_resp, data_conf, model)
+            aA, bA, aV, bV, sigA, sigV, pCommon, ...
+            CI, mu_P, sigMotor, data_resp, model)
 
         nLL_bimodal = 0;
         sA_prime   = model.bi_sA.*aA + bA; %the mean of biased auditory measurements
@@ -276,65 +230,12 @@ end
                 MAP_MA(1,:,:)  = shat_C1.*Post_C1 + squeeze(shat_C2(1,:,:)).*Post_C2;
                 MAP_MA(2,:,:)  = shat_C1.*Post_C1 + squeeze(shat_C2(2,:,:)).*Post_C2;
 
-                %--------------------- Confidence report --------------------------
-                % three strategies differ in the variance that is used to derive
-                % the confidence variable
-                if strcmp(model.strategy_conf,'Optimal')
-
-                    var(1,:,:) = Post_C1 ./CI.constC1_shat + ...
-                        Post_C2 ./CI.constC2_1_shat + ...
-                        Post_C1 .* Post_C2 .* (squeeze(shat_C2(1,:,:)) - shat_C1).^2;
-                    var(2,:,:) = Post_C1 ./CI.constC1_shat + ...
-                        Post_C2 ./CI.constC2_2_shat + ...
-                        Post_C1 .* Post_C2 .* (squeeze(shat_C2(2,:,:)) - shat_C1).^2;
-
-                elseif strcmp(model.strategy_conf, 'Suboptimal')
-
-                    var(1,:,:)= Post_C1 ./CI.constC1_shat + Post_C2 ./CI.constC2_1_shat;
-                    var(2,:,:)= Post_C1 ./CI.constC1_shat + Post_C2 ./CI.constC2_2_shat;
-                    %             var = repmat(1/CI.constC1_shat, [2, size(Post_C1)]);
-                    %             indices = (Post_C1 >= 0.5);
-                    %             var(1,indices) = 1/CI.constC2_1_shat;
-                    %             var(2,indices) = 1/CI.constC2_2_shat;
-
-                elseif strcmp(model.strategy_conf, 'Heuristic')
-
-                    var(1,:,:) = repmat(CI.J_P * sigA/CI.constC2_1, size(Post_C1));
-                    var(2,:,:) = repmat(CI.J_P * sigV/CI.constC2_2, size(Post_C1));
-                    %  var(1,:,:) = repmat(CI.J_A, size(Post_C1));
-                    %  var(2,:,:) = repmat(CI.J_V, size(Post_C1));
-
-                end
-
-                % normalize variance by the corresponding modality noise
-                norm_var(1,:,:) = var(1,:,:)./sigA;
-                norm_var(2,:,:) = var(2,:,:)./sigV;
-
-                % probability of reporting confidence is the value of a lognormal
-                % cumulative distribution with a mean of confidence variable (var)
-                % and an S.D. of confidence measurement noise (sigC), evaluated at
-                % each criteria.
-                m = norm_var;
-                v = sigC;
-                mu = log((m.^2)./sqrt(v+m.^2));
-                sigma = sqrt(log(v./(m.^2)+1));
-                temp_p4 = logncdf(c1, mu, sigma);
-                temp_p3 = logncdf(c2, mu, sigma) - logncdf(c1, mu, sigma);
-                temp_p2 = logncdf(c3, mu, sigma) - logncdf(c2, mu, sigma);
-
-                % add lapse
-                p4_conf = lapse./4 + (1-lapse) .* temp_p4 + 1e-20;
-                p3_conf = lapse./4 + (1-lapse) .* temp_p3 + 1e-20;
-                p2_conf = lapse./4 + (1-lapse) .* temp_p2 + 1e-20;
-                p1_conf = 1 - p2_conf - p3_conf - p4_conf;
-
                 %----------------------- Compute likelihood -----------------------
                 % For each same sA, sV combination, the data are organized by
                 % response modality (A, V), repeititon of trials.
                 % First half trials are A loc resps, second half trials are V loc
                 % resps, from the same sA, sV combination
                 locResp_A_V = [squeeze(data_resp(p,q,1,:))'; squeeze(data_resp(p,q,2,:))'];
-                confResp_A_V = [squeeze(data_conf(p,q,1,:))'; squeeze(data_conf(p,q,2,:))'];
                 [num_modality, num_rep] = size(locResp_A_V);
 
                 if strcmp(model.strategy_loc,'MA') %Model averaging
@@ -343,18 +244,8 @@ end
                             % localization probability
                             p_r_given_MAP = norm_dst(locResp_A_V(mm, kk),squeeze(MAP_MA(mm,:,:)),...
                                 sigMotor,1e-20);
-                            % confidence probability
-                            if confResp_A_V(mm, kk) == 1
-                                p_conf_given_m = squeeze(p1_conf(mm,:,:));
-                            elseif confResp_A_V(mm, kk) == 2
-                                p_conf_given_m = squeeze(p2_conf(mm,:,:));
-                            elseif confResp_A_V(mm, kk) == 3
-                                p_conf_given_m = squeeze(p3_conf(mm,:,:));
-                            elseif confResp_A_V(mm, kk) == 4
-                                p_conf_given_m = squeeze(p4_conf(mm,:,:));
-                            end
                             nLL_bimodal = nLL_bimodal - log(sum(sum(p_r_given_MAP.*...
-                                p_conf_given_m.*p_mAmV_given_sAsV)));
+                                p_mAmV_given_sAsV)));
                         end
                     end
                 elseif strcmp(model.strategy_loc,'MS') %Model selection
@@ -366,18 +257,7 @@ end
                             else
                                 p_r_given_MAP = norm_dst(locResp_A_V(mm, kk),squeeze(shat_C2(mm,:,:)),sigMotor,1e-20);
                             end
-                            % confidence probability
-                            if confResp_A_V(mm, kk) == 1
-                                p_conf_given_m = squeeze(p1_conf(mm,:,:));
-                            elseif confResp_A_V(mm, kk) == 2
-                                p_conf_given_m = squeeze(p2_conf(mm,:,:));
-                            elseif confResp_A_V(mm, kk) == 3
-                                p_conf_given_m = squeeze(p3_conf(mm,:,:));
-                            elseif confResp_A_V(mm, kk) == 4
-                                p_conf_given_m = squeeze(p4_conf(mm,:,:));
-                            end
-                            nLL_bimodal = nLL_bimodal - log(sum(sum(p_r_given_MAP.*...
-                                p_conf_given_m.*p_mAmV_given_sAsV)));
+                            nLL_bimodal = nLL_bimodal - log(sum(sum(p_r_given_MAP.*p_mAmV_given_sAsV)));
                         end
                     end
 
@@ -386,20 +266,21 @@ end
         end
     end
 
-end
 
-function [Post_C1, Post_C2, L_C1, L_C2] = calculatePostC1C2(X1, X2, CI, mu_P, pC1)
-%likelihood of a common cause and seperate causes
-L_C1     = 1/(2*pi*sqrt(CI.constC1))*exp(-0.5*((X1 - X2).^2.*CI.J_P +...
-    (X1 - mu_P).^2*CI.J_V + (X2 - mu_P).^2.*CI.J_A)./CI.constC1);
-L_C2     = 1/(2*pi*sqrt(CI.constC2_1*CI.constC2_2))*exp(-0.5*...
-    ((X1 - mu_P).^2./CI.constC2_1+(X2 - mu_P).^2./CI.constC2_2));
-normTerm = L_C1.*pC1 + L_C2.*(1-pC1);
-%posterior of a common cause
-Post_C1  = L_C1.*pC1./normTerm;
-Post_C2  = 1 - Post_C1;
-end
+    function [Post_C1, Post_C2, L_C1, L_C2] = calculatePostC1C2(X1, X2, CI, mu_P, pC1)
+        %likelihood of a common cause and seperate causes
+        L_C1     = 1/(2*pi*sqrt(CI.constC1))*exp(-0.5*((X1 - X2).^2.*CI.J_P +...
+            (X1 - mu_P).^2*CI.J_V + (X2 - mu_P).^2.*CI.J_A)./CI.constC1);
+        L_C2     = 1/(2*pi*sqrt(CI.constC2_1*CI.constC2_2))*exp(-0.5*...
+            ((X1 - mu_P).^2./CI.constC2_1+(X2 - mu_P).^2./CI.constC2_2));
+        normTerm = L_C1.*pC1 + L_C2.*(1-pC1);
+        %posterior of a common cause
+        Post_C1  = L_C1.*pC1./normTerm;
+        Post_C2  = 1 - Post_C1;
+    end
 
-function p = norm_dst(x,mu,sigma,t)
-p = 1/sqrt(2*pi*sigma^2).*exp(-(x-mu).^2./(2*sigma^2)) + t;
+    function p = norm_dst(x,mu,sigma,t)
+        p = 1/sqrt(2*pi*sigma^2).*exp(-(x-mu).^2./(2*sigma^2)) + t;
+    end
+
 end
