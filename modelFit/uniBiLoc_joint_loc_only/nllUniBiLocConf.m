@@ -11,8 +11,8 @@ switch model.mode
         paraH.aA                     = [ 0.1,     3]; % degree
         paraH.bA                     = [ -10,    10]; % degree
         paraH.sigV1uni               = [1e-2,     5]; % degree
-        paraH.sigAuni                = [   1,    15]; % degree
-        paraH.sigV2uni               = [   1,    15]; % degree
+        paraH.sigAuni                = [   1,     4]; % degree
+        paraH.sigV2uni               = [   1,     4]; % degree
         paraH.sigV1                  = [1e-2,     5]; % degree
         paraH.sigA                   = [   1,    15]; % degree
         paraH.sigV2                  = [   1,    15]; % degree
@@ -27,8 +27,8 @@ switch model.mode
         paraS.aA                     = [ 0.9,     1]; % degree
         paraS.bA                     = [  -2,     2]; % degree
         paraS.sigV1uni               = [ 0.1,     2]; % degree
-        paraS.sigAuni                = [   3,     8]; % degree
-        paraS.sigV2uni               = [   3,     8]; % degree
+        paraS.sigAuni                = [   2,     3]; % degree
+        paraS.sigV2uni               = [   2,     3]; % degree
         paraS.sigV1                  = [ 0.1,     2]; % degree
         paraS.sigA                   = [   3,     8]; % degree
         paraS.sigV2                  = [   3,     8]; % degree
@@ -94,31 +94,34 @@ switch model.mode
             s_V_prime_uni1      = aV.*data.uniExpInfo.randVisVA(V1_bool) + bV;
             s_V_prime_uni2      = aV.*data.uniExpInfo.randVisVA(V2_bool) + bV;
 
-            %to calculate the mean of the response distributions
-            c_A                = (1/sigAuni^2)/(1/sigAuni^2+1/sigP^2);
-            c_V1               = (1/sigV1uni^2)/(1/sigV1uni^2+1/sigP^2);
-            c_V2               = (1/sigV2uni^2)/(1/sigV2uni^2+1/sigP^2);
-            f_A                = (muP/sigP^2)/(1/sigAuni^2+1/sigP^2);
-            f_V1               = (muP/sigP^2)/(1/sigV1uni^2+1/sigP^2);
-            f_V2               = (muP/sigP^2)/(1/sigV2uni^2+1/sigP^2);
-            mu_shat_A_uni      = c_A.*s_A_prime_uni + f_A;
-            mu_shat_V1_uni     = c_V1.*s_V_prime_uni1 + f_V1;
-            mu_shat_V2_uni     = c_V2.*s_V_prime_uni2 + f_V2;
-            R1.mu_shat_A_uni   = unique(mu_shat_A_uni);
-            R1.mu_shat_V1_uni  = unique(mu_shat_V1_uni);
-            R1.mu_shat_V2_uni  = unique(mu_shat_V2_uni);
+            nLL_uni_loc    = calculateNLL_uniLoc([s_A_prime_uni; s_V_prime_uni1; s_V_prime_uni2], ...
+                [sigAuni; sigV1uni; sigV2uni], data.uni_loc);
 
-            %the variances of estimate distributions
-            sigma_shat_A       = c_A*sigAuni;
-            sigma_shat_V1      = c_V1*sigV1uni;
-            sigma_shat_V2      = c_V2*sigV2uni;
-            R1.sigma_shat_A_wN = sqrt(sigma_shat_A^2 + sigMotor^2);
-            R1.sigma_shat_V1_wN = sqrt(sigma_shat_V1^2 + sigMotor^2);
-            R1.sigma_shat_V2_wN = sqrt(sigma_shat_V2^2 + sigMotor^2);
-
-            %unimodal localization task
-            nLL_uni_loc    = calculateNLL_uniLoc([mu_shat_A_uni; mu_shat_V1_uni; mu_shat_V2_uni], ...
-                [R1.sigma_shat_A_wN; R1.sigma_shat_V1_wN; R1.sigma_shat_V2_wN], data.uni_loc);
+%             %             %to calculate the mean of the response distributions
+%             c_A                = (1/sigAuni^2)/(1/sigAuni^2+1/sigP^2);
+%             c_V1               = (1/sigV1uni^2)/(1/sigV1uni^2+1/sigP^2);
+%             c_V2               = (1/sigV2uni^2)/(1/sigV2uni^2+1/sigP^2);
+%             f_A                = (muP/sigP^2)/(1/sigAuni^2+1/sigP^2);
+%             f_V1               = (muP/sigP^2)/(1/sigV1uni^2+1/sigP^2);
+%             f_V2               = (muP/sigP^2)/(1/sigV2uni^2+1/sigP^2);
+%             mu_shat_A_uni      = c_A.*s_A_prime_uni + f_A;
+%             mu_shat_V1_uni     = c_V1.*s_V_prime_uni1 + f_V1;
+%             mu_shat_V2_uni     = c_V2.*s_V_prime_uni2 + f_V2;
+%             R1.mu_shat_A_uni   = unique(mu_shat_A_uni);
+%             R1.mu_shat_V1_uni  = unique(mu_shat_V1_uni);
+%             R1.mu_shat_V2_uni  = unique(mu_shat_V2_uni);
+% % 
+% %             %the variances of estimate distributions
+%             sigma_shat_A       = c_A*sigAuni;
+%             sigma_shat_V1      = c_V1*sigV1uni;
+%             sigma_shat_V2      = c_V2*sigV2uni;
+%             R1.sigma_shat_A_wN = sqrt(sigma_shat_A^2 + sigMotor^2);
+%             R1.sigma_shat_V1_wN = sqrt(sigma_shat_V1^2 + sigMotor^2);
+%             R1.sigma_shat_V2_wN = sqrt(sigma_shat_V2^2 + sigMotor^2);
+% % 
+% %             %unimodal localization task
+%             nLL_uni_loc    = calculateNLL_uniLoc([mu_shat_A_uni; mu_shat_V1_uni; mu_shat_V2_uni], ...
+%                 [R1.sigma_shat_A_wN; R1.sigma_shat_V1_wN; R1.sigma_shat_V2_wN], data.uni_loc);
 
             %% unimodal confidence
 

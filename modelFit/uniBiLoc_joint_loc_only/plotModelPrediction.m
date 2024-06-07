@@ -5,6 +5,8 @@ ses_slc = 1:2; % bimodal sessions
 
 models = {'Heuristic','Suboptimal','Optimal'};
 
+str = 'nomuP_pinSigA';
+
 %% manage path
 
 cur_dir               = pwd;
@@ -80,6 +82,8 @@ for j = 1:3
 end
 plot([-lim, lim], [-lim*1.2, lim*1.2],'k--','LineWidth',lw)
 
+saveas(gca, fullfile(out_dir, sprintf('sub%i_bestfittingM%i_uniloc_%s', sub_slc, d, str)), 'png')
+
 %% plot VE
 
 % analyze data prediction 
@@ -141,7 +145,7 @@ for cue = 1:num_cue
     end
 end
 
-saveas(gca, fullfile(out_dir, sprintf('sub%i_bestfittingM%i_loc', sub_slc, d)), 'png')
+saveas(gca, fullfile(out_dir, sprintf('sub%i_bestfittingM%i_loc_%s', sub_slc, d, str)), 'png')
 
 %% plot bimodal localization response as a function of stimulus location
 
@@ -161,3 +165,5 @@ for i = 1:2
         plotInd = plotInd + 1;
     end
 end
+
+saveas(gca, fullfile(out_dir, sprintf('sub%i_bestfittingM%i_spread_%s', sub_slc, d, str)), 'png')

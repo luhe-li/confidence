@@ -9,13 +9,17 @@ mA    = randn(1, nrep).*sigA_uni + (fixP.uni_sA' * aA + bA);
 mV1    = randn(1, nrep).*sigV1_uni + fixP.uni_sV';
 mV2    = randn(1, nrep).*sigV2_uni + fixP.uni_sV';
 
-shatA = (mA*sigP^2 + muP*sigA_uni^2)./(sigA_uni^2 + sigP^2);
-shatV1 = (mV1*sigP^2 + muP*sigV1_uni^2)./(sigV1_uni^2 + sigP^2);
-shatV2 = (mV2*sigP^2 + muP*sigV2_uni^2)./(sigV2_uni^2 + sigP^2);
+loc(1,:,:) = randn(size(mA)).*fixP.sigMotor + mA;
+loc(2,:,:) = randn(size(mV1)).*fixP.sigMotor + mV1;
+loc(3,:,:) = randn(size(mV2)).*fixP.sigMotor + mV2;
 
-loc(1,:,:) = randn(size(shatA)).*fixP.sigMotor + shatA;
-loc(2,:,:) = randn(size(shatV1)).*fixP.sigMotor + shatV1;
-loc(3,:,:) = randn(size(shatV1)).*fixP.sigMotor + shatV2;
+% shatA = (mA*sigP^2 + muP*sigA_uni^2)./(sigA_uni^2 + sigP^2);
+% shatV1 = (mV1*sigP^2 + muP*sigV1_uni^2)./(sigV1_uni^2 + sigP^2);
+% shatV2 = (mV2*sigP^2 + muP*sigV2_uni^2)./(sigV2_uni^2 + sigP^2);
+% 
+% loc(1,:,:) = randn(size(shatA)).*fixP.sigMotor + shatA;
+% loc(2,:,:) = randn(size(shatV1)).*fixP.sigMotor + shatV1;
+% loc(3,:,:) = randn(size(shatV1)).*fixP.sigMotor + shatV2;
 
 % conf
 % norm_var(1,:,:) = repmat(sigA_uni * sigP^2 / (sigP^2 + sigA_uni^2), [1, size(loc, 2, 3)]);
