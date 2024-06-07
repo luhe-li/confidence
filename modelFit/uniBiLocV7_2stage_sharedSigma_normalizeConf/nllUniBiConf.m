@@ -155,9 +155,9 @@ end
     function nLL_uni_conf = calculateNLL_uniConf(m, v, c1, c2, c3, lapse, data)
 
         % normalize criteria
-        c1 = (c1 - m)./sqrt(v);
-        c2 = (c2 - m)./sqrt(v);
-        c3 = (c3 - m)./sqrt(v);
+        c1 = c1./sqrt(v);
+        c2 = c2./sqrt(v);
+        c3 = c3./sqrt(v);
 
         % convert to lognormal parameters
         mu = log((m.^2)./sqrt(v+m.^2))';
@@ -270,9 +270,9 @@ end
                 sigma = sqrt(log(v./(m.^2)+1));
 
                 % normalize criteria
-                c1 = (c1 - m)./sqrt(v);
-                c2 = (c2 - m)./sqrt(v);
-                c3 = (c3 - m)./sqrt(v);
+                c1 = c1./sqrt(v);
+                c2 = c2./sqrt(v);
+                c3 = c3./sqrt(v);
 
                 temp_p4 = logncdf(c1, mu, sigma);
                 temp_p3 = logncdf(c2, mu, sigma) - logncdf(c1, mu, sigma);
