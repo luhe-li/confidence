@@ -22,14 +22,17 @@ var(1,:,:) = repmat(1/(1/sigP^2 + 1/sigA_uni^2), [1, size(loc, 2, 3)]);
 var(2,:,:) = repmat(1/(1/sigP^2 + 1/sigV1_uni^2), [1, size(loc, 2, 3)]);
 var(3,:,:) = repmat(1/(1/sigP^2 + 1/sigV2_uni^2), [1, size(loc, 2, 3)]);
 m = var;
-v = sigC;
+v = sigC^2;
 mu = log((m.^2)./sqrt(v+m.^2));
 sigma = sqrt(log(v./(m.^2)+1));
 est_var = lognrnd(mu, sigma);
 
 % normalize
-std_est_var = std(est_var, [], 2);
-norm_est_var = est_var./ std_est_var;
+temp = reshape(est_var, 3, numel(fixP.uni_sA') * nrep);
+mean_est_var = mean(temp, 2);
+std_est_var = std(temp, [], 2);
+norm_temp = (temp - mean_est_var)./ std_est_var;
+norm_est_var = reshape(norm_temp, [3, numel(fixP.uni_sA'), nrep]);
 
 % compare variance to criterion s.t. the lowest variance leads to highest
 % confidence

@@ -132,7 +132,7 @@ switch model.mode
             fixP.model_ind = model.model_slc;
             fixP.sigMotor = sigMotor;
 
-            [out.uni_loc, out.uni_conf] = simUni(...
+            [out.uni_loc, out.uni_conf, out.uni_est_var] = simUni(...
                 aA, bA, sigA, sigV1, sigV2, muP, sigP, sigC, [c1; c4; c4], [c2; c5; c5], [c3; c6; c6], lapse, fixP);
 
             [bi_loc, bi_conf] = deal(NaN(numel(bi_sA), numel(bi_sV), numel(model.modality), numel(sigVs), model.bi_nrep));
@@ -144,7 +144,7 @@ switch model.mode
                         fixP.bi_sA = bi_sA(aa);
                         fixP.bi_sV = bi_sV(vv);
 
-                        [bi_loc(aa,vv,:,rr,:), bi_conf(aa,vv,:,rr,:)] = simAllModels(...
+                        [bi_loc(aa,vv,:,rr,:), bi_conf(aa,vv,:,rr,:), ~, ~, bi_est_var(aa, vv, :, rr, :)] = simAllModels(...
                             aA, bA, sigA, sigVs(rr), muP, sigP, pCommon, sigC, [c1; c4], [c2; c5], [c3; c6], lapse, fixP);
 
                     end
@@ -153,6 +153,7 @@ switch model.mode
 
             out.bi_loc = bi_loc;
             out.bi_conf = bi_conf;
+            out.bi_est_var = bi_est_var;
 
         end
 end

@@ -79,7 +79,7 @@ switch model.mode
 
             % unimodal confidence task
             nLL_uni_conf = calculateNLL_uniConf(var_uni,...
-                sigC, c1, c2, c3, lapse, data.uni_conf);
+                sigC^2, c1, c2, c3, lapse, data.uni_conf);
 
             %% bimodal confidence
 
@@ -154,10 +154,10 @@ end
 
     function nLL_uni_conf = calculateNLL_uniConf(m, v, c1, c2, c3, lapse, data)
 
-        % normalize criteria
-        c1 = c1./sqrt(v);
-        c2 = c2./sqrt(v);
-        c3 = c3./sqrt(v);
+        % reverse normalized criteria
+        c1 = c1.*sqrt(v) + m;
+        c2 = c2.*sqrt(v) + m;
+        c3 = c3.*sqrt(v) + m;
 
         % convert to lognormal parameters
         mu = log((m.^2)./sqrt(v+m.^2))';
@@ -265,14 +265,14 @@ end
                 % and an S.D. of confidence measurement noise (sigC), evaluated at
                 % each criteria.
                 m = var;
-                v = sigC;
+                v = sigC^2;
                 mu = log((m.^2)./sqrt(v+m.^2));
                 sigma = sqrt(log(v./(m.^2)+1));
 
-                % normalize criteria
-                c1 = c1./sqrt(v);
-                c2 = c2./sqrt(v);
-                c3 = c3./sqrt(v);
+                % reverse normalized criteria
+                c1 = c1.*sigC + m;
+                c2 = c2.*sigC + m;
+                c3 = c3.*sigC + m;
 
                 temp_p4 = logncdf(c1, mu, sigma);
                 temp_p3 = logncdf(c2, mu, sigma) - logncdf(c1, mu, sigma);
