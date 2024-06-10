@@ -1,4 +1,4 @@
-clear; %close all; 
+clear; %close all;
 rng('shuffle');
 
 sub_slc = 13;
@@ -67,22 +67,22 @@ for c = 1:3
 end
 
 
-%% plot unimodal estvar
-
-uni_est = reshape(pred.uni_est_var, 3,[]);
-figure; hold on
-histogram(uni_est(1,:))
-histogram(uni_est(2,:))
-histogram(uni_est(3,:))
-legend({'A','V1','V2'})
-cA = [p(2),p(2)+p(3),p(2)+p(3)+p(4)]; cV = [p(5),p(5)+p(6),p(5)+p(6)+p(7)];
-
-for c = 1:3
-
-    xline(cA(c));
-    xline(cV(c),'--');
-
-end
+% %% plot unimodal estvar
+%
+% uni_est = reshape(pred.uni_est_var, 3,[]);
+% figure; hold on
+% histogram(uni_est(1,:))
+% histogram(uni_est(2,:))
+% histogram(uni_est(3,:))
+% legend({'A','V1','V2'})
+% cA = [p(2),p(2)+p(3),p(2)+p(3)+p(4)]; cV = [p(5),p(5)+p(6),p(5)+p(6)+p(7)];
+%
+% for c = 1:3
+%
+%     xline(cA(c));
+%     xline(cV(c),'--');
+%
+% end
 
 %% plot bimodal estvar
 
@@ -109,16 +109,16 @@ for pp = 1:npair
 
     for  rel = 1:2
 
-       bi_est = squeeze(pred.bi_est_var(aa,vv,1,rel,:));
-       histogram(bi_est,'NumBins',25)
+        bi_est = squeeze(pred.bi_est_var(aa,vv,1,rel,:));
+        histogram(bi_est,'NumBins',25)
 
     end
 
-    % for c = 1:3
+    for cc = 1:3
 
-        % xline(cA(c));
-        % xline(cV(c),'--');
-    % end
+        xline(pred.criteria(aa, vv, 1, cc));
+
+    end
 
 end
 
@@ -148,8 +148,8 @@ for pp = 1:npair
 
     for  rel = 1:2
 
-       bi_conf = squeeze(pred.bi_conf(aa,vv,1,rel,:));
-       histogram(bi_conf(:))
+        bi_conf = squeeze(pred.bi_conf(aa,vv,1,rel,:));
+        histogram(bi_conf(:))
 
     end
     xticks(0:5)
@@ -158,6 +158,7 @@ for pp = 1:npair
 end
 
 %%
+
 figure
 sgtitle('V')
 set(gcf,'Position',[0,0,2400,300])
@@ -174,15 +175,16 @@ for pp = 1:npair
 
     for  rel = 1:2
 
-       bi_est = squeeze(pred.bi_est_var(aa,vv,2,rel,:));
-       histogram(bi_est,'NumBins',25)
+        bi_est = squeeze(pred.bi_est_var(aa,vv,2,rel,:));
+        histogram(bi_est,'NumBins',25)
 
     end
 
-    for c = 1:3
+    for cc = 1:3
 
-        % xline(cA(c));
-        % xline(cV(c),'--');
+        xline(pred.criteria(aa, vv, 2, cc));
+
     end
+
 
 end
