@@ -2,8 +2,8 @@
 % Compares confidence between unimodal and bimodal conditions
 
 clear; clc; close all;
-sub_slc     = 16;
-ses_slc     = 1;
+sub_slc     = 13;
+ses_slc     = 1:2;
 
 % manage path
 cur_dir      = pwd;
@@ -13,7 +13,7 @@ addpath(genpath(fullfile(project_dir,'func')))
 if ~exist(out_dir,'dir') mkdir(out_dir); end
 
 % organize data
-[bi_resp, bi_conf, bi_err, ExpInfo] = org_data(sub_slc,ses_slc,'biLoc');
+[bi_resp, data_bi_conf, bi_err, ExpInfo] = org_data(sub_slc,ses_slc,'biLoc');
 [uni_resp, uni_conf, uni_err, uniExpInfo, ~, ScreenInfo] = org_data(sub_slc,[],'uniLoc'); % condition (A,V1,V2) x loc (4) x rep
 
 %% analyze real data
@@ -183,3 +183,38 @@ for i = 1:2
 end
 % flnm = sprintf('loc_sub%i_ses%i-%i', sub_slc, min(ses_slc), max(ses_slc));
 % saveas(gca, fullfile(out_dir, flnm),'png')
+
+%%
+%% plot bimodal conf resp
+
+sA = [-10, -2, 2, 10];
+diff =  sA - sA';
+udiff = unique(diff);
+udiff = udiff(5:end);
+pair_slc = [2,2;3,2;2,1;3,1;4,1];
+npair = size(pair_slc,1);
+
+figure
+sgtitle('A')
+set(gcf,'Position',[0,0,2400,300])
+
+for pp = 1:npair
+
+    subplot(1,npair, pp);
+    hold on
+    xlim([0, 10])
+    title(sprintf('discrepancy: %i', udiff(pp)))
+
+    aa = pair_slc(pp,1);
+    vv = pair_slc(pp,2);
+
+    for  rel = 1:2
+
+        a = squeeze(data_bi_conf(aa,vv,1,rel,:));
+        histogram(a(:))
+
+    end
+    xticks(0:5)
+    xlim([0,5])
+
+end

@@ -101,7 +101,7 @@ for pp = 1:npair
 
     subplot(1,npair, pp);
     hold on
-    xlim([0, 10])
+    % xlim([0, 10])
     title(sprintf('discrepancy: %i', udiff(pp)))
 
     aa = pair_slc(pp,1);
@@ -114,11 +114,11 @@ for pp = 1:npair
 
     end
 
-    for c = 1:3
+    % for c = 1:3
 
-        xline(cA(c));
-        xline(cV(c),'--');
-    end
+        % xline(cA(c));
+        % xline(cV(c),'--');
+    % end
 
 end
 
@@ -140,7 +140,7 @@ for pp = 1:npair
 
     subplot(1,npair, pp);
     hold on
-    xlim([0, 10])
+    % xlim([0, 10])
     title(sprintf('discrepancy: %i', udiff(pp)))
 
     aa = pair_slc(pp,1);
@@ -166,7 +166,7 @@ for pp = 1:npair
 
     subplot(1,npair, pp);
     hold on
-    xlim([0, 10])
+    % xlim([0, 10])
     title(sprintf('discrepancy: %i', udiff(pp)))
 
     aa = pair_slc(pp,1);
@@ -181,8 +181,8 @@ for pp = 1:npair
 
     for c = 1:3
 
-        xline(cA(c));
-        xline(cV(c),'--');
+        % xline(cA(c));
+        % xline(cV(c),'--');
     end
 
 end
