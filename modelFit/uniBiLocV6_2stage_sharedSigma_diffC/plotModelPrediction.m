@@ -1,7 +1,7 @@
 clear; close all; rng('shuffle');
 
-sub_slc = 13;
-ses_slc = 1:2; % bimodal sessions
+sub_slc = 16;
+ses_slc = 1:3; % bimodal sessions
 
 models = {'Heuristic','Suboptimal','Optimal'};
 
@@ -52,22 +52,22 @@ disp(p)
 
 %TO-DO: use predicted unimodal data
 
-bi_resp = pred.bi_loc;
-aud_locs = model.bi_sA;
-remapped_vis_locs = model.bi_sV;
-raw_diff = unique(aud_locs - aud_locs');
-figure; set(gcf, 'Position',[10 10 1200 1000])
-plotInd = 1;
-for i = 1:2
-    for j = 1:2
-        subplot(2,2,plotInd)
-        cue = i;
-        reliability = j;
-        plot_spread_VE(bi_resp,aud_locs,raw_diff,remapped_vis_locs,cue,reliability)
-        plotInd = plotInd + 1;
-    end
-end
-sgtitle(sprintf('Sub%i, best-fitting model: %s', sub_slc, models{d}), 'FontSize', titleSZ)
+% bi_resp = pred.bi_loc;
+% aud_locs = model.bi_sA;
+% remapped_vis_locs = model.bi_sV;
+% raw_diff = unique(aud_locs - aud_locs');
+% figure; set(gcf, 'Position',[10 10 1200 1000])
+% plotInd = 1;
+% for i = 1:2
+%     for j = 1:2
+%         subplot(2,2,plotInd)
+%         cue = i;
+%         reliability = j;
+%         plot_spread_VE(bi_resp,aud_locs,raw_diff,remapped_vis_locs,cue,reliability)
+%         plotInd = plotInd + 1;
+%     end
+% end
+% sgtitle(sprintf('Sub%i, best-fitting model: %s', sub_slc, models{d}), 'FontSize', titleSZ)
 
 %% first panel: plot unimodal localization
 
