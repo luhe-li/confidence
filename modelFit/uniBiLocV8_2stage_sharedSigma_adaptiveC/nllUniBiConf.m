@@ -4,17 +4,14 @@ switch model.mode
 
     case 'initiate'
 
-        out.paraID                   = {'\sigma_{C}','c1','\delta_{c2}','\delta_{c3}','c4','dc5','dc6'};
+        out.paraID                   = {'\sigma_{C}','c1','\delta_{c2}','\delta_{c3}'};
         out.num_para                 = length(out.paraID);
 
         % hard bounds, the range for LB, UB, larger than soft bounds
         paraH.sigC                   = [1e-4,     5]; % measurement noise of confidence
-        paraH.c1                     = [ 0.5,     5];
+        paraH.c1                     = [1e-3,     5];
         paraH.dc2                    = [0.01,     5];
         paraH.dc3                    = [0.01,     5];
-        paraH.c4                     = [ 0.5,     5];
-        paraH.dc5                    = [0.01,     5];
-        paraH.dc6                    = [0.01,     5];
 
         % soft bounds, the range for PLB, PUB
         paraS.sigC                   = [1e-4,     2]; % measurement noise of confidence
@@ -137,7 +134,7 @@ switch model.mode
                 aA, bA, sigA, sigV1, sigV2, muP, sigP, sigC, [c1; c4; c4], [c2; c5; c5], [c3; c6; c6], lapse, fixP);
 
             [out.bi_loc, out.bi_conf, ~, ~, out.bi_est_var, out.criteria] = simAllModels5D(...
-                aA, bA, sigA, [sigV1, sigV2], muP, sigP, pCommon, sigC, lapse, fixP);
+                aA, bA, sigA, [sigV1, sigV2], muP, sigP, pCommon, sigC, c1, c2, c3, lapse, fixP);
 
             %             [bi_loc, bi_conf] = deal(NaN(numel(bi_sA), numel(bi_sV), numel(model.modality), numel(sigVs), model.bi_nrep));
 % 

@@ -38,6 +38,7 @@ load(files(end).name);
 
 % use the best-fitting parameter and winning model
 p = saveConfModel{d}.bestP;
+p = [p(1), 0.3, 0.2, 0.2, p(5), p(6), p(7)];
 model.mode = 'predict';
 model.model_slc             = d;
 model.strategy_conf         = models{d};
@@ -46,7 +47,7 @@ model.strategy_conf         = models{d};
 model.uni_nrep = 1e3;
 model.bi_nrep = 1e3;
 pred = nllUniBiConf(p, model, data);
-disp(p)
+% disp(p)
 
 %% plot bimodal localization response as a function of stimulus location
 
