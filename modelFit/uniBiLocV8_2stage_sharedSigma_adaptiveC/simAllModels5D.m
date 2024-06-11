@@ -1,5 +1,5 @@
 function [bi_loc, bi_conf, variance, norm_var, est_var, criteria] = simAllModels5D(...
-    aA, bA, sigA, sigVs, muP, sigP, pCommon, sigC, lapse, fixP)
+    aA, bA, sigA, sigVs, muP, sigP, pCommon, sigC, c1, c2, c3, lapse, fixP)
 
 %% generative model of bimodal session
 
@@ -8,11 +8,11 @@ sigMotor = fixP.sigMotor;
 bi_nrep = fixP.bi_nrep;
 n_sA = 4;
 
-[shat, variance] = deal(NaN(n_sA, n_sA, 2, 2, bi_nrep));
+[shat, variance, norm_var] = deal(NaN(n_sA, n_sA, 2, 2, bi_nrep));
 
-for rel = 1:numel(sigVs)
+for cue = 1:numel(sigVs)
 
-    sigV = sigVs(rel);
+    sigV = sigVs(cue);
     %simulate measurements, which are drawn from Gaussian distributions
     % stochasticity starts here
     mA2d    = randn(size(fixP.bi_sA',1), bi_nrep).*sigA + repmat((fixP.bi_sA' * aA + bA),1, bi_nrep);
@@ -61,8 +61,8 @@ for rel = 1:numel(sigVs)
     %two intermediate location estimates, weighted by the corresponding
     %causal structure.
     %Eq. 4 in Wozny et al., 2010
-    shat(:,:,1,rel,:) = post_C1.* sHat_C1 + post_C2.* sHat_A_C2;
-    shat(:,:,2,rel,:) = post_C1.* sHat_C1 + post_C2.* sHat_V_C2;
+    shat(:,:,1,cue,:) = post_C1.* sHat_C1 + post_C2.* sHat_A_C2;
+    shat(:,:,2,cue,:) = post_C1.* sHat_C1 + post_C2.* sHat_V_C2;
 
     % add motor noise
     bi_loc = randn(size(shat)).*sigMotor + shat;
@@ -71,32 +71,25 @@ for rel = 1:numel(sigVs)
     % of confidence) given each model
     switch model_ind
         case 1
-            variance(:,:,1,rel,:)= repmat(1/(1/JA + 1/JP), [n_sA, n_sA, 1, 1, bi_nrep]);
-            variance(:,:,2,rel,:)= repmat(1/(1/JV + 1/JP), [n_sA, n_sA, 1, 1, bi_nrep]);
+            variance(:,:,1,cue,:)= repmat(1/(1/JA + 1/JP), [n_sA, n_sA, 1, 1, bi_nrep]);
+            variance(:,:,2,cue,:)= repmat(1/(1/JV + 1/JP), [n_sA, n_sA, 1, 1, bi_nrep]);
         case 2
-            variance(:,:,1,rel,:)= post_C1./(1/JV + 1/JA + 1/JP) + post_C2./(1/JA + 1/JP);
-            variance(:,:,2,rel,:)= post_C1./(1/JV + 1/JA + 1/JP) + post_C2./(1/JV + 1/JP);
+            variance(:,:,1,cue,:)= post_C1./(1/JV + 1/JA + 1/JP) + post_C2./(1/JA + 1/JP);
+            variance(:,:,2,cue,:)= post_C1./(1/JV + 1/JA + 1/JP) + post_C2./(1/JV + 1/JP);
             %         % CONSIDER PREVIOUS M2 AS M3-MODEL SELECTION VER
             %         variance(1:2,:)= repmat(1/(1/JV + 1/JA + 1/JP), [2, num_rep]);
             %         variance(1,post_C1<0.5)  = 1/(1/JA + 1/JP);
             %         variance(2,post_C1<0.5)  = 1/(1/JV + 1/JP);
         case 3
-            variance(:,:,1,rel,:)= post_C1./(1/JV + 1/JA + 1/JP) + post_C2./(1/JA + 1/JP) + post_C1.* post_C2 .* (sHat_A_C2 - sHat_C1).^2;
-            variance(:,:,2,rel,:)= post_C1./(1/JV + 1/JA + 1/JP) + post_C2./(1/JV + 1/JP) + post_C1.* post_C2 .* (sHat_V_C2 - sHat_C1).^2;
+            variance(:,:,1,cue,:)= post_C1./(1/JV + 1/JA + 1/JP) + post_C2./(1/JA + 1/JP) + post_C1.* post_C2 .* (sHat_A_C2 - sHat_C1).^2;
+            variance(:,:,2,cue,:)= post_C1./(1/JV + 1/JA + 1/JP) + post_C2./(1/JV + 1/JP) + post_C1.* post_C2 .* (sHat_V_C2 - sHat_C1).^2;
     end
 
     % normalize variance by the corresponding modality noise
-    norm_var(:,:,1,rel,:) = variance(:,:,1,rel,:)./sigA;
-    norm_var(:,:,2,rel,:) = variance(:,:,2,rel,:)./sigV;
-
+    norm_var(:,:,1,cue,:) = variance(:,:,1,cue,:)./sigA;
+    norm_var(:,:,2,cue,:) = variance(:,:,2,cue,:)./sigV;
 
 end
-
-% find criteria based on 25.75, 50, 75.25% quantile
-quantiles = [0.2575, 0.5, 0.7525];
-norm_var_4d = reshape(norm_var, [4*4, 2, 2, bi_nrep]);
-quantile_values = quantile(norm_var_4d, quantiles, 4);
-criteria = squeeze(mean(mean(quantile_values,3),1)); % average quantile-based criteria across reliabilities and locations
 
 % make noisy measurements of variance/uncertainty for each modality
 m = norm_var;
@@ -105,69 +98,95 @@ mu = log((m.^2)./sqrt(v+m.^2));
 sigma = sqrt(log(v./(m.^2)+1));
 est_var = lognrnd(mu, sigma);
 
-% % visualize criteria to see if they are resonable
-% for cue = 1:2
-%     figure;
-%     set(gcf, 'Position', get(0, 'Screensize'));
-%     tiledlayout(4,4)
-%     for sA = 1:4
-%         for sV = 1:4
-%             nexttile
-%             hold on
-% 
-%             for rel = 1:2
-%                 histogram(squeeze(est_var(sA, sV, cue, rel, :)),'NumBins',25)                    
-%             end
-% 
-%             for cc = 1:3
-%                 xline(criteria(sA, sV, cue, cc))
-%             end
-%         end
-%     end
-% end
+% find criteria based on quantile
+quantiles = [c1, c2, c3];
+all_criteria = quantile(est_var, quantiles, 5);
 
-% compare noisy variance estimates to criteria to generate confidence
-% ratings
+% 2d version: seprate for modality only
+criteria = squeeze(mean(mean(mean(all_criteria, 4),2),1));
 bi_conf = NaN(size(est_var));
-
 for cue = 1:2
 
-  % Extract the criteria for the current cue
     q1 = criteria(cue, 1);
     q2 = criteria(cue, 2);
     q3 = criteria(cue, 3);
-    
-    % Extract the data for the current cue across all sA, sV, reliability, and repetition
+
     i_est_var = squeeze(est_var(:, :, cue, :, :));
-    
-    % Initialize a temporary matrix to store the classification results for the current cue
     temp_conf = NaN(size(i_est_var));
-    
-    % Apply the quantile criteria
     temp_conf(i_est_var < q1) = 4;
     temp_conf(i_est_var >= q1 & i_est_var < q2) = 3;
     temp_conf(i_est_var >= q2 & i_est_var < q3) = 2;
     temp_conf(i_est_var >= q3) = 1;
-    
-    % Assign the results back to the corresponding slice in bi_conf
-    bi_conf(:, :, cue, :, :) = reshape(temp_conf, [4, 4, 1, 2, bi_nrep]);
-    
+
+    bi_conf(:, :, cue, :, :) = temp_conf;
+
 end
 
+% % 3d version: seprate for modality and reliability -> overlapping curves
+% criteria = squeeze(mean(mean(all_criteria, 2),1));
+% bi_conf = NaN(size(est_var));
+% for cue = 1:2
+% 
+%     for rel = 1:2
+%     q1 = criteria(cue, rel, 1);
+%     q2 = criteria(cue, rel, 2);
+%     q3 = criteria(cue, rel, 3);
+% 
+%     i_est_var = squeeze(est_var(:, :, cue, rel, :));
+%     temp_conf = NaN(size(i_est_var));
+%     temp_conf(i_est_var < q1) = 4;
+%     temp_conf(i_est_var >= q1 & i_est_var < q2) = 3;
+%     temp_conf(i_est_var >= q2 & i_est_var < q3) = 2;
+%     temp_conf(i_est_var >= q3) = 1;
+% 
+%     bi_conf(:, :, cue, rel, :) = temp_conf;
+% 
+% end
 
-% for sA = 1:4
-%     for sV = 1:4
+% % 5d version: seprate for modality, reliability, and location -> flat
+% for aa = 1:4
+%     for vv = 1:4
 %         for cue = 1:2
-%             i_est_var = squeeze(est_var(sA, sV, cue, :, :));
-%             bi_conf(sA, sV, i_est_var< criteria(sA, sV, cue, 1)) = 4;
-%             bi_conf(sA, sV,i_est_var >= criteria(sA, sV,cue,1) & ...
-%                 i_est_var < criteria(sA, sV,cue, 2)) = 3;
-%             bi_conf(sA, sV,i_est_var >= criteria(sA, sV, cue, 2) & ...
-%                 i_est_var < criteria(sA, sV, cue, 3)) = 2;
-%             bi_conf(sA, sV,i_est_var >= criteria(sA, sV, cue, 3)) = 1;
+%             for rel = 1:2
+% 
+%                 q1 = criteria(aa, vv, cue, rel, 1);
+%                 q2 = criteria(aa, vv, cue, rel, 2);
+%                 q3 = criteria(aa, vv, cue, rel, 3);
+% 
+%                 i_est_var = squeeze(est_var(aa, vv, cue, rel, :));
+%                 temp_conf = NaN(size(i_est_var));
+%                 temp_conf(i_est_var < q1) = 4;
+%                 temp_conf(i_est_var >= q1 & i_est_var < q2) = 3;
+%                 temp_conf(i_est_var >= q2 & i_est_var < q3) = 2;
+%                 temp_conf(i_est_var >= q3) = 1;
+% 
+%                 bi_conf(aa, vv, cue, rel, :) = temp_conf;
+% 
+%             end
 %         end
 %     end
 % end
+
+% visualize criteria to see if they are resonable
+for cue = 1:2
+    figure;
+    set(gcf, 'Position', get(0, 'Screensize'));
+    tiledlayout(4,4)
+    for sA = 1:4
+        for sV = 1:4
+            nexttile
+            hold on
+
+            for rel = 1:2
+                histogram(squeeze(est_var(sA, sV, cue, rel, :)),'NumBins',25)
+            end
+
+            for cc = 1:3
+                xline(criteria(cue, cc))
+            end
+        end
+    end
+end
 
 % add lapse to confidence report
 lapse_trial = rand(size(bi_loc))<lapse;
