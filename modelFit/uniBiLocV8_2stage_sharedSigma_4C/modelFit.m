@@ -7,7 +7,7 @@
 clear; close all; rng('shuffle');
 
 sub_slc = 13;
-ses_slc = 1:2; % bimodal sessions
+ses_slc = 1:3; % bimodal sessions
 
 %% manage path
 
@@ -80,6 +80,7 @@ for sub = sub_slc
         NLL                         = NaN(1, model.num_run);
         estP                        = NaN(model.num_run, Val.num_para);
 
+       
         parfor n              = 1:model.num_run
 
             tempModel             = model;
@@ -121,7 +122,7 @@ for sub = sub_slc
 
         test = nllUniBiConf(Val.init(1,:), model, data);
 
-        for i                    = 1:model.num_run
+        parfor i                    = 1:model.num_run
 
             [estP(i,:),NLL(i)] = bads(@(p) nllUniBiConf(p, model, data),...
                 Val.init(i,:), Val.lb,...

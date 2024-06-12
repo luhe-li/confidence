@@ -54,7 +54,7 @@ sHat_V_C2  = (mV./JV + muP/JP)./(1/JV + 1/JP);
 %Eq. 4 in Wozny et al., 2010
 shat(1,:) = post_C1.* sHat_C1 + post_C2.* sHat_A_C2;
 shat(2,:) = post_C1.* sHat_C1 + post_C2.* sHat_V_C2;
-s
+
 % add motor noise
 bi_loc = randn(size(shat)).*sigMotor + shat;
 
@@ -76,33 +76,44 @@ switch model_ind
         variance(2,:)= post_C1./(1/JV + 1/JA + 1/JP) + post_C2./(1/JV + 1/JP) + post_C1.* post_C2 .* (sHat_V_C2 - sHat_C1).^2;
 end
 
+% normalize variance by the corresponding modality noise
+norm_var(1,:) = variance(1,:)./sigA;
+norm_var(2,:) = variance(2,:)./sigV;
+
 % make noisy measurements of variance/uncertainty for each modality
-m = variance;
-v = sigC^2;
+m = norm_var;
+v = sigC;
 mu = log((m.^2)./sqrt(v+m.^2));
 sigma = sqrt(log(v./(m.^2)+1));
 est_var = lognrnd(mu, sigma);
 
-% normalize
-min_est_var = min(est_var,2);
-l_idx = nonzero(min_est_var - min(min_est_var));
-
-s_idx = min(min(est_var,2));
-est_var(s_idx,:)
-
-
-
-mean_est_var = mean(est_var, 2);
-std_est_var = std(est_var, [], 2);
-norm_est_var = (est_var - mean_est_var)./ std_est_var;
-
+% est_var = (est_var - median(norm_var,"all"));
 % compare variance to criterion s.t. the lowest variance leads to highest
 % confidence
-bi_conf = NaN(size(norm_est_var));
-bi_conf(norm_est_var < c1) = 4; 
-bi_conf(norm_est_var >= c1 & norm_est_var < c2) = 3;
-bi_conf(norm_est_var >= c2 & norm_est_var < c3) = 2;
-bi_conf(norm_est_var >= c3) = 1;
+bi_conf = NaN(size(est_var));
+bi_conf(est_var < c1) = 4; 
+bi_conf(est_var >= c1 & est_var < c2) = 3;
+bi_conf(est_var >= c2 & est_var < c3) = 2;
+bi_conf(est_var >= c3) = 1;
+
+% % make noisy measurements of stimulus uncertainty
+% m = [repmat(sigA, [1, bi_nrep]); repmat(sigV, [1, bi_nrep])];
+% v = sigC;
+% mu = log((m.^2)./sqrt(v+m.^2));
+% sigma = sqrt(log(v./(m.^2)+1));
+% est_sig = lognrnd(mu, sigma);
+% 
+% % normalize 
+% est_var = norm_var./est_sig;
+
+% % compare variance to criterion s.t. the lowest variance leads to highest
+% % confidence
+% bi_conf = NaN(size(est_var));
+% bi_conf(est_var < c1) = 4; 
+% bi_conf(est_var >= c1 & est_var < c2) = 3;
+% bi_conf(est_var >= c2 & est_var < c3) = 2;
+% bi_conf(est_var >= c3) = 1;
+
 
 % add lapse to confidence report
 lapse_trial = rand(size(bi_loc))<lapse;

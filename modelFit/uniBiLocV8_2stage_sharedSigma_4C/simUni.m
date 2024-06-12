@@ -1,4 +1,4 @@
-function [loc, conf] = simUni(...
+function [loc, conf, est_var] = simUni(...
         aA, bA, sigA_uni, sigV1_uni, sigV2_uni, muP, sigP, sigC, c1, c2, c3, lapse, fixP)
 
 % simulate for unimodal session
@@ -18,29 +18,22 @@ loc(2,:,:) = randn(size(shatV1)).*fixP.sigMotor + shatV1;
 loc(3,:,:) = randn(size(shatV2)).*fixP.sigMotor + shatV2;
 
 % conf
-var(1,:,:) = repmat(1/(1/sigP^2 + 1/sigA_uni^2), [1, size(loc, 2, 3)]);
-var(2,:,:) = repmat(1/(1/sigP^2 + 1/sigV1_uni^2), [1, size(loc, 2, 3)]);
-var(3,:,:) = repmat(1/(1/sigP^2 + 1/sigV2_uni^2), [1, size(loc, 2, 3)]);
-m = var;
-v = sigC^2;
+norm_var(1,:,:) = repmat(sigA_uni * sigP^2 / (sigP^2 + sigA_uni^2), [1, size(loc, 2, 3)]);
+norm_var(2,:,:) = repmat(sigV1_uni^2 * sigP^2 / (sigP^2 + sigV1_uni^2), [1, size(loc, 2, 3)]);
+norm_var(3,:,:) = repmat(sigV2_uni^2 * sigP^2 / (sigP^2 + sigV2_uni^2), [1, size(loc, 2, 3)]);
+m = norm_var;
+v = sigC;
 mu = log((m.^2)./sqrt(v+m.^2));
 sigma = sqrt(log(v./(m.^2)+1));
 est_var = lognrnd(mu, sigma);
 
-% normalize
-temp = reshape(est_var, 3, numel(fixP.uni_sA') * nrep);
-mean_est_var = mean(temp, 2);
-std_est_var = std(temp, [], 2);
-norm_temp = (temp - mean_est_var)./ std_est_var;
-norm_est_var = reshape(norm_temp, [3, numel(fixP.uni_sA'), nrep]);
-
 % compare variance to criterion s.t. the lowest variance leads to highest
 % confidence
-conf = NaN(size(norm_est_var));
-conf(norm_est_var < c1) = 4; 
-conf(norm_est_var >= c1 & norm_est_var < c2) = 3;
-conf(norm_est_var >= c2 & norm_est_var < c3) = 2;
-conf(norm_est_var >= c3) = 1;
+conf = NaN(size(est_var));
+conf(est_var < c1) = 4; 
+conf(est_var >= c1 & est_var < c2) = 3;
+conf(est_var >= c2 & est_var < c3) = 2;
+conf(est_var >= c3) = 1;
 
 % add lapse to confidence report
 lapse_trial = rand(size(conf))<lapse;

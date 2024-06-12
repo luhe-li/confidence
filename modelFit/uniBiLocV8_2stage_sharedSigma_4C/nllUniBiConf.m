@@ -4,22 +4,39 @@ switch model.mode
 
     case 'initiate'
 
-        out.paraID                   = {'\sigma_{C}','c1','\delta_{c2}','\delta_{c3}','lapse'};
+        out.paraID                   = {'\sigma_{C}','c1','\delta_{c2}','\delta_{c3}','c4','dc5','dc6','c7','dc8','dc9','c10','dc11','dc12'};
         out.num_para                 = length(out.paraID);
 
         % hard bounds, the range for LB, UB, larger than soft bounds
-        paraH.sigC                   = [ 0.1,    30]; % measurement noise of confidence
-        paraH.c1                     = [ 0.5,     5];
+        paraH.sigC                   = [1e-4,     2]; % measurement noise of confidence
+        paraH.c1                     = [0.01,     5]; % A
         paraH.dc2                    = [0.01,     5];
         paraH.dc3                    = [0.01,     5];
-        paraH.lapse                  = [1e-3,  0.06];
+        paraH.c4                     = [0.01,     5]; % V1
+        paraH.dc5                    = [0.01,    5];
+        paraH.dc6                    = [0.01,    5];
+        paraH.c7                     = [0.01,     5]; % v2
+        paraH.dc8                    = [0.01,     5];
+        paraH.dc9                    = [0.01,     5];
+        paraH.c10                     = [0.01,     5]; % A, v2
+        paraH.dc11                    = [0.01,     5];
+        paraH.dc12                    = [0.01,     5];
 
         % soft bounds, the range for PLB, PUB
-        paraS.sigC                   = [ 0.1,     2]; % measurement noise of confidence
+        paraS.sigC                   = [1e-4,     2]; % measurement noise of confidence
         paraS.c1                     = [   1,     2];
         paraS.dc2                    = [ 0.1,   0.5];
         paraS.dc3                    = [ 0.1,   0.5];
-        paraS.lapse                  = [0.01,  0.03];
+        paraS.c4                     = [ 0.1,   0.5];
+        paraS.dc5                    = [ 0.1,   0.5];
+        paraS.dc6                    = [ 0.1,   0.5];
+        paraS.c7                     = [ 0.1,   0.5];
+        paraS.dc8                    = [ 0.1,   0.5];
+        paraS.dc9                    = [ 0.1,   0.5];
+        paraS.c10                     = [ 0.1,   0.5];
+        paraS.dc11                    = [ 0.1,   0.5];
+        paraS.dc12                    = [ 0.1,   0.5];
+
 
         % reorganize parameter bounds to feed to bads
         fn                           = fieldnames(paraH);
@@ -34,7 +51,6 @@ switch model.mode
         % get grid initializations
         out.init                     = getInit(out.lb, out.ub, model.num_sec, model.num_run);
 
-
     case {'optimize','predict'}
 
         % free parameters
@@ -42,7 +58,15 @@ switch model.mode
         c1                           = freeParam(2);
         dc2                          = freeParam(3);
         dc3                          = freeParam(4);
-        lapse                        = freeParam(5);
+        c4                           = freeParam(5);
+        dc5                          = freeParam(6);
+        dc6                          = freeParam(7);
+        c7 = freeParam(8);
+        dc8 = freeParam(9);
+        dc9 = freeParam(10);
+        c10 = freeParam(11);
+        dc11 = freeParam(12);
+        dc12 = freeParam(13);
 
         % fixed parameters from first-stage fit
         aA                           = model.locP(1);
@@ -52,34 +76,42 @@ switch model.mode
         sigV2                        = model.locP(5);
         sigP                         = model.locP(6);
         pCommon                      = model.locP(7);
-%         muP                          = model.locP(8);
 
         % convert
         sigVs = [sigV1, sigV2];
         num_sigVs = numel(sigVs);
         c2 = c1 + dc2;
         c3 = c1 + dc2 + dc3;
+        c5 = c4 + dc5;
+        c6 = c4 + dc5 + dc6;
+        c8 = c7+ dc8;
+        c9 = c7+ dc8 + dc9;
+        c11 = c10+dc11;
+        c12 = c10+dc11+dc12;
+        c1s = {[c1, c4], [c10, c7]};
+        c2s = {[c2, c5], [c11, c8]};
+        c3s = {[c3, c6], [c12, c9]};
 
         % freeze parameters from data
         sigMotor = data.sigMotor;
-%         lapse = 0.06;
+        lapse = 0.06;
         aV = 1;
         bV = 0;
         muP = 0;
-
+        
         if strcmp(model.mode, 'optimize')
 
             %% unimodal confidence
 
             % normalize variance by the corresponding modality noise to
             % approximate uncertainty
-            var_uni(1) = 1/(1/sigP^2 + 1/sigA^2);
-            var_uni(2) = 1/(1/sigP^2 + 1/sigV1^2);
-            var_uni(3) = 1/(1/sigP^2 + 1/sigV2^2);
+            norm_var_A = 1/(1/sigP^2 + 1/sigA^2)/sigA;
+            norm_var_V1 = 1/(1/sigP^2 + 1/sigV1^2)/sigV1;
+            norm_var_V2 = 1/(1/sigP^2 + 1/sigV2^2)/sigV2;
 
             % unimodal confidence task
-            nLL_uni_conf = calculateNLL_uniConf(var_uni,...
-                sigC^2, c1, c2, c3, lapse, data.uni_conf);
+            nLL_uni_conf = calculateNLL_uniConf([norm_var_A, norm_var_V1, norm_var_V2],...
+                sigC,  [c1; c4; c7], [c2; c5; c8], [c3; c6; c9], lapse, data.uni_conf);
 
             %% bimodal confidence
 
@@ -106,7 +138,7 @@ switch model.mode
                 data_conf = squeeze(data.bi_conf(:,:,:,vv,:));
 
                 [nLL_bimodal(vv)] = calculateNLL_bimodal(...
-                    aA, bA, aV, bV, sigA, sigV, sigC, pCommon, c1, c2, c3,...
+                    aA, bA, aV, bV, sigA, sigV, sigC, pCommon, c1s{vv}, c2s{vv}, c3s{vv},...
                     CI, muP, sigMotor, lapse, data_resp, data_conf, model);
 
             end
@@ -126,10 +158,10 @@ switch model.mode
             fixP.model_ind = model.model_slc;
             fixP.sigMotor = sigMotor;
 
-            [out.uni_loc, out.uni_conf] = simUni(...
-                aA, bA, sigA, sigV1, sigV2, muP, sigP, sigC, c1, c2, c3, lapse, fixP);
+            [out.uni_loc, out.uni_conf, out.uni_est_var] = simUni(...
+                aA, bA, sigA, sigV1, sigV2, muP, sigP, sigC, [c1; c4; c7], [c2; c5; c8], [c3; c6; c9], lapse, fixP);
 
-            [bi_loc, bi_conf] = deal(NaN(numel(bi_sA), numel(bi_sV), numel(model.modality), numel(sigVs), model.bi_nrep));
+            [bi_loc, bi_conf, bi_est_var] = deal(NaN(numel(bi_sA), numel(bi_sV), numel(model.modality), numel(sigVs), model.bi_nrep));
 
             for aa = 1:numel(bi_sA)
                 for vv = 1:numel(bi_sV)
@@ -138,8 +170,8 @@ switch model.mode
                         fixP.bi_sA = bi_sA(aa);
                         fixP.bi_sV = bi_sV(vv);
 
-                        [bi_loc(aa,vv,:,rr,:), bi_conf(aa,vv,:,rr,:)] = simAllModels(...
-                            aA, bA, sigA, sigVs(rr), muP, sigP, pCommon, sigC, c1, c2, c3, lapse, fixP);
+                        [bi_loc(aa,vv,:,rr,:), bi_conf(aa,vv,:,rr,:), ~, ~, bi_est_var(aa, vv, :, rr, :)] = simAllModels(...
+                            aA, bA, sigA, sigVs(rr), muP, sigP, pCommon, sigC, c1s{rr}, c2s{rr}, c3s{rr}, lapse, fixP);
 
                     end
                 end
@@ -147,17 +179,13 @@ switch model.mode
 
             out.bi_loc = bi_loc;
             out.bi_conf = bi_conf;
+            out.bi_est_var = bi_est_var;
 
         end
 end
 
 
     function nLL_uni_conf = calculateNLL_uniConf(m, v, c1, c2, c3, lapse, data)
-
-        % reverse normalized criteria
-        c1 = c1.*sqrt(v) + m;
-        c2 = c2.*sqrt(v) + m;
-        c3 = c3.*sqrt(v) + m;
 
         % convert to lognormal parameters
         mu = log((m.^2)./sqrt(v+m.^2))';
@@ -260,23 +288,21 @@ end
 
                 end
 
+                % normalize variance by the corresponding modality noise
+                norm_var(1,:,:) = var(1,:,:)./sigA;
+                norm_var(2,:,:) = var(2,:,:)./sigV;
+
                 % probability of reporting confidence is the value of a lognormal
                 % cumulative distribution with a mean of confidence variable (var)
                 % and an S.D. of confidence measurement noise (sigC), evaluated at
                 % each criteria.
-                m = var;
-                v = sigC^2;
+                m = norm_var;
+                v = sigC;
                 mu = log((m.^2)./sqrt(v+m.^2));
                 sigma = sqrt(log(v./(m.^2)+1));
-
-                % reverse normalized criteria
-                c1 = c1.*sigC + m;
-                c2 = c2.*sigC + m;
-                c3 = c3.*sigC + m;
-
-                temp_p4 = logncdf(c1, mu, sigma);
-                temp_p3 = logncdf(c2, mu, sigma) - logncdf(c1, mu, sigma);
-                temp_p2 = logncdf(c3, mu, sigma) - logncdf(c2, mu, sigma);
+                temp_p4 = logncdf(c1', mu, sigma);
+                temp_p3 = logncdf(c2', mu, sigma) - logncdf(c1', mu, sigma);
+                temp_p2 = logncdf(c3', mu, sigma) - logncdf(c2', mu, sigma);
 
                 % add lapse
                 p4_conf = lapse./4 + (1-lapse) .* temp_p4 + 1e-20;
