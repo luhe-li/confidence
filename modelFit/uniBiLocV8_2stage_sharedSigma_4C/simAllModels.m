@@ -76,7 +76,7 @@ switch model_ind
         variance(2,:)= post_C1./(1/JV + 1/JA + 1/JP) + post_C2./(1/JV + 1/JP) + post_C1.* post_C2 .* (sHat_V_C2 - sHat_C1).^2;
 end
 
-% normalize variance by the corresponding modality noise
+% % normalize variance by the corresponding modality noise
 norm_var(1,:) = variance(1,:)./sigA;
 norm_var(2,:) = variance(2,:)./sigV;
 

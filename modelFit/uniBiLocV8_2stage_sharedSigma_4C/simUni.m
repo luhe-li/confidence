@@ -19,8 +19,8 @@ loc(3,:,:) = randn(size(shatV2)).*fixP.sigMotor + shatV2;
 
 % conf
 norm_var(1,:,:) = repmat(sigA_uni * sigP^2 / (sigP^2 + sigA_uni^2), [1, size(loc, 2, 3)]);
-norm_var(2,:,:) = repmat(sigV1_uni^2 * sigP^2 / (sigP^2 + sigV1_uni^2), [1, size(loc, 2, 3)]);
-norm_var(3,:,:) = repmat(sigV2_uni^2 * sigP^2 / (sigP^2 + sigV2_uni^2), [1, size(loc, 2, 3)]);
+norm_var(2,:,:) = repmat(sigV1_uni * sigP^2 / (sigP^2 + sigV1_uni^2), [1, size(loc, 2, 3)]);
+norm_var(3,:,:) = repmat(sigV2_uni * sigP^2 / (sigP^2 + sigV2_uni^2), [1, size(loc, 2, 3)]);
 m = norm_var;
 v = sigC;
 mu = log((m.^2)./sqrt(v+m.^2));

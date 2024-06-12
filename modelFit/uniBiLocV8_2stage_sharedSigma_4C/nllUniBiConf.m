@@ -8,13 +8,13 @@ switch model.mode
         out.num_para                 = length(out.paraID);
 
         % hard bounds, the range for LB, UB, larger than soft bounds
-        paraH.sigC                   = [1e-4,     2]; % measurement noise of confidence
+        paraH.sigC                   = [1e-4,     5]; % measurement noise of confidence
         paraH.c1                     = [0.01,     5]; % A
         paraH.dc2                    = [0.01,     5];
         paraH.dc3                    = [0.01,     5];
         paraH.c4                     = [0.01,     5]; % V1
         paraH.dc5                    = [0.01,    5];
-        paraH.dc6                    = [0.01,    5];
+        paraH.dc6                    = [0.01,    10];
         paraH.c7                     = [0.01,     5]; % v2
         paraH.dc8                    = [0.01,     5];
         paraH.dc9                    = [0.01,     5];
@@ -108,6 +108,10 @@ switch model.mode
             norm_var_A = 1/(1/sigP^2 + 1/sigA^2)/sigA;
             norm_var_V1 = 1/(1/sigP^2 + 1/sigV1^2)/sigV1;
             norm_var_V2 = 1/(1/sigP^2 + 1/sigV2^2)/sigV2;
+% 
+%             norm_var_A = 1/(1/sigP^2 + 1/sigA^2);
+%             norm_var_V1 = 1/(1/sigP^2 + 1/sigV1^2);
+%             norm_var_V2 = 1/(1/sigP^2 + 1/sigV2^2);
 
             % unimodal confidence task
             nLL_uni_conf = calculateNLL_uniConf([norm_var_A, norm_var_V1, norm_var_V2],...
@@ -281,14 +285,14 @@ end
 
                 elseif strcmp(model.strategy_conf, 'Heuristic')
 
-                    var(1,:,:) = repmat(CI.J_P * sigA/CI.constC2_1, size(Post_C1));
-                    var(2,:,:) = repmat(CI.J_P * sigV/CI.constC2_2, size(Post_C1));
+                    var(1,:,:) = repmat(1/CI.constC2_1_shat, size(Post_C1));
+                    var(2,:,:) = repmat(1/CI.constC2_2_shat, size(Post_C1));
                     %  var(1,:,:) = repmat(CI.J_A, size(Post_C1));
                     %  var(2,:,:) = repmat(CI.J_V, size(Post_C1));
 
                 end
 
-                % normalize variance by the corresponding modality noise
+%                 % normalize variance by the corresponding modality noise
                 norm_var(1,:,:) = var(1,:,:)./sigA;
                 norm_var(2,:,:) = var(2,:,:)./sigV;
 

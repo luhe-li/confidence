@@ -9,18 +9,18 @@ switch model.mode
 
         % hard bounds, the range for LB, UB, larger than soft bounds
         paraH.sigC                   = [1e-4,     5]; % measurement noise of confidence
-        paraH.c1                     = [ 0.5,     5];
-        paraH.dc2                    = [0.01,     5];
-        paraH.dc3                    = [0.01,     5];
-        paraH.c4                     = [ 0.5,     5];
-        paraH.dc5                    = [0.01,     5];
-        paraH.dc6                    = [0.01,     5];
+        paraH.c1                     = [ 0.5,     20];
+        paraH.dc2                    = [0.01,     20];
+        paraH.dc3                    = [0.01,     20];
+        paraH.c4                     = [ 0.5,     10];
+        paraH.dc5                    = [0.01,     10];
+        paraH.dc6                    = [0.01,     10];
 
         % soft bounds, the range for PLB, PUB
         paraS.sigC                   = [1e-4,     2]; % measurement noise of confidence
         paraS.c1                     = [   1,     2];
-        paraS.dc2                    = [ 0.1,   0.5];
-        paraS.dc3                    = [ 0.1,   0.5];
+        paraS.dc2                    = [ 0.1,     5];
+        paraS.dc3                    = [ 0.1,     5];
         paraS.c4                     = [   1,     2];
         paraS.dc5                    = [ 0.1,   0.5];
         paraS.dc6                    = [ 0.1,   0.5];
@@ -79,9 +79,13 @@ switch model.mode
 
             % normalize variance by the corresponding modality noise to
             % approximate uncertainty
-            norm_var_A = 1/(1/sigP^2 + 1/sigA^2)/sigA;
-            norm_var_V1 = 1/(1/sigP^2 + 1/sigV1^2)/sigV1;
-            norm_var_V2 = 1/(1/sigP^2 + 1/sigV2^2)/sigV2;
+%             norm_var_A = 1/(1/sigP^2 + 1/sigA^2)/sigA;
+%             norm_var_V1 = 1/(1/sigP^2 + 1/sigV1^2)/sigV1;
+%             norm_var_V2 = 1/(1/sigP^2 + 1/sigV2^2)/sigV2;
+
+            norm_var_A = 1/(1/sigP^2 + 1/sigA^2);
+            norm_var_V1 = 1/(1/sigP^2 + 1/sigV1^2);
+            norm_var_V2 = 1/(1/sigP^2 + 1/sigV2^2);
 
             % unimodal confidence task
             nLL_uni_conf = calculateNLL_uniConf([norm_var_A, norm_var_V1, norm_var_V2],...
@@ -270,7 +274,7 @@ end
                 % cumulative distribution with a mean of confidence variable (var)
                 % and an S.D. of confidence measurement noise (sigC), evaluated at
                 % each criteria.
-                m = norm_var;
+                m = var;%norm_var;
                 v = sigC;
                 mu = log((m.^2)./sqrt(v+m.^2));
                 sigma = sqrt(log(v./(m.^2)+1));

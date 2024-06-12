@@ -6,7 +6,7 @@
 
 clear; close all; rng('shuffle');
 
-sub_slc = 16;
+sub_slc = 13;
 ses_slc = 1:3; % bimodal sessions
 
 %% manage path

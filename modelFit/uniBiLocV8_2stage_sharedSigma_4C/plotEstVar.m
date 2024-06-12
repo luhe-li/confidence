@@ -36,7 +36,7 @@ load(files(end).name);
 
 % winning model?
 [~, d] = min([saveConfModel{1}.minNLL, saveConfModel{2}.minNLL, saveConfModel{3}.minNLL]);
-d = 3;
+% d = 3;
 
 % use the best-fitting parameter and winning model
 p = saveConfModel{d}.bestP;
@@ -58,13 +58,14 @@ histogram(uni_est(1,:))
 histogram(uni_est(2,:))
 histogram(uni_est(3,:))
 legend({'A','V1','V2'})
-cA = [p(2),p(2)+p(3),p(2)+p(3)+p(4)]; cV = [p(5),p(5)+p(6),p(5)+p(6)+p(7)];
+cA1 = [p(2),p(2)+p(3),p(2)+p(3)+p(4)]; cV1 = [p(5),p(5)+p(6),p(5)+p(6)+p(7)];
+cA2 = [p(8),p(8)+p(9),p(8)+p(9)+p(10)]; cV2 = [p(11),p(11)+p(12),p(11)+p(12)+p(13)];
 
-for c = 1:3
-
-    xline(cA(c));
-    xline(cV(c),'--');
-end
+% for c = 1:3
+% 
+%     xline(cA(c));
+%     xline(cV(c),'--');
+% end
 
 
 % %% plot unimodal estvar
@@ -103,6 +104,7 @@ for pp = 1:npair
     hold on
     % xlim([0, 10])
     title(sprintf('discrepancy: %i', udiff(pp)))
+xlim([0, 30])
 
     aa = pair_slc(pp,1);
     vv = pair_slc(pp,2);
@@ -110,52 +112,53 @@ for pp = 1:npair
     for  rel = 1:2
 
         bi_est = squeeze(pred.bi_est_var(aa,vv,1,rel,:));
-        histogram(bi_est,'NumBins',25)
+        histogram(bi_est,'BinWidth',0.2)
 
     end
 
     for cc = 1:3
 
-        xline(cA(cc));
+        xline(cA1(cc));
+        xline(cA2(cc),'--');
 
     end
 
 end
 
 
-%% plot bimodal conf resp
-
-sA = [-10, -2, 2, 10];
-diff =  sA - sA';
-udiff = unique(diff);
-udiff = udiff(5:end);
-pair_slc = [2,2;3,2;2,1;3,1;4,1];
-npair = size(pair_slc,1);
-
-figure
-sgtitle('A')
-set(gcf,'Position',[0,0,2400,300])
-
-for pp = 1:npair
-
-    subplot(1,npair, pp);
-    hold on
-    % xlim([0, 10])
-    title(sprintf('discrepancy: %i', udiff(pp)))
-
-    aa = pair_slc(pp,1);
-    vv = pair_slc(pp,2);
-
-    for  rel = 1:2
-
-        bi_conf = squeeze(pred.bi_conf(aa,vv,1,rel,:));
-        histogram(bi_conf(:))
-
-    end
-    xticks(0:5)
-    xlim([0,5])
-
-end
+% %% plot bimodal conf resp
+% 
+% sA = [-10, -2, 2, 10];
+% diff =  sA - sA';
+% udiff = unique(diff);
+% udiff = udiff(5:end);
+% pair_slc = [2,2;3,2;2,1;3,1;4,1];
+% npair = size(pair_slc,1);
+% 
+% figure
+% sgtitle('A')
+% set(gcf,'Position',[0,0,2400,300])
+% 
+% for pp = 1:npair
+% 
+%     subplot(1,npair, pp);
+%     hold on
+%     % xlim([0, 10])
+%     title(sprintf('discrepancy: %i', udiff(pp)))
+% 
+%     aa = pair_slc(pp,1);
+%     vv = pair_slc(pp,2);
+% 
+%     for  rel = 1:2
+% 
+%         bi_conf = squeeze(pred.bi_conf(aa,vv,1,rel,:));
+%         histogram(bi_conf(:))
+% 
+%     end
+%     xticks(0:5)
+%     xlim([0,5])
+% 
+% end
 
 %%
 
@@ -176,13 +179,14 @@ for pp = 1:npair
     for  rel = 1:2
 
         bi_est = squeeze(pred.bi_est_var(aa,vv,2,rel,:));
-        histogram(bi_est,'NumBins',25)
+        histogram(bi_est,'BinWidth',0.2)
 
     end
 
     for cc = 1:3
 
-        xline(cV(cc));
+        xline(cV1(cc));
+        xline(cV2(cc),'--');
 
     end
 

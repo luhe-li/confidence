@@ -81,7 +81,7 @@ norm_var(1,:) = variance(1,:)./sigA;
 norm_var(2,:) = variance(2,:)./sigV;
 
 % make noisy measurements of variance/uncertainty for each modality
-m = norm_var;
+m = variance;%norm_var;
 v = sigC;
 mu = log((m.^2)./sqrt(v+m.^2));
 sigma = sqrt(log(v./(m.^2)+1));

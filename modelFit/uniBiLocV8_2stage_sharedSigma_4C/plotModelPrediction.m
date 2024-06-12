@@ -35,6 +35,7 @@ load(files(end).name);
 
 % winning model?
 [~, d] = min([saveConfModel{1}.minNLL, saveConfModel{2}.minNLL, saveConfModel{3}.minNLL]);
+d=3;
 
 % use the best-fitting parameter and winning model
 p = saveConfModel{d}.bestP;
