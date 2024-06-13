@@ -13,26 +13,30 @@ cur_dir      = pwd;
 addpath(genpath(fullfile(project_dir,'func')))
 
 % load unimodal prediction if it exists
-if exist('pred.uni_loc','var')
+try
     uni_loc = pred.uni_loc;
     uni_conf = pred.uni_conf;
-else % load unimodal data if there's no prediction
+    nrep = size(pred.uni_loc,3);
+catch % load unimodal data if there's no prediction
     [uni_loc, uni_conf, ~, ~] = org_data(sub_slc,[],'uniLoc');
-    if exist('pred','var') % load bimodal prediction if it exists
-        bi_loc = pred.bi_loc;
-        bi_conf = pred.bi_conf;
-        bi_sA = pred.bi_sA;
-        bi_sV = pred.bi_sV;
-        uni_sA = pred.uni_sA;
-    else % load bimodal data if there's no prediction
-        [bi_loc, bi_conf, ~, biExpInfo] = org_data(sub_slc,ses_slc,'biLoc');
-        [uni_loc, uni_conf, ~, ~] = org_data(sub_slc,[],'uniLoc');
-        % get stimulus loactions
-        bi_sA = unique(biExpInfo.randAudVA);
-        bi_sV = unique(biExpInfo.randVisVA);
-        uni_sA = bi_sA;
-    end
+    nrep = size(uni_loc,3);
 end
+
+if exist('pred','var') % load bimodal prediction if it exists
+    bi_loc = pred.bi_loc;
+    bi_conf = pred.bi_conf;
+    bi_sA = pred.bi_sA;
+    bi_sV = pred.bi_sV;
+    uni_sA = pred.uni_sA;
+else % load bimodal data if there's no prediction
+    [bi_loc, bi_conf, ~, biExpInfo] = org_data(sub_slc,ses_slc,'biLoc');
+    [uni_loc, uni_conf, ~, ~] = org_data(sub_slc,[],'uniLoc');
+    % get stimulus loactions
+    bi_sA = unique(biExpInfo.randAudVA);
+    bi_sV = unique(biExpInfo.randVisVA);
+    uni_sA = bi_sA;
+end
+
 
 %% reorganize uni and bi confidence
 
@@ -65,9 +69,8 @@ if interpolateUni
     % coefsA = squeeze(Transfer.degCoeff(1, :));
     % There is no need to load bias data because we can calculate it here.
     % This allows fake unimodal data to be used.
-    mean_uni_resp = mean(uni_loc, 3);
-%     sArep = repmat(bi_sA',1,uniExpInfo.nRep);
-    sArep = repmat(bi_sA',1,20); 
+    sArep = repmat(bi_sA',1,nrep);
+    % sArep = repmat(bi_sA',1,20); 
     uni_a_resp = squeeze(uni_loc(1,:,:));
     mdlA = fitlm(sArep(:),uni_a_resp(:));
     coefsA = table2array(mdlA.Coefficients(:,1));

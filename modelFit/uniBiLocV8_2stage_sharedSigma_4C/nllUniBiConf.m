@@ -128,14 +128,18 @@ switch model.mode
             fixP.bi_nrep = model.bi_nrep;
             fixP.model_ind = model.model_slc;
             fixP.sigMotor = sigMotor;
-            sA = model.bi_sA;
-            sV = model.bi_sV;
+            bi_sA = model.bi_sA;
+            bi_sV = model.bi_sV;
             if model.finer
-                finer_sA = linspace(min(sA),max(sA),20);
-                finer_sV = linspace(min(sV),max(sV),20);
+                fixP.uni_sA = linspace(min(model.uni_sA), max(model.uni_sA), 20);
+                fixP.uni_sV = linspace(min(model.uni_sV), max(model.uni_sV), 20);
+                finer_sA = linspace(min(bi_sA),max(bi_sA),20);
+                finer_sV = linspace(min(bi_sV),max(bi_sV),20);
             else
-                finer_sA = sA;
-                finer_sV = sV;
+                fixP.uni_sA = model.uni_sA;
+                fixP.uni_sV = model.uni_sV;
+                finer_sA = bi_sA;
+                finer_sV = bi_sV;
             end
 
             % uni-loc
@@ -143,14 +147,14 @@ switch model.mode
                 aA, bA, sigA, sigV1, sigV2, muP, sigP, sigC,  cs(1,1:3)', cs(2,1:3)', cs(3,1:3)', lapse, fixP);
 
             % bi-loc
-            [bi_loc, ~, bi_est_var] = deal(NaN(numel(sA), numel(sV), numel(model.modality), numel(sigVs), model.bi_nrep));
+            [bi_loc, ~, bi_est_var] = deal(NaN(numel(bi_sA), numel(bi_sV), numel(model.modality), numel(sigVs), model.bi_nrep));
 
-            for aa = 1:numel(sA)
-                for vv = 1:numel(sV)
+            for aa = 1:numel(bi_sA)
+                for vv = 1:numel(bi_sV)
                     for rr = 1:numel(sigVs)
 
-                        fixP.bi_sA = sA(aa);
-                        fixP.bi_sV = sV(vv);
+                        fixP.bi_sA = bi_sA(aa);
+                        fixP.bi_sV = bi_sV(vv);
 
                         [bi_loc(aa,vv,:,rr,:), ~, ~, ~, bi_est_var(aa, vv, :, rr, :)] = simAllModels(...
                             aA, bA, sigA, sigVs(rr), muP, sigP, pCommon, sigC, cs(1,rr*2-1:rr*2), cs(2,rr*2-1:rr*2), cs(3,rr*2-1:rr*2), lapse, fixP);
@@ -180,7 +184,7 @@ switch model.mode
             out.bi_loc = bi_loc;
             out.bi_conf = bi_conf;
             out.bi_est_var = bi_est_var;
-            out.uni_sA = sA;
+            out.uni_sA = fixP.uni_sA;
             out.bi_sA = finer_sA;
             out.bi_sV = finer_sV;
 
