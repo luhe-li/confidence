@@ -37,7 +37,7 @@ switch model.mode
         paraS.kv1                    = [0.4, 0.6];
         paraS.kv2                    = [0.4, 0.6];
         paraS.ka2                    = [1.1, 1.5];
-        paraH.lapse                  = [0.01, 0.05];
+        paraS.lapse                  = [0.01, 0.05];
 
         % reorganize parameter bounds to feed to bads
         fn                           = fieldnames(paraH);
@@ -210,6 +210,11 @@ switch model.mode
 
             out.bi_loc = bi_loc;
             out.bi_conf = bi_conf;
+            out.bi_est_var = bi_est_var;
+            out.uni_sA = fixP.uni_sA;
+            out.uni_sV = fixP.uni_sV;
+            out.bi_sA = finer_sA;
+            out.bi_sV = finer_sV;
 
         end
 

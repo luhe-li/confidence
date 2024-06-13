@@ -6,7 +6,7 @@
 
 clear; close all; rng('shuffle');
 
-sub_slc = 16;
+sub_slc = [13,15,16];
 ses_slc = 1:3; % bimodal sessions
 
 %% manage path
@@ -65,7 +65,7 @@ for sub = sub_slc
 
     for d = 3:-1:1
 
-        fprintf('[%s] Start fitting localization data, sub-%i, ses1-%i, M%i\n', mfilename, sub_slc, max(ses_slc), d);
+        fprintf('[%s] Start fitting localization data, sub-%i, ses1-%i, M%i\n', mfilename, sub, max(ses_slc), d);
 
         % switch confidence strategies
         model.strategy_conf         = models{d};
@@ -105,7 +105,7 @@ for sub = sub_slc
 
         %% 2. second part: conf
 
-        fprintf('[%s] Start fitting confidence data, sub-%i, ses1-%i, M%i\n', mfilename, sub_slc, max(ses_slc), d);
+        fprintf('[%s] Start fitting confidence data, sub-%i, ses1-%i, M%i\n', mfilename, sub, max(ses_slc), d);
 
         % use best param from loc fits
         model.locP = bestP;

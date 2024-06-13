@@ -1,6 +1,6 @@
 clear; close all; rng('shuffle');
 
-sub_slc = 13;
+sub_slc = 16;
 ses_slc = 1:3; % bimodal sessions
 
 models = {'Heuristic','Suboptimal','Optimal'};
@@ -34,19 +34,20 @@ files = dir(fullfile(result_dir, flnm));
 load(files(end).name);
 
 % winning model?
-[~, d] = min([saveConfModel{1}.minNLL, saveConfModel{2}.minNLL, saveConfModel{3}.minNLL]);
+[~, d] = min([saveModel{1}.minNLL, saveModel{2}.minNLL, saveModel{3}.minNLL]);
+disp(d)
 
-% d = 3;
 % use the best-fitting parameter and winning model
-p = saveConfModel{d}.bestP;
+p = saveModel{d}.bestP;
 model.mode = 'predict';
 model.model_slc             = d;
 model.strategy_conf         = models{d};
+
 % increase trial number for prediction
 model.uni_nrep = 1e3;
 model.bi_nrep = 1e3;
-model.finer = true;
-pred = nllUniBiConf(p, model, data);
+model.finer = false;
+pred = nllUniBiLocConf(p, model, data);
 disp(p)
 
 % %% plot bimodal localization response as a function of stimulus location
@@ -97,7 +98,7 @@ for j = 1:3
         'HandleVisibility', 'off');
 
     % prediction
-    plot(pred.uni_sA, mean(pred.uni_loc(j,:,:),3),'-','LineWidth',pred_lw,'Color',clt(j,:));
+    plot(model.uni_sA, mean(pred.uni_loc(j,:,:),3),'-','LineWidth',pred_lw,'Color',clt(j,:));
 
 end
 plot([-lim, lim], [-lim*1.2, lim*1.2],'k--','LineWidth',lw)
@@ -106,8 +107,8 @@ plot([-lim, lim], [-lim*1.2, lim*1.2],'k--','LineWidth',lw)
 
 pred.biExpInfo = data.biExpInfo;
 
-[pred_mean_conf, pred_std_mean_conf, pred_uni_pconf, pred.abs_diff,...
-    pred_mean_ve, pred_std_ve, pred.raw_diff] = analyze_data(sub_slc, ses_slc, pred);
+[pred_mean_conf, pred_std_mean_conf, pred_uni_pconf, ~,...
+    pred_mean_ve, pred_std_ve, ~] = analyze_data(sub_slc, ses_slc, pred);
 
 % analyze real data
 [mean_conf, std_conf, uni_pconf, abs_diff,...
@@ -143,7 +144,7 @@ for cue = 1:num_cue
             'HandleVisibility', 'off');
 
         % plot prediction
-        l(rel) = plot(pred.raw_diff, squeeze(pred_mean_ve(:, cue, rel)), '-','Color',clt(rel+1,:),'LineWidth',pred_lw);
+        l(rel) = plot(raw_diff, squeeze(pred_mean_ve(:, cue, rel)), '-','Color',clt(rel+1,:),'LineWidth',pred_lw);
 
     end
 
@@ -184,7 +185,7 @@ for cue = 1:num_cue
             'HandleVisibility', 'off');
 
         % plot prediction
-        l(rel) = plot(pred.abs_diff, squeeze(pred_mean_conf(:, cue, rel)), '-', 'Color',clt(rel+1,:),'LineWidth',pred_lw);
+        l(rel) = plot(abs_diff, squeeze(pred_mean_conf(:, cue, rel)), '-', 'Color',clt(rel+1,:),'LineWidth',pred_lw);
 
         % plot unimodal p_confidence
         if cue == 1

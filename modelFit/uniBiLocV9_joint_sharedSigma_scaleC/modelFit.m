@@ -3,7 +3,7 @@
 
 clear; close all; rng('shuffle');
 
-sub_slc = 13;
+sub_slc = 16;
 ses_slc = 1:3; % bimodal sessions
 
 %% manage path
@@ -32,7 +32,7 @@ model.numBins_V       = 15;
 model.modality        = {'A','V'};
 model.strategy_loc    = 'MA';
 OPTIONS.TolMesh = 1e-5;
-% OPTIONS.Display = 'off';
+OPTIONS.Display = 'off';
 
 models               = {'Heuristic','Suboptimal','Optimal'};
 
