@@ -120,8 +120,8 @@ for sub = sub_slc
         NLL                         = NaN(1, model.num_run);
         estP                        = NaN(model.num_run, Val.num_para);
 
-        p = [  5.0000    0.4551    4.9448    5.0000    2.3745    5.0000   10.0000    0.2207    0.6958    2.1282    0.0699    0.9080    4.2809];
-        test = nllUniBiConf(p, model, data);
+%         p = [  5.0000    0.4551    4.9448    5.0000    2.3745    5.0000   10.0000    0.2207    0.6958    2.1282    0.0699    0.9080    4.2809];
+%         test = nllUniBiConf(p, model, data);
 
         parfor i                    = 1:model.num_run
 

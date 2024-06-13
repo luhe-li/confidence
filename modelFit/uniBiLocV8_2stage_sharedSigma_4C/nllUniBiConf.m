@@ -4,39 +4,26 @@ switch model.mode
 
     case 'initiate'
 
-        out.paraID                   = {'\sigma_{C}','c1','\delta_{c2}','\delta_{c3}','c4','dc5','dc6','c7','dc8','dc9','c10','dc11','dc12'};
+        out.paraID                   = {'c1','\delta_{c2}','\delta_{c3}','k_{v1}','k_{v2}','k_{a2}'};
         out.num_para                 = length(out.paraID);
 
         % hard bounds, the range for LB, UB, larger than soft bounds
-        paraH.sigC                   = [1e-4,    10]; % measurement noise of confidence
+%         paraH.sigC                   = [1e-4,     2]; % measurement noise of confidence
         paraH.c1                     = [0.01,     5]; % A
-        paraH.dc2                    = [0.01,     5];
+        paraH.dc2                    = [0.01,    10];
         paraH.dc3                    = [0.01,    10];
-        paraH.c4                     = [0.01,     5]; % V1
-        paraH.dc5                    = [0.01,    15];
-        paraH.dc6                    = [0.01,    15];
-        paraH.c7                     = [0.01,     5]; % v2
-        paraH.dc8                    = [0.01,     5];
-        paraH.dc9                    = [0.01,     5];
-        paraH.c10                     = [0.01,     5]; % A, v2
-        paraH.dc11                    = [0.01,     5];
-        paraH.dc12                    = [0.01,     5];
+        paraH.kv1                    = [0.01, 10];
+        paraH.kv2                    = [0.01, 10];
+        paraH.ka2                    = [0.01, 10];
 
         % soft bounds, the range for PLB, PUB
-        paraS.sigC                   = [1e-4,     2]; % measurement noise of confidence
+%         paraS.sigC                   = [1e-4,     2]; % measurement noise of confidence
         paraS.c1                     = [   1,     2];
         paraS.dc2                    = [ 0.1,   0.5];
         paraS.dc3                    = [ 0.1,   0.5];
-        paraS.c4                     = [ 0.1,   0.5];
-        paraS.dc5                    = [ 0.1,   0.5];
-        paraS.dc6                    = [ 0.1,   0.5];
-        paraS.c7                     = [ 0.1,   0.5];
-        paraS.dc8                    = [ 0.1,   0.5];
-        paraS.dc9                    = [ 0.1,   0.5];
-        paraS.c10                     = [ 0.1,   0.5];
-        paraS.dc11                    = [ 0.1,   0.5];
-        paraS.dc12                    = [ 0.1,   0.5];
-
+        paraS.kv1 = [0.4, 0.6];
+        paraS.kv2 = [0.4, 0.6];
+        paraS.ka2 = [1.1, 1.5];
 
         % reorganize parameter bounds to feed to bads
         fn                           = fieldnames(paraH);
@@ -54,19 +41,12 @@ switch model.mode
     case {'optimize','predict'}
 
         % free parameters
-        sigC                         = freeParam(1);
-        c1                           = freeParam(2);
-        dc2                          = freeParam(3);
-        dc3                          = freeParam(4);
-        c4                           = freeParam(5);
-        dc5                          = freeParam(6);
-        dc6                          = freeParam(7);
-        c7 = freeParam(8);
-        dc8 = freeParam(9);
-        dc9 = freeParam(10);
-        c10 = freeParam(11);
-        dc11 = freeParam(12);
-        dc12 = freeParam(13);
+        c1                           = freeParam(1);
+        dc2                          = freeParam(2);
+        dc3                          = freeParam(3);
+        kv1 = freeParam(4);
+        kv2 = freeParam(5);
+        ka2 = freeParam(6);
 
         % fixed parameters from first-stage fit
         aA                           = model.locP(1);
@@ -82,15 +62,7 @@ switch model.mode
         num_sigVs = numel(sigVs);
         c2 = c1 + dc2;
         c3 = c1 + dc2 + dc3;
-        c5 = c4 + dc5;
-        c6 = c4 + dc5 + dc6;
-        c8 = c7+ dc8;
-        c9 = c7+ dc8 + dc9;
-        c11 = c10+dc11;
-        c12 = c10+dc11+dc12;
-        c1s = {[c1, c4], [c10, c7]};
-        c2s = {[c2, c5], [c11, c8]};
-        c3s = {[c3, c6], [c12, c9]};
+        cs = [c1, c2, c3; kv1*[c1, c2, c3]; ka2 * [c1, c2, c3]; kv2 * [c1, c2, c3]]';
 
         % freeze parameters from data
         sigMotor = data.sigMotor;
@@ -98,6 +70,7 @@ switch model.mode
         aV = 1;
         bV = 0;
         muP = 0;
+        sigC = 1;
         
         if strcmp(model.mode, 'optimize')
 
@@ -108,22 +81,18 @@ switch model.mode
             norm_var_A = 1/(1/sigP^2 + 1/sigA^2)/sigA;
             norm_var_V1 = 1/(1/sigP^2 + 1/sigV1^2)/sigV1;
             norm_var_V2 = 1/(1/sigP^2 + 1/sigV2^2)/sigV2;
-% 
-%             norm_var_A = 1/(1/sigP^2 + 1/sigA^2);
-%             norm_var_V1 = 1/(1/sigP^2 + 1/sigV1^2);
-%             norm_var_V2 = 1/(1/sigP^2 + 1/sigV2^2);
 
             % unimodal confidence task
             nLL_uni_conf = calculateNLL_uniConf([norm_var_A, norm_var_V1, norm_var_V2],...
-                sigC,  [c1; c4; c7], [c2; c5; c8], [c3; c6; c9], lapse, data.uni_conf);
+                sigC,  cs(1,1:3)', cs(2,1:3)', cs(3,1:3)', lapse, data.uni_conf);
 
             %% bimodal confidence
 
             nLL_bimodal = NaN(1, num_sigVs);
 
-            for vv = 1:num_sigVs
+            for rr = 1:num_sigVs
 
-                sigV = sigVs(vv);
+                sigV = sigVs(rr);
 
                 % constants
                 CI.J_A            = sigA^2;
@@ -138,11 +107,11 @@ switch model.mode
 
                 % auditory locations (4) x visual locations (4) x postcues (2)
                 % x rep
-                data_resp = squeeze(data.bi_loc(:,:,:,vv,:));
-                data_conf = squeeze(data.bi_conf(:,:,:,vv,:));
+                data_resp = squeeze(data.bi_loc(:,:,:,rr,:));
+                data_conf = squeeze(data.bi_conf(:,:,:,rr,:));
 
-                [nLL_bimodal(vv)] = calculateNLL_bimodal(...
-                    aA, bA, aV, bV, sigA, sigV, sigC, pCommon, c1s{vv}, c2s{vv}, c3s{vv},...
+                [nLL_bimodal(rr)] = calculateNLL_bimodal(...
+                    aA, bA, aV, bV, sigA, sigV, sigC, pCommon, cs(1,rr*2-1:rr*2), cs(2,rr*2-1:rr*2), cs(3,rr*2-1:rr*2),...
                     CI, muP, sigMotor, lapse, data_resp, data_conf, model);
 
             end
@@ -161,12 +130,17 @@ switch model.mode
             fixP.sigMotor = sigMotor;
             sA = model.bi_sA;
             sV = model.bi_sV;
-            finer_sA = -10:2:10;
-            finer_sV = -10:2:10;
+            if model.finer
+                finer_sA = -10:2:10;
+                finer_sV = -10:2:10;
+            else
+                finer_sA = sA;
+                finer_sV = sV;
+            end
 
             % uni-loc
             [out.uni_loc, out.uni_conf, out.uni_est_var] = simUni(...
-                aA, bA, sigA, sigV1, sigV2, muP, sigP, sigC, [c1; c4; c7], [c2; c5; c8], [c3; c6; c9], lapse, fixP);
+                aA, bA, sigA, sigV1, sigV2, muP, sigP, sigC,  cs(1,1:3)', cs(2,1:3)', cs(3,1:3)', lapse, fixP);
 
             % bi-loc
             [bi_loc, ~, bi_est_var] = deal(NaN(numel(sA), numel(sV), numel(model.modality), numel(sigVs), model.bi_nrep));
@@ -179,7 +153,7 @@ switch model.mode
                         fixP.bi_sV = sV(vv);
 
                         [bi_loc(aa,vv,:,rr,:), ~, ~, ~, bi_est_var(aa, vv, :, rr, :)] = simAllModels(...
-                            aA, bA, sigA, sigVs(rr), muP, sigP, pCommon, sigC, c1s{rr}, c2s{rr}, c3s{rr}, lapse, fixP);
+                            aA, bA, sigA, sigVs(rr), muP, sigP, pCommon, sigC, cs(1,rr*2-1:rr*2), cs(2,rr*2-1:rr*2), cs(3,rr*2-1:rr*2), lapse, fixP);
 
                     end
                 end
@@ -196,8 +170,8 @@ switch model.mode
                         fixP.bi_sA = finer_sA(aa);
                         fixP.bi_sV = finer_sV(vv);
 
-                        [bi_loc(aa,vv,:,rr,:), bi_conf(aa,vv,:,rr,:), ~, ~, bi_est_var(aa, vv, :, rr, :)] = simAllModels(...
-                            aA, bA, sigA, sigVs(rr), muP, sigP, pCommon, sigC, c1s{rr}, c2s{rr}, c3s{rr}, lapse, fixP);
+                        [~, bi_conf(aa,vv,:,rr,:)] = simAllModels(...
+                            aA, bA, sigA, sigVs(rr), muP, sigP, pCommon, sigC, cs(1,rr*2-1:rr*2), cs(2,rr*2-1:rr*2), cs(3,rr*2-1:rr*2), lapse, fixP);
 
                     end
                 end
@@ -209,7 +183,6 @@ switch model.mode
             out.uni_sA = sA;
             out.bi_sA = finer_sA;
             out.bi_sV = finer_sV;
-
 
         end
 end
