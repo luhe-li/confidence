@@ -1,6 +1,6 @@
 clear; close all; rng('shuffle');
 
-sub_slc = 16;
+sub_slc = 13;
 ses_slc = 1:3; % bimodal sessions
 
 models = {'Heuristic','Suboptimal','Optimal'};
@@ -36,7 +36,7 @@ load(files(end).name);
 % winning model?
 [~, d] = min([saveConfModel{1}.minNLL, saveConfModel{2}.minNLL, saveConfModel{3}.minNLL]);
 
-d = 2;
+% d = 2;
 % use the best-fitting parameter and winning model
 p = saveConfModel{d}.bestP;
 model.mode = 'predict';
