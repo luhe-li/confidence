@@ -46,7 +46,7 @@ model.strategy_conf         = models{d};
 % increase trial number for prediction
 model.uni_nrep = 1e3;
 model.bi_nrep = 1e3;
-model.finer = true;
+model.finer = false;
 pred = nllUniBiConf(p, model, data);
 disp(p)
 
