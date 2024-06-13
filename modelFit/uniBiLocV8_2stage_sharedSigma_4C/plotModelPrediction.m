@@ -42,11 +42,10 @@ p = saveConfModel{d}.bestP;
 model.mode = 'predict';
 model.model_slc             = d;
 model.strategy_conf         = models{d};
-
 % increase trial number for prediction
 model.uni_nrep = 1e3;
 model.bi_nrep = 1e3;
-model.finer = false;
+model.finer = true;
 pred = nllUniBiConf(p, model, data);
 disp(p)
 
@@ -98,7 +97,7 @@ for j = 1:3
         'HandleVisibility', 'off');
 
     % prediction
-    plot(model.uni_sA, mean(pred.uni_loc(j,:,:),3),'-','LineWidth',pred_lw,'Color',clt(j,:));
+    plot(pred.uni_sA, mean(pred.uni_loc(j,:,:),3),'-','LineWidth',pred_lw,'Color',clt(j,:));
 
 end
 plot([-lim, lim], [-lim*1.2, lim*1.2],'k--','LineWidth',lw)

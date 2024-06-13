@@ -147,14 +147,14 @@ switch model.mode
                 aA, bA, sigA, sigV1, sigV2, muP, sigP, sigC,  cs(1,1:3)', cs(2,1:3)', cs(3,1:3)', lapse, fixP);
 
             % bi-loc
-            [bi_loc, ~, bi_est_var] = deal(NaN(numel(bi_sA), numel(bi_sV), numel(model.modality), numel(sigVs), model.bi_nrep));
+            [bi_loc, ~, bi_est_var] = deal(NaN(numel(finer_sA), numel(finer_sV), numel(model.modality), numel(sigVs), model.bi_nrep));
 
-            for aa = 1:numel(bi_sA)
-                for vv = 1:numel(bi_sV)
+            for aa = 1:numel(finer_sA)
+                for vv = 1:numel(finer_sV)
                     for rr = 1:numel(sigVs)
 
-                        fixP.bi_sA = bi_sA(aa);
-                        fixP.bi_sV = bi_sV(vv);
+                        fixP.bi_sA = finer_sA(aa);
+                        fixP.bi_sV = finer_sV(vv);
 
                         [bi_loc(aa,vv,:,rr,:), ~, ~, ~, bi_est_var(aa, vv, :, rr, :)] = simAllModels(...
                             aA, bA, sigA, sigVs(rr), muP, sigP, pCommon, sigC, cs(1,rr*2-1:rr*2), cs(2,rr*2-1:rr*2), cs(3,rr*2-1:rr*2), lapse, fixP);
