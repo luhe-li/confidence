@@ -1,6 +1,6 @@
 clear; close all; rng('shuffle');
 
-sub_slc = 13;
+sub_slc = 16;
 ses_slc = 1:3; % bimodal sessions
 
 models = {'Heuristic','Suboptimal','Optimal'};
@@ -46,7 +46,7 @@ model.strategy_conf         = models{d};
 % increase trial number for prediction
 model.uni_nrep = 1e3;
 model.bi_nrep = 1e3;
-model.finer = false;
+model.finer = true;
 pred = nllUniBiConf(p, model, data);
 disp(p)
 

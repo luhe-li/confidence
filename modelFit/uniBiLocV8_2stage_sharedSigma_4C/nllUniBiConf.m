@@ -131,8 +131,8 @@ switch model.mode
             sA = model.bi_sA;
             sV = model.bi_sV;
             if model.finer
-                finer_sA = -10:2:10;
-                finer_sV = -10:2:10;
+                finer_sA = linspace(min(sA),max(sA),20);
+                finer_sV = linspace(min(sV),max(sV),20);
             else
                 finer_sA = sA;
                 finer_sV = sV;
