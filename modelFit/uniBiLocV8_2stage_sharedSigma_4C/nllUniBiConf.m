@@ -8,13 +8,13 @@ switch model.mode
         out.num_para                 = length(out.paraID);
 
         % hard bounds, the range for LB, UB, larger than soft bounds
-        paraH.sigC                   = [1e-4,     5]; % measurement noise of confidence
+        paraH.sigC                   = [1e-4,    10]; % measurement noise of confidence
         paraH.c1                     = [0.01,     5]; % A
         paraH.dc2                    = [0.01,     5];
-        paraH.dc3                    = [0.01,     5];
+        paraH.dc3                    = [0.01,    10];
         paraH.c4                     = [0.01,     5]; % V1
-        paraH.dc5                    = [0.01,    5];
-        paraH.dc6                    = [0.01,    10];
+        paraH.dc5                    = [0.01,    15];
+        paraH.dc6                    = [0.01,    15];
         paraH.c7                     = [0.01,     5]; % v2
         paraH.dc8                    = [0.01,     5];
         paraH.dc9                    = [0.01,     5];

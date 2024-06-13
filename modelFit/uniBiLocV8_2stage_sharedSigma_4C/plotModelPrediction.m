@@ -35,7 +35,6 @@ load(files(end).name);
 
 % winning model?
 [~, d] = min([saveConfModel{1}.minNLL, saveConfModel{2}.minNLL, saveConfModel{3}.minNLL]);
-d=3;
 
 % use the best-fitting parameter and winning model
 p = saveConfModel{d}.bestP;
@@ -50,8 +49,6 @@ pred = nllUniBiConf(p, model, data);
 disp(p)
 
 %% plot bimodal localization response as a function of stimulus location
-
-%TO-DO: use predicted unimodal data
 
 bi_resp = pred.bi_loc;
 aud_locs = model.bi_sA;

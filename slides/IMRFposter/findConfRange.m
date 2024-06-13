@@ -1,6 +1,6 @@
 function [lb, ub] = findConfRange(aA, bA, sigA, sigV1, sigV2, sigP, pCommon, fixP)
 % findConfRange takes in free parameters other than criteria and calculates
-% the plausible range for variance/uncertainty to set automatic criteria.
+% the plausible range for variance/uncertainty.
 
 % 24/05 LL
 

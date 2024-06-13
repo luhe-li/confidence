@@ -21,20 +21,18 @@ else % load unimodal data if there's no prediction
     if exist('pred','var') % load bimodal prediction if it exists
         bi_loc = pred.bi_loc;
         bi_conf = pred.bi_conf;
-        biExpInfo = pred.biExpInfo;
+        bi_sA = unique(pred.sA);
+        bi_sV = unique(pred.sV);
+        uni_sA = unique(pred.biExpInfo.randAudVA);
     else % load bimodal data if there's no prediction
         [bi_loc, bi_conf, ~, biExpInfo] = org_data(sub_slc,ses_slc,'biLoc');
         [uni_loc, uni_conf, ~, ~] = org_data(sub_slc,[],'uniLoc');
+        % get stimulus loactions
+        bi_sA = unique(biExpInfo.randAudVA);
+        bi_sV = unique(biExpInfo.randVisVA);
+        uni_sA = bi_sA;
     end
 end
-
-% load uni data anyway
-
-% get stimulus loactions
-% get stimulus loactions;
-bi_sA = unique(biExpInfo.randAudVA);
-bi_sV = unique(biExpInfo.randVisVA);
-uni_sA = bi_sA;
 
 %% reorganize uni and bi confidence
 
@@ -45,6 +43,7 @@ uni_pconf = mean(mean(uni_conf,3),2); % condition (A,V1,V2) x loc (4)
 [conf_by_diff, abs_diff] = org_by_diffs(bi_conf, bi_sA); % {diff} cue x reliability x rep
 
 [mean_conf, std_mean_conf] = deal(nan(numel(abs_diff), 2, 2));
+
 % calculate mean and sd
 for cue = 1:2
     for rel = 1:2
@@ -60,7 +59,7 @@ end
 %% reorganize ventriloquist effect
 
 % interpolates auditory responses as a straight line
-if interpolateUni || ~isequal(uni_sA, bi_sA)
+if interpolateUni
 
     % load([sprintf('AVbias_sub%i', ExpInfo.subjID) '.mat'])
     % coefsA = squeeze(Transfer.degCoeff(1, :));

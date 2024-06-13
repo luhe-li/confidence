@@ -8,8 +8,8 @@ switch model.mode
         out.num_para                 = length(out.paraID);
 
         % hard bounds, the range for LB, UB, larger than soft bounds
-        paraH.aA                     = [ 0.5,     3]; % degree
-        paraH.bA                     = [  -5,     5]; % degree
+        paraH.aA                     = [ 0.1,     3]; % degree
+        paraH.bA                     = [  -10,    10]; % degree
         paraH.sigV1                  = [1e-2,     5]; % degree
         paraH.sigA                   = [   1,    20]; % degree
         paraH.sigV2                  = [   1,    10]; % degre
@@ -108,20 +108,20 @@ switch model.mode
 
         elseif strcmp(model.mode, 'predict')
 
-            sA = model.bi_sA;
-            sV = model.bi_sV;
-            fixP.num_rep = model.bi_nrep;
+            sA = -10:2:10;%model.bi_sA;
+            sV = -10:2:10;%model.bi_sV;
+            fixP.bi_nrep = 1000;
             fixP.model_ind = model.model_slc;
             fixP.sigMotor = sigMotor;
 
-            [org_loc, org_conf] = deal(NaN(numel(sA), numel(sV), numel(model.modality), numel(sigVs), model.bi_nrep));
+            [org_loc, org_conf] = deal(NaN(numel(sA), numel(sV), numel(model.modality), numel(sigVs), fixP.bi_nrep));
 
             for a = 1:numel(sA)
                 for v = 1:numel(sV)
                     for r = 1:numel(sigVs)
 
-                        fixP.sA = sA(a);
-                        fixP.sV = sV(v);
+                        fixP.bi_sA = sA(a);
+                        fixP.bi_sV = sV(v);
 
                         [org_loc(a,v,:,r,:), org_conf(a,v,:,r,:)] = simAllModels(...
                             aA, bA, sigA, sigVs(r), muP, sigP, pCommon, sigC, c1, c2, c3, lapse, fixP);
@@ -132,6 +132,8 @@ switch model.mode
 
             out.bi_loc = org_loc;
             out.bi_conf = org_conf;
+            out.sA = sA;
+            out.sV = sV;
 
         end
 
@@ -201,17 +203,17 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
 
             var(1,:,:)= Post_C1 ./CI.constC1_shat + Post_C2 ./CI.constC2_1_shat;
             var(2,:,:)= Post_C1 ./CI.constC1_shat + Post_C2 ./CI.constC2_2_shat;
-%             var = repmat(1/CI.constC1_shat, [2, size(Post_C1)]);
-%             indices = (Post_C1 >= 0.5);
-%             var(1,indices) = 1/CI.constC2_1_shat;
-%             var(2,indices) = 1/CI.constC2_2_shat;
+            %             var = repmat(1/CI.constC1_shat, [2, size(Post_C1)]);
+            %             indices = (Post_C1 >= 0.5);
+            %             var(1,indices) = 1/CI.constC2_1_shat;
+            %             var(2,indices) = 1/CI.constC2_2_shat;
 
         elseif strcmp(model.strategy_conf, 'Heuristic')
 
-            var(1,:,:) = repmat(CI.J_P * sigA/CI.constC2_1, size(Post_C1));
-            var(2,:,:) = repmat(CI.J_P * sigV/CI.constC2_2, size(Post_C1));
-%             var(1,:,:) = repmat(CI.J_A, size(Post_C1));
-%             var(2,:,:) = repmat(CI.J_V, size(Post_C1));
+            var(1,:,:) = repmat(1/CI.constC2_1_shat, size(Post_C1));
+            var(2,:,:) = repmat(1/CI.constC2_2_shat, size(Post_C1));
+            %  var(1,:,:) = repmat(CI.J_A, size(Post_C1));
+            %  var(2,:,:) = repmat(CI.J_V, size(Post_C1));
 
         end
 
