@@ -155,24 +155,46 @@ switch model.mode
 
             fixP.uni_sA = model.uni_sA;
             fixP.uni_sV = model.uni_sV;
-            bi_sA = model.bi_sA;
-            bi_sV = model.bi_sV;
             fixP.uni_nrep = model.uni_nrep;
             fixP.bi_nrep = model.bi_nrep;
             fixP.model_ind = model.model_slc;
             fixP.sigMotor = sigMotor;
+            sA = model.bi_sA;
+            sV = model.bi_sV;
+            finer_sA = -10:2:10;
+            finer_sV = -10:2:10;
 
+            % uni-loc
             [out.uni_loc, out.uni_conf, out.uni_est_var] = simUni(...
                 aA, bA, sigA, sigV1, sigV2, muP, sigP, sigC, [c1; c4; c7], [c2; c5; c8], [c3; c6; c9], lapse, fixP);
 
-            [bi_loc, bi_conf, bi_est_var] = deal(NaN(numel(bi_sA), numel(bi_sV), numel(model.modality), numel(sigVs), model.bi_nrep));
+            % bi-loc
+            [bi_loc, ~, bi_est_var] = deal(NaN(numel(sA), numel(sV), numel(model.modality), numel(sigVs), model.bi_nrep));
 
-            for aa = 1:numel(bi_sA)
-                for vv = 1:numel(bi_sV)
+            for aa = 1:numel(sA)
+                for vv = 1:numel(sV)
                     for rr = 1:numel(sigVs)
 
-                        fixP.bi_sA = bi_sA(aa);
-                        fixP.bi_sV = bi_sV(vv);
+                        fixP.bi_sA = sA(aa);
+                        fixP.bi_sV = sV(vv);
+
+                        [bi_loc(aa,vv,:,rr,:), ~, ~, ~, bi_est_var(aa, vv, :, rr, :)] = simAllModels(...
+                            aA, bA, sigA, sigVs(rr), muP, sigP, pCommon, sigC, c1s{rr}, c2s{rr}, c3s{rr}, lapse, fixP);
+
+                    end
+                end
+            end
+
+            % bi-conf
+
+            [bi_conf] = deal(NaN(numel(finer_sA), numel(finer_sV), numel(model.modality), numel(sigVs), model.bi_nrep));
+
+            for aa = 1:numel(finer_sA)
+                for vv = 1:numel(finer_sV)
+                    for rr = 1:numel(sigVs)
+
+                        fixP.bi_sA = finer_sA(aa);
+                        fixP.bi_sV = finer_sV(vv);
 
                         [bi_loc(aa,vv,:,rr,:), bi_conf(aa,vv,:,rr,:), ~, ~, bi_est_var(aa, vv, :, rr, :)] = simAllModels(...
                             aA, bA, sigA, sigVs(rr), muP, sigP, pCommon, sigC, c1s{rr}, c2s{rr}, c3s{rr}, lapse, fixP);
@@ -184,6 +206,10 @@ switch model.mode
             out.bi_loc = bi_loc;
             out.bi_conf = bi_conf;
             out.bi_est_var = bi_est_var;
+            out.uni_sA = sA;
+            out.bi_sA = finer_sA;
+            out.bi_sV = finer_sV;
+
 
         end
 end

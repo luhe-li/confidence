@@ -21,9 +21,9 @@ else % load unimodal data if there's no prediction
     if exist('pred','var') % load bimodal prediction if it exists
         bi_loc = pred.bi_loc;
         bi_conf = pred.bi_conf;
-        bi_sA = unique(pred.sA);
-        bi_sV = unique(pred.sV);
-        uni_sA = unique(pred.biExpInfo.randAudVA);
+        bi_sA = pred.bi_sA;
+        bi_sV = pred.bi_sV;
+        uni_sA = pred.uni_sA;
     else % load bimodal data if there's no prediction
         [bi_loc, bi_conf, ~, biExpInfo] = org_data(sub_slc,ses_slc,'biLoc');
         [uni_loc, uni_conf, ~, ~] = org_data(sub_slc,[],'uniLoc');
