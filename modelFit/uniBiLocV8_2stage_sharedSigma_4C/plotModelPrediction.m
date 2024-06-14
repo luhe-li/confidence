@@ -22,9 +22,9 @@ pred_lw = 2;
 fontSZ = 15;
 titleSZ = 20;
 dotSZ = 80;
-clt = [30, 120, 180; % blue
-    227, 27, 27;  % dark red
-    repmat(125, 1, 3)]./255;
+clt = [26,120,180; % blue
+    163,63,73;  % dark red
+    227 135 158]./255;
 
 %% predict data
 
@@ -199,3 +199,74 @@ for cue = 1:num_cue
 end
 
 saveas(gca, fullfile(out_dir, sprintf('sub%i_bestfittingM%i_conf', sub_slc, d)), 'png')
+%% plotting absolute VE
+% %% second panel: plot unimodal localization
+% 
+% pred.biExpInfo = data.biExpInfo;
+% 
+% [pred_mean_conf, pred_std_mean_conf, pred_uni_pconf, pred.abs_diff,...
+%     pred_mean_ve, pred_std_ve, pred.raw_diff] = analyze_data(sub_slc, ses_slc, pred);
+% 
+% % analyze real data
+% [mean_conf, std_conf, uni_pconf, abs_diff,...
+%     mean_ve, std_ve, raw_diff] = analyze_data(sub_slc, ses_slc);
+% 
+% cue_label             = {'Post-cue: A','Post-cue: V'};
+% num_cue               = numel(cue_label);
+% rel_label             = {'High visual reliability','Low visual reliability'};
+% num_rel               = numel(rel_label);
+% 
+% sgtitle(sprintf('Sub%i, best-fitting model: %s', sub_slc, models{d}),'FontSize',titleSZ)
+% sp_idx = [2,5];
+% 
+% diffInd = abs(-4:4) + 1;
+% 
+% 
+% 
+% for cue = 1:num_cue
+% 
+%     subplot(2,3,sp_idx(cue))
+%     set(gca, 'LineWidth', lw, 'FontSize', fontSZ, 'TickDir', 'out')
+% 
+%     title(cue_label{cue})
+%     hold on
+%     xticks(round(raw_diff))
+%     xtickangle(45)
+%     ylabel('Shift of localization');
+% 
+%     for rel = 1:num_rel
+%         meanVeVector = squeeze(mean_ve(:, cue, rel));
+%         diffInd = abs(-floor(length(meanVeVector)/2):floor(length(meanVeVector)/2)) + 1;
+%         for i = 1:floor(length(meanVeVector)/2)+1
+%             abs_ve(i) = mean(abs(meanVeVector(diffInd == i)));
+%         end
+%         % plot data
+%         plot(abs_diff, abs_ve, 'o',...
+%               'Color', clt(rel+1,:), 'MarkerFaceColor', clt(rel+1,:), 'MarkerSize', 6);
+%         % patch([0, abs(raw_diff)], ...
+%         %     [mean_ve(:, cue, rel)' - std_ve(:,cue, rel)', ...
+%         %     fliplr(mean_ve(:, cue, rel)' + std_ve(:,cue, rel)')],...
+%         %     clt(rel+1,:),'EdgeColor','none','FaceAlpha',0.1, ...
+%         %     'HandleVisibility', 'off');
+% 
+%         % plot prediction
+%         pred_meanVeVector = squeeze(pred_mean_ve(:, cue, rel));
+%         diffInd = abs(-floor(length(pred_meanVeVector)/2):floor(length(pred_meanVeVector)/2)) + 1;
+%         for i = 1:floor(length(pred_meanVeVector)/2)+1
+%             pred.abs_ve(i) = mean(abs(pred_meanVeVector(diffInd == i)));
+%         end
+%         l(rel) = plot(pred.abs_diff, pred.abs_ve, '-','Color',clt(rel+1,:),'LineWidth',pred_lw);
+% 
+%     end
+% 
+%     yline(0,'--')
+%     if cue == 1
+%         plot(raw_diff, raw_diff,'k--')
+%     else
+%         plot(raw_diff, -raw_diff,'k--')
+% %         legend([l(:)],rel_label)
+%         xlabel('Audiovisual discrepancy (V-A, deg)');
+%     end
+%     xlim([0,22])
+%     ylim([0,22])
+% end
