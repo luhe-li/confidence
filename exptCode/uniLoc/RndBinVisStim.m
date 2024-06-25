@@ -1,4 +1,4 @@
-function Resp = LocalizeVisualStim(i, ExpInfo, ScreenInfo,VSinfo,windowPtr)
+function Resp = RndBinVisStim(i, ExpInfo, ScreenInfo,VSinfo,windowPtr)
 
 %% precompute visual stimuli
 
