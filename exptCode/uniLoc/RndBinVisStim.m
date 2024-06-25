@@ -1,56 +1,10 @@
 function Resp = RndBinVisStim(i, ExpInfo, ScreenInfo,VSinfo,windowPtr)
 
 %% precompute visual stimuli
-
-%first compute the location of the visual stimulus in pixels
-loc_pixel = round(ExpInfo.randVisPixel(i));
-targetLoc = [ScreenInfo.xmid + loc_pixel,300];
-num_dots = 1000;
-RNcoordinates = round(rand(num_dots,2) .* repmat([1024,768],num_dots,1));
-
-coherPDF = mvnpdf(RNcoordinates,targetLoc,[400,0;0,400]);
-coherPDF = coherPDF ./ sum(coherPDF) .*160;
-num_frames = 180;
-frameBin = randi([0 1],num_dots,num_frames);
-ideal = repmat([0;0;1;1],num_frames./4,1);
-include = 0;
-for f = 1:num_frames
-    randInx = rand(num_dots,1)<coherPDF;
-    frameBin(randInx,f) = ideal(f);
-    frameBin(~randInx,f) = randi([0 1],sum(~randInx),1);
-    include = include + sum(randInx);
-end
-sort(coherPDF)
-%%
-filename = '0011.gif';
-
-set(gcf, 'Color', [0.5 0.5 0.5]);  % Figure background color
-set(gca, 'Color', [0.5 0.5 0.5]);  % Figure background color
-
-h = figure(1);
-colormap("gray");
-
-for f = 1:num_frames
-    clf;
-    hold on
-    rectangle('Position', [0, 0, 1024, 768], ...
-          'FaceColor', [0.5 0.5 0.5], 'EdgeColor', 'none');
-    % plot(targetLoc(1),targetLoc(2),'ro')
-    scatter(RNcoordinates(:,1),RNcoordinates(:,2),[],frameBin(:,f),'filled')
-    xlim([0,1024])
-    ylim([0,768])
-    hold off
-    % Capture the plot as an image
-    frame = getframe(h);
-    img = frame2im(frame);
-    [imind, cm] = rgb2ind(img, 256);
-    
-    % Write to the GIF File
-    if f == 1
-        imwrite(imind, cm, filename, 'gif', 'Loopcount', inf, 'DelayTime', 0.067);
-    else
-        imwrite(imind, cm, filename, 'gif', 'WriteMode', 'append', 'DelayTime', 0.067);
-    end
+if false
+    flickerTx = generateBinFlickers(VSinfo,ExpInfo,ScreenInfo,windowPtr,i);
+else
+    flickerTx = generateWaveFlickers(VSinfo,ExpInfo,ScreenInfo,windowPtr,i);
 end
 
 %% start the trial
@@ -72,14 +26,8 @@ Screen('Flip',windowPtr);
 WaitSecs(ExpInfo.tBlank1);
 
 % display visual stimulus
-Screen('DrawTexture',windowPtr,dotClouds_targetLoc,[],...
-        [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
-vbl = Screen('Flip',windowPtr);
-Screen('Flip',windowPtr, vbl + (VSinfo.numFrames - 0.5) * ScreenInfo.ifi);
-
-% mask
-for jj = 1:VSinfo.numFramesMasker 
-Screen('DrawTexture', windowPtr, VSinfo.gwn_texture(rem(jj,VSinfo.GWNnumFrames)+1),[],...
+for jj = 1:VSinfo.numFrames
+Screen('DrawTexture', windowPtr, flickerTx(jj),[],...
          [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
 Screen('Flip',windowPtr);
 end

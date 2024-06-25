@@ -20,14 +20,11 @@
 %% Enter experiment info
 clear; close all;  rng('Shuffle');
 
-ExpInfo.subjID = [];
-while isempty(ExpInfo.subjID) == 1
-    try ExpInfo.subjID = input('Participant ID#: ') ;
-        ExpInfo.session = input('Session: A/V#: ','s');
-        ExpInfo.practice  = input('Main expt: 1; Practice: 2#: ');
-    catch
-    end
-end
+
+ExpInfo.subjID = 100;
+ExpInfo.session = 'V';
+ExpInfo.practice  = 2;
+
 
 switch ExpInfo.session
     case 'A'
@@ -60,17 +57,10 @@ outDir = fullfile(projectDir, 'data','uniLoc');
 if ~exist(outDir,'dir') mkdir(outDir); end
 addpath(genpath(PsychtoolboxRoot))
 
-% avoid rewriting data
-if exist(fullfile(outDir, [outFileName '.mat']), 'file')
-    resp = input('Replace the existing file? Y/N', 's');
-    if ~strcmp(resp,'Y')
-        disp('Experiment terminated.')
-        return
-    end
-end
+
 
 % switch between debug mode
-ExpInfo.mode  = 2; %input('Experiment mode: 1; Debug mode: 2#: ');
+ExpInfo.mode  = 1; %input('Experiment mode: 1; Debug mode: 2#: ');
 switch ExpInfo.mode
     case 1 % experiment mode
         windowSize = [];
@@ -79,12 +69,6 @@ switch ExpInfo.mode
     case 2 % debug mode
         windowSize = [100 100 1000 600]; % open a smaller window
         opacity = 0.4;
-end
-if strcmp(ExpInfo.session, 'A')
-    % Use INSTRFIND to determine if other instrument objects are connected to the requested device.
-    %Arduino = serial('/dev/cu.usbmodemFD131','BaudRate',115200); % make sure this value matches with the baudrate in the arduino code
-    Arduino = serial('/dev/cu.usbmodem14301','BaudRate',115200);
-    fopen(Arduino);
 end
 %% Screen Setup
 PsychDefaultSetup(2);
@@ -127,7 +111,7 @@ ScreenInfo.y2_ub = ScreenInfo.yaxis-ScreenInfo.liftingYaxis+7;
 
 % choose auditory locations out of 16 speakers, level/index is speaker
 % order (left to right: 1-16)
-ExpInfo.audLevel = [1:8];%[6,8,9,11];
+ExpInfo.audLevel = 1:16;
 ExpInfo.nLevel = numel(ExpInfo.audLevel);
 for tt = 1:ExpInfo.nRep
     ExpInfo.randA(:,tt) = randperm(ExpInfo.nLevel)';
@@ -174,9 +158,9 @@ ExpInfo.tFixation = 0.5;
 ExpInfo.tBlank1 = 0.3;
 switch ExpInfo.mode
     case 1 % experiment mode
-        ExpInfo.tStimFrame = 3; % in frame
+        ExpInfo.tStimFrame = 600; % in frame
     case 2 % debug mode
-        ExpInfo.tStimFrame = 60; % in frame
+        ExpInfo.tStimFrame = 240; % in frame
 end
 
 ExpInfo.ITI = 0.3;
@@ -239,6 +223,7 @@ VSinfo.blankScreen         = zeros(ScreenInfo.xaxis,ScreenInfo.yaxis);
 
 % white noise background
 VSinfo.GWNnumPixel         = 4; % 4 pixels will have the same color
+VSinfo.FlickerNumPixel     = 4;
 VSinfo.GWNnumFrames        = 10;
 VSinfo.gwn_texture         = generateNoisyBackground(VSinfo,ScreenInfo,windowPtr);
 
@@ -279,7 +264,7 @@ for i = 1:ExpInfo.nTrials
     else
         SetMouse(ScreenInfo.xaxis*2, ScreenInfo.yaxis*2, windowPtr);
         HideCursor;
-        Resp(i)= LocalizeVisualStim(i, ExpInfo,...
+        Resp(i)= RndBinVisStim(i, ExpInfo,...
             ScreenInfo,VSinfo,windowPtr);
         
     end
@@ -333,7 +318,7 @@ else
     [~, temp2] = sort([Resp(1:end).target_idx]);
     sortedResp = Resp(temp2);
     save(fullfile(outDir,outFileName),'Resp','sortedResp','ExpInfo','ScreenInfo','VSinfo','AudInfo');
-    fopen(Arduino);
+    
 end
 
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...

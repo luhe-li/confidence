@@ -87,6 +87,7 @@ while resp
             sca;
             ShowCursor;
             Screen('CloseAll');
+            fclose(Arduino);
             error('Escape!');
         end
     end
