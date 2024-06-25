@@ -7,7 +7,7 @@ void setup() {
   for (int i = 0; i < numSpeakers; i++) {
     pinMode(speakerPins[i], OUTPUT); // Set each speaker pin as output
     digitalWrite(speakerPins[i], LOW); // Turn all speakers off initially
-  }
+  } 
 }
 
 void loop() {

@@ -81,8 +81,9 @@ switch ExpInfo.mode
         opacity = 0.4;
 end
 if strcmp(ExpInfo.session, 'A')
+    % Use INSTRFIND to determine if other instrument objects are connected to the requested device.
     %Arduino = serial('/dev/cu.usbmodemFD131','BaudRate',115200); % make sure this value matches with the baudrate in the arduino code
-    Arduino = serial('/dev/cu.usbmodem14101','BaudRate',115200);
+    Arduino = serial('/dev/cu.usbmodem14301','BaudRate',115200);
     fopen(Arduino);
 end
 %% Screen Setup
@@ -91,7 +92,7 @@ AssertOpenGL();
 GetSecs();
 WaitSecs(0.1);
 KbCheck();
-ListenChar(1); % change from 2 to 1 because if 2 then NO keyboard will be usable after quitting with escape.
+ListenChar(2);
 
 Screen('Preference', 'VisualDebugLevel', 1);
 Screen('Preference', 'SkipSyncTests', 1);
@@ -126,7 +127,7 @@ ScreenInfo.y2_ub = ScreenInfo.yaxis-ScreenInfo.liftingYaxis+7;
 
 % choose auditory locations out of 16 speakers, level/index is speaker
 % order (left to right: 1-16)
-ExpInfo.audLevel = [6,8,9,11];%[6,8,9,11];
+ExpInfo.audLevel = [1:8];%[6,8,9,11];
 ExpInfo.nLevel = numel(ExpInfo.audLevel);
 for tt = 1:ExpInfo.nRep
     ExpInfo.randA(:,tt) = randperm(ExpInfo.nLevel)';
@@ -136,8 +137,9 @@ ExpInfo.randA = reshape(ExpInfo.randA, [], 1)';
 ExpInfo.randV = reshape(ExpInfo.randV, [], 1)';
 
 % randomized auditory and visual stimulus location in speaker index
-ExpInfo.randAudIdx = ExpInfo.audLevel(ExpInfo.randA);
+% ExpInfo.randAudIdx = ExpInfo.audLevel(ExpInfo.randA);
 ExpInfo.randVisIdx = ExpInfo.audLevel(ceil(ExpInfo.randV./2));
+ExpInfo.randAudIdx = [reshape([1:8;16:-1:9],[1, 16]),reshape([1:8;16:-1:9],[1, 16])];
 
 % location of speakers in CM, visual angle, and pixel
 ExpInfo.sittingDistance              = 113.0; %cm

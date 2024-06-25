@@ -45,7 +45,7 @@ switch ExpInfo.mode
         windowSize                           = [];
         opacity                              = 1;
         % make sure this value matches with the baudrate in the arduino code
-        Arduino                              = serial('/dev/cu.usbmodem14101','BaudRate',115200);
+        Arduino                              = serial('/dev/cu.usbmodem14301','BaudRate',115200);
         fopen(Arduino);
     case 2 % debug mode
         windowSize                           = [100 100 1000 600]; % open a smaller window
@@ -58,12 +58,7 @@ AssertOpenGL();
 GetSecs();
 WaitSecs(0.1);
 KbCheck();
-ListenChar(1); % change from 2 to 1 because if 2 then NO keyboard will be usable after quitting with escape.
-% STOP CHANGING THIS TO TWO 
-% S T O P!    D O I N Gsssssssssss!    T H A T!
-% ListenChar(        ONE!        );
-% There isn't even a keyboard with a index of two what are you even listening to 
-% DO NOT CHANGE THIS TO TWO
+ListenChar(1); 
 
 Screen('Preference', 'VisualDebugLevel', 1);
 Screen('Preference', 'SkipSyncTests', 1);

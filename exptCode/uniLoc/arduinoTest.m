@@ -1,7 +1,7 @@
 %% Enter experiment info
 clear; close all;  rng('Shuffle');
 
-Arduino = serial('/dev/cu.usbmodem14101','BaudRate',115200);
+Arduino = serial('/dev/cu.usbmodem14301','BaudRate',115200);
 fopen(Arduino);
 
 %% Auditory set up
