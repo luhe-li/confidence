@@ -141,6 +141,16 @@ ExpInfo.randV = reshape(ExpInfo.randV, [], 1)';
 ExpInfo.randVisIdx = ExpInfo.audLevel(ceil(ExpInfo.randV./2));
 ExpInfo.randAudIdx = [reshape([1:8;16:-1:9],[1, 16]),reshape([1:8;16:-1:9],[1, 16])];
 
+% ================
+% TO BE UPDATED: CALCUALTE VA CONSIDERING THE FLAT SCREEN
+% calculate VA considering a flat screen
+% sitDistance = 113; % cm
+% LRmostSpeakers2center = 65.5; % cm
+% nSpeaker = 16;
+% speakerCM = linspace(0, LRmostSpeakers2center*2, nSpeaker) - LRmostSpeakers2center;
+% speakerVA = (180/pi) * atan(speakerCM/sitDistance);
+% ================
+
 % location of speakers in CM, visual angle, and pixel
 ExpInfo.sittingDistance              = 113.0; %cm
 ExpInfo.numSpeaker                   = 16;
