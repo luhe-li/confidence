@@ -1,7 +1,7 @@
 function Resp = RndBinVisStim(i, ExpInfo, ScreenInfo,VSinfo,windowPtr)
 
 %% precompute visual stimuli
-if false
+if true
     flickerTx = generateBinFlickers(VSinfo,ExpInfo,ScreenInfo,windowPtr,i);
 else
     flickerTx = generateWaveFlickers(VSinfo,ExpInfo,ScreenInfo,windowPtr,i);

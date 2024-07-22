@@ -139,7 +139,7 @@ ExpInfo.randV = reshape(ExpInfo.randV, [], 1)';
 % randomized auditory and visual stimulus location in speaker index
 % ExpInfo.randAudIdx = ExpInfo.audLevel(ExpInfo.randA);
 ExpInfo.randVisIdx = ExpInfo.audLevel(ceil(ExpInfo.randV./2));
-ExpInfo.randAudIdx = [reshape([1:8;16:-1:9],[1, 16]),reshape([1:8;16:-1:9],[1, 16])];
+ExpInfo.randAudIdx = [1:16];
 
 % ================
 % TO BE UPDATED: CALCUALTE VA CONSIDERING THE FLAT SCREEN

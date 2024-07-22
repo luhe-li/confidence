@@ -8,21 +8,25 @@ function flickerTx = generatePhaseFlickers(VSinfo,ExpInfo,ScreenInfo,windowPtr,i
     %first compute the location of the visual stimulus in pixels
     loc_pixel = round(ExpInfo.randVisPixel(i));
     targetLoc = [ScreenInfo.yaxis-ScreenInfo.liftingYaxis,ScreenInfo.xmid + loc_pixel];
-    num_dots = 1000;
+    num_dots = 3000;
     RNcoordinates = round(rand(num_dots,2) .* repmat([ScreenInfo.yaxis/replictation-1,ScreenInfo.xaxis/replictation-1],num_dots,1)) + 1; % the -1 and +1 was in order to prevent index = 0;
     
     coherPDF = mvnpdf(RNcoordinates,targetLoc./replictation,[40,0;0,80]);
     coherPDF = coherPDF ./ sum(coherPDF) .*60;
     num_frames = VSinfo.numFrames;
     frameBin = randi([0 1],num_dots,num_frames);
-    wavelength = 60;
+    wavelength = 30;
     sinewave = (1-sin(linspace(0,pi,wavelength)))';
     ideal = repmat(sinewave,num_frames./wavelength,1);
-    subideal = repmat(ideal,2,1);
+    
     randInx = rand(num_dots,1)<coherPDF;
-    frameBin(randInx,:) = ideal;
-    outOfPhaseInd = randi([1,wavelength],sum(~randInx),1);
-    frameBin(~randInx,:) = subideal(outOfPhaseInd:outOfPhaseInd+wavelength);
+    frameBin(randInx,:) = repmat(ideal',sum(randInx),1);
+    outOfPhaseBoolInd = randi([1,wavelength],sum(~randInx),1);
+    subideal = repmat(ideal',sum(~randInx),2);
+    outOfPhaseNumInd = find(~randInx);
+    for i = 1:length(outOfPhaseNumInd)
+    frameBin(outOfPhaseNumInd(i),:) = subideal(i,outOfPhaseBoolInd(i):outOfPhaseBoolInd(i)+num_frames-1);
+    end
     flcM_repeated = NaN(ScreenInfo.yaxis,ScreenInfo.xaxis,VSinfo.GWNnumFrames);
     for n = 1:VSinfo.numFrames
         flkM = zeros(ScreenInfo.yaxis/replictation,ScreenInfo.xaxis/replictation);

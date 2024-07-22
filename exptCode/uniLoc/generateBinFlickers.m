@@ -8,7 +8,7 @@ function flickerTx = generateBinFlickers(VSinfo,ExpInfo,ScreenInfo,windowPtr,i)
     %first compute the location of the visual stimulus in pixels
     loc_pixel = round(ExpInfo.randVisPixel(i));
     targetLoc = [ScreenInfo.yaxis-ScreenInfo.liftingYaxis,ScreenInfo.xmid + loc_pixel];
-    num_dots = 10000;
+    num_dots = 3000;
     RNcoordinates = round(rand(num_dots,2) .* repmat([ScreenInfo.yaxis/replictation-1,ScreenInfo.xaxis/replictation-1],num_dots,1)) + 1; % the -1 and +1 was in order to prevent index = 0;
     
     coherPDF = mvnpdf(RNcoordinates,targetLoc./replictation,[40,0;0,80]);
@@ -22,7 +22,7 @@ function flickerTx = generateBinFlickers(VSinfo,ExpInfo,ScreenInfo,windowPtr,i)
     for f = 1:num_frames
         randInx = rand(num_dots,1)<coherPDF;
         frameBin(randInx,f) = ideal(f);
-        frameBin(~randInx,f) = 0;%randi([0,1],sum(~randInx),1);
+        frameBin(~randInx,f) = randi([0,1],sum(~randInx),1);
         include = include + sum(randInx);
     end
     
