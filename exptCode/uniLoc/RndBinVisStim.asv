@@ -3,8 +3,8 @@ function Resp = RndBinVisStim(i, ExpInfo, ScreenInfo,VSinfo,windowPtr)
 %% precompute visual stimuli
 height = 200;
 noise_sd = 20;
-stim_sd = VSinfo.SD_blob(i) .* 6;
-wBack = 0.5;
+stim_sd = VSinfo.SD_blob .* 3;
+wBack = 0.25;
 flickerTx = generateRippleStim(VSinfo,ExpInfo,ScreenInfo,windowPtr,i, height, noise_sd, stim_sd, wBack);
 
 

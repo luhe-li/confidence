@@ -158,7 +158,7 @@ ExpInfo.tFixation = 0.5;
 ExpInfo.tBlank1 = 0.3;
 switch ExpInfo.mode
     case 1 % experiment mode
-        ExpInfo.tStimFrame = 600; % in frame
+        ExpInfo.tStimFrame = 60; % in frame
     case 2 % debug mode
         ExpInfo.tStimFrame = 240; % in frame
 end
