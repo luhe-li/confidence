@@ -5,7 +5,7 @@ height = 200;
 noise_sd = 20;
 stim_sd = VSinfo.SD_blob(i) .* 6;
 wBack = 0.5;
-flickerTx = generateRippleStim(VSinfo,ExpInfo,ScreenInfo,windowPtr,i, height, noise_sd, stim_sd, wBack);
+stimTx = generateRippleStim(VSinfo,ExpInfo,ScreenInfo,windowPtr,i, height, noise_sd, stim_sd, wBack);
 
 
 %% start the trial
@@ -28,7 +28,7 @@ WaitSecs(ExpInfo.tBlank1);
 
 % display visual stimulus
 for jj = 1:VSinfo.numFrames
-Screen('DrawTexture', windowPtr, flickerTx(jj),[],...
+Screen('DrawTexture', windowPtr, stimTx(jj),[],...
          [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
 Screen('Flip',windowPtr);
 end
