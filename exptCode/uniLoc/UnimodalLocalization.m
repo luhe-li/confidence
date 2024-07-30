@@ -39,7 +39,7 @@ end
 
 switch ExpInfo.practice
     case 1
-        outFileName = sprintf('uniLoc_sub%i_ses-%s', ExpInfo.subjID, ExpInfo.session);
+        outFileName = sprintf('uniLoc_sub%s_ses-%s', ExpInfo.subjID, ExpInfo.session);
         ExpInfo.nRep = 20; % number of trial per condition level
         ExpInfo.numBlocks = 8;
     case 2
@@ -49,7 +49,7 @@ switch ExpInfo.practice
             case 'V'
                 ExpInfo.nRep = 2;          
         end
-        outFileName = sprintf('uniLoc_practice_sub%i_ses-%s', ExpInfo.subjID, ExpInfo.session);
+        outFileName = sprintf('uniLoc_practice_sub%s_ses-%s', ExpInfo.subjID, ExpInfo.session);
         ExpInfo.numBlocks = 2;
 end
 
@@ -127,7 +127,7 @@ ScreenInfo.y2_ub = ScreenInfo.yaxis-ScreenInfo.liftingYaxis+7;
 
 % choose auditory locations out of 16 speakers, level/index is speaker
 % order (left to right: 1-16)
-ExpInfo.audLevel = [1:8];%[6,8,9,11];
+ExpInfo.audLevel = [5,8,9,12];
 ExpInfo.nLevel = numel(ExpInfo.audLevel);
 for tt = 1:ExpInfo.nRep
     ExpInfo.randA(:,tt) = randperm(ExpInfo.nLevel)';
@@ -137,9 +137,8 @@ ExpInfo.randA = reshape(ExpInfo.randA, [], 1)';
 ExpInfo.randV = reshape(ExpInfo.randV, [], 1)';
 
 % randomized auditory and visual stimulus location in speaker index
-% ExpInfo.randAudIdx = ExpInfo.audLevel(ExpInfo.randA);
+ExpInfo.randAudIdx = ExpInfo.audLevel(ExpInfo.randA);
 ExpInfo.randVisIdx = ExpInfo.audLevel(ceil(ExpInfo.randV./2));
-ExpInfo.randAudIdx = [1:16];
 
 % ================
 % TO BE UPDATED: CALCUALTE VA CONSIDERING THE FLAT SCREEN
@@ -150,6 +149,8 @@ ExpInfo.randAudIdx = [1:16];
 % speakerCM = linspace(0, LRmostSpeakers2center*2, nSpeaker) - LRmostSpeakers2center;
 % speakerVA = (180/pi) * atan(speakerCM/sitDistance);
 % ================
+% This is done.
+% ================
 
 % location of speakers in CM, visual angle, and pixel
 ExpInfo.sittingDistance              = 113.0; %cm
@@ -158,7 +159,7 @@ ExpInfo.LRmostSpeakers2center        = 65.5; %cm
 ExpInfo.LRmostVisualAngle            = (180/pi) * atan(ExpInfo.LRmostSpeakers2center / ...
     ExpInfo.sittingDistance);
 ExpInfo.speakerLocCM = linspace(-ExpInfo.LRmostSpeakers2center, ExpInfo.LRmostSpeakers2center, ExpInfo.numSpeaker);
-ExpInfo.speakerLocVA = linspace(-ExpInfo.LRmostVisualAngle, ExpInfo.LRmostVisualAngle, ExpInfo.numSpeaker);
+ExpInfo.speakerLocVA = (180/pi) * atan(ExpInfo.speakerLocCM/ExpInfo.sittingDistance);
 ExpInfo.speakerLocPixel = round(ExpInfo.speakerLocCM * ScreenInfo.numPixels_perCM);
 
 % auditory locations in different units
