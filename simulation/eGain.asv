@@ -43,30 +43,22 @@ for i = 1:length(estX)
 
     erPDFright = myPDF(i,(estX(i)+1) : (estX(i) + confRadiusMax(i))); 
     erPDFleft  = myPDF(i,(estX(i)-1) : -1 : (estX(i) - confRadiusMax(i))); 
-    % Error pdf: For this specific estX(i) that we are working on, truncate
+    % error pdf: For this specific estX(i) that we are working on, truncate
     % the part of the pdf from the minimum radius to the maximum radius
     % we do left and right because we can't assume symmetry in PDF around
     % estX
     erCDF = [myPDF(i,estX(i)) , cumsum(erPDFright) + cumsum(erPDFleft) + myPDF(i,estX(i))]; 
-    % Error cdf, i.e. erf: Transform the PDF from left and right into CDF,
+    % error cdf, i.e. erf: Transform the PDF from left and right into CDF,
     % add them up along with the probability density at the estimated
     % location estX. The sum of this addition is our "error function". 
     % We concatenate this with the probability density at estX because that
     % is the CDF when the confidence radius encloses nothing but the estX. 
-    % Conceptually, this error CDF is the probability that the stimulus is
-    % in the range enclosed by each possible radii. 
-    % e.g. p(stimulus is within 20 pixels from estX) = erCDF(20)
+    % Conceptually, this error CDF is the probabi
+
+
     eGain = costFun .* erCDF;
-    % The expected gain is taking the dot product between the cost function
-    % and the error CDF. 
-    % e.g. p(stimulus is within 20 pixels from estX) * cost(radius = 20)
-    % = erCDF(20) * costFun(20)
     [~,optRadius(i)] = max(eGain);
-    % We look for the index that corresponds to the maximum expected gain. 
-    % That index is the value of the radius we are looking for.
     expGain(i).eGain = eGain;
-    % We also save this entire eGain array in case we need it later
-    % (totally fine to remove, just remember to change function output)
 end
 
 end
