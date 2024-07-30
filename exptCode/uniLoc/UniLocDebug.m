@@ -158,7 +158,7 @@ ExpInfo.tFixation = 0.5;
 ExpInfo.tBlank1 = 0.3;
 switch ExpInfo.mode
     case 1 % experiment mode
-        ExpInfo.tStimFrame = 60; % in frame
+        ExpInfo.tStimFrame = 10; % in frame
     case 2 % debug mode
         ExpInfo.tStimFrame = 240; % in frame
 end
@@ -264,7 +264,7 @@ for i = 1:ExpInfo.nTrials
     else
         SetMouse(ScreenInfo.xaxis*2, ScreenInfo.yaxis*2, windowPtr);
         HideCursor;
-        Resp(i)= RndBinVisStim(i, ExpInfo,...
+        Resp(i)= LocalizeVisualStimAllDial(i, ExpInfo,...
             ScreenInfo,VSinfo,windowPtr);
         
     end

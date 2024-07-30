@@ -5,7 +5,7 @@ function stimTextureMatrix = generateRippleStim(VSinfo,ExpInfo,ScreenInfo,window
 %first compute the location of the visual stimulus in pixels
 loc_pixel = round(ExpInfo.randVisPixel(i));
 % frame_rate = 60;
-increment = 0.1;%pi/VSinfo.numFrames;
+increment = 0.2;%pi/VSinfo.numFrames;
 back_sd_y = noise_sd;
 stim_sd_y = stim_sd; %doesn't matter when repeating lines
 wGauss = 1 - wBack;

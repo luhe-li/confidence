@@ -1,4 +1,4 @@
-function Resp = RndBinVisStim(i, ExpInfo, ScreenInfo,VSinfo,windowPtr)
+function Resp = LocalizeVisualStimAllDial(i, ExpInfo, ScreenInfo,VSinfo,windowPtr)
 
 %% precompute visual stimuli
 height = 200;
@@ -9,7 +9,8 @@ stimTx = generateRippleStim(VSinfo,ExpInfo,ScreenInfo,windowPtr,i, height, noise
 ExpInfo.maxPoint = 100; %%%%%%%%%%%%%%%%% NEEDS TO BE ADDED BACK TO EXP MAIN SCRIPT!
 ExpInfo.dropRate = 2;
 ExpInfo.minPoint = 1;
-dialScaler = 2;
+dialScalerConf = 2;
+dialScalerEst = 10;
 %% start the trial
 
 % fixation
@@ -40,15 +41,17 @@ Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
 Screen('Flip',windowPtr);
 
 %% response
+pm = PsychPowerMate('Open');
+[buttonPM, ~] = PsychPowerMate('Get',pm); %initalize powermate
+initDialPos = -randi(ceil(ScreenInfo.xaxis/dialScalerEst),1);
 
 % perceptual response
 yLoc = ScreenInfo.yaxis-ScreenInfo.liftingYaxis;
-SetMouse(randi(ScreenInfo.xaxis*2,1), yLoc*2, windowPtr);
 HideCursor;
-buttons = 0;
 tic;
-while sum(buttons)==0
-    [x,~,buttons] = GetMouse(windowPtr);
+while ~buttonPM
+    [buttonPM, dialPos] = PsychPowerMate('Get',pm); %update dial postion
+    x = dialScalerEst * abs(dialPos - initDialPos);
     HideCursor;
     x = min(x, ScreenInfo.xmid*2); 
     x = max(0,x);
@@ -75,17 +78,18 @@ SetMouse(x*2, yLoc*2, windowPtr);
 HideCursor;
 WaitSecs(0.2);
 tic;
-pm = PsychPowerMate('Open');
+
 [buttonPM, dialPos] = PsychPowerMate('Get',pm); %initalize powermate
 initDialPos = dialPos;
 while ~buttonPM
     [buttonPM, dialPos] = PsychPowerMate('Get',pm); %update dial postion
     
-    conf_radius = dialScaler * abs(dialPos - initDialPos);
+    conf_radius = dialScalerConf * abs(dialPos - initDialPos);
     potentialconfRcm = conf_radius/ScreenInfo.numPixels_perCM;
-    potentialPoint = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * potentialconfRcm, ExpInfo.minPoint);
+    potentialconfRdeg = rad2deg(atan(potentialconfRcm/ExpInfo.sittingDistance));
+    potentialPoint = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * potentialconfRdeg, ExpInfo.minPoint);
     
-    potentialEnclosed = abs(ExpInfo.speakerLocCM(ExpInfo.randVisIdx(i)) - Resp.response_cm) <= potentialconfRcm;
+    potentialEnclosed = abs(ExpInfo.speakerLocVA(ExpInfo.randVisIdx(i)) - Resp.response_deg) <= potentialconfRdeg;
     
     Screen('DrawTexture',windowPtr, VSinfo.grey_texture,[],...
         [0,0,ScreenInfo.xaxis, ScreenInfo.yaxis]);
