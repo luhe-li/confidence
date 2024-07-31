@@ -21,8 +21,10 @@ optRadius = NaN(length(estX),1);
 % estX
 
 for i = 1:length(estX)
+    
     confRadius = 0 : confRadiusMax(i); 
     % for each estimation location estX, it has its distinct max radius
+
     lengthRatio = confRadius ./ elbow;
     % calculate the ratio between the current radius and 
     % the radius where the score stops dropping (because it's too wide) 
@@ -31,6 +33,7 @@ for i = 1:length(estX)
     % if confRadius < elbow, this ratio < 1, participant gets the score
     % proportional to their confRadius. e.g. ratio = 0.25, so 25% of the 
     % score is deduced, they get 75% score
+    
     penaltyRange = maxScore - minScore;
     % This is the max possible penalty they can get. when ratio = 1, they
     % get the entire penalty. 
