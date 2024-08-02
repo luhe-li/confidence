@@ -1,12 +1,15 @@
 function Resp = RndBinVisStim(i, ExpInfo, ScreenInfo,VSinfo,windowPtr)
 
 %% precompute visual stimuli
-if true
-    flickerTx = generateBinFlickers(VSinfo,ExpInfo,ScreenInfo,windowPtr,i);
-else
-    flickerTx = generateWaveFlickers(VSinfo,ExpInfo,ScreenInfo,windowPtr,i);
-end
-
+height = 200;
+noise_sd = 20;
+stim_sd = VSinfo.SD_blob(i) .* 8;
+wBack = 0.55;
+stimTx = generateRippleStim(VSinfo,ExpInfo,ScreenInfo,windowPtr,i, height, noise_sd, stim_sd, wBack);
+ExpInfo.maxPoint = 100; %%%%%%%%%%%%%%%%% NEEDS TO BE ADDED BACK TO EXP MAIN SCRIPT!
+ExpInfo.dropRate = 2;
+ExpInfo.minPoint = 1;
+dialScaler = 2;
 %% start the trial
 
 % fixation
@@ -27,7 +30,7 @@ WaitSecs(ExpInfo.tBlank1);
 
 % display visual stimulus
 for jj = 1:VSinfo.numFrames
-Screen('DrawTexture', windowPtr, flickerTx(jj),[],...
+Screen('DrawTexture', windowPtr, stimTx(jj),[],...
          [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
 Screen('Flip',windowPtr);
 end
@@ -42,73 +45,103 @@ Screen('Flip',windowPtr);
 yLoc = ScreenInfo.yaxis-ScreenInfo.liftingYaxis;
 SetMouse(randi(ScreenInfo.xaxis*2,1), yLoc*2, windowPtr);
 HideCursor;
-resp = 1;
+buttons = 0;
 tic;
-stopRecorded = 0;
-x = -1;
-while resp
-    cache = x;
-    [x,~,~] = GetMouse(windowPtr);
+while sum(buttons)==0
+    [x,~,buttons] = GetMouse(windowPtr);
     HideCursor;
-    x = min(x, ScreenInfo.xmid*2);
+    x = min(x, ScreenInfo.xmid*2); 
     x = max(0,x);
     Screen('DrawTexture',windowPtr, VSinfo.grey_texture,[],...
         [0,0,ScreenInfo.xaxis, ScreenInfo.yaxis]);
     Screen('DrawLine', windowPtr, [255 255 255],x, yLoc-3, x, yLoc+3, 1);
-    Screen('Flip', windowPtr);
-    
-    locdiff = abs(cache - x);
-    if locdiff ~= 0
-        stopRecorded = 0;
-    elseif locdiff == 0 && ~stopRecorded
-        mouseStopT = GetSecs();
-        stopRecorded = 1;
-    end
-    
-    % Check the keyboard
-    [keyIsDown, startTime, keyCode] = KbCheck();
-    if keyIsDown
-        % Check if any of the specified keys are pressed
-        if keyCode(KbName('a')) || keyCode(KbName('s')) || keyCode(KbName('d')) || keyCode(KbName('f'))
-            [releaseTime, ~, ~] = KbReleaseWait();
-            Resp.PressDuration = releaseTime - startTime;
-            Resp.mouseStopDuration = startTime - mouseStopT;
-            if keyCode(KbName('a'))
-                conf = 1;
-            elseif keyCode(KbName('s'))
-                conf = 2;
-            elseif keyCode(KbName('d'))
-                conf = 3;
-            elseif keyCode(KbName('f'))
-                conf = 4;
-            end
-            resp = 0;
-        end
-        if keyCode(KbName('ESCAPE'))
-            sca;
-            ShowCursor;
-            Screen('CloseAll');
-            error('Escape!');
-        end
+    Screen('Flip',windowPtr);
+    [~, ~, keyCode] = KbCheck(-1);
+    if keyCode(KbName('ESCAPE'))
+        sca;
+        ShowCursor;
+        Screen('CloseAll');
+        error('Escape');
     end
 end
-Resp.conf = conf;
 Resp.RT1  = toc;
 Resp.response_pixel = x;
 Resp.response_cm    = (Resp.response_pixel -  ScreenInfo.xmid)/ScreenInfo.numPixels_perCM;
 Resp.response_deg   = rad2deg(atan(Resp.response_cm/ExpInfo.sittingDistance));
 HideCursor;
+% confidence response
+Screen('TextSize',windowPtr,15);
+SetMouse(x*2, yLoc*2, windowPtr);
+HideCursor;
+WaitSecs(0.2);
+tic;
+pm = PsychPowerMate('Open');
+[buttonPM, dialPos] = PsychPowerMate('Get',pm); %initalize powermate
+initDialPos = dialPos;
+while ~buttonPM
+    [buttonPM, dialPos] = PsychPowerMate('Get',pm); %update dial postion
+    
+    conf_radius = dialScaler * abs(dialPos - initDialPos);
+    potentialconfRcm = conf_radius/ScreenInfo.numPixels_perCM;
+    potentialPoint = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * potentialconfRcm, ExpInfo.minPoint);
+    
+    potentialEnclosed = abs(ExpInfo.speakerLocCM(ExpInfo.randVisIdx(i)) - Resp.response_cm) <= potentialconfRcm;
+    
+    Screen('DrawTexture',windowPtr, VSinfo.grey_texture,[],...
+        [0,0,ScreenInfo.xaxis, ScreenInfo.yaxis]);
+    Screen('DrawLine', windowPtr, [255 255 255],x, yLoc+3, x, yLoc-3, 1);
+    Screen('DrawLine', windowPtr, [255 255 255],x-conf_radius, yLoc, x+conf_radius, yLoc, 1);
+    Screen('DrawLine', windowPtr, [255 255 255],x-conf_radius, yLoc+height/2, x-conf_radius, yLoc-height/2, 1);
+    Screen('DrawLine', windowPtr, [255 255 255],x+conf_radius, yLoc+height/2, x+conf_radius, yLoc-height/2, 1);
+    
+    if ExpInfo.practice == 2
+    DrawFormattedText(windowPtr, ['Actual score: ' num2str(round(potentialPoint * potentialEnclosed,2))], 'center', 'center', ...
+        [255 255 255],[], [], [], [], [], ...
+        [x-20,yLoc-25,x+20,yLoc-19]);
+    DrawFormattedText(windowPtr, ['Potential score: ' num2str(round(potentialPoint,2))], 'center', 'center', ...
+        [255 255 255],[], [], [], [], [], ...
+        [x-20,yLoc-12,x+20,yLoc-6]);
+    else
+    DrawFormattedText(windowPtr, num2str(round(potentialPoint,2)), 'center', 'center', ...
+        [255 255 255],[], [], [], [], [], ...
+        [x-20,yLoc-12,x+20,yLoc-6]);
+    end
+    
+    Screen('Flip',windowPtr);
+    [~, ~, keyCode] = KbCheck(-1);
+    if keyCode(KbName('ESCAPE'))
+        sca;
+        ShowCursor;
+        Screen('CloseAll');
+        error('Escape');
+    end
+end
+Resp.RT2             = toc;
+Resp.conf_radius_pixel= conf_radius;
+Resp.conf_radius_cm  = Resp.conf_radius_pixel/ScreenInfo.numPixels_perCM;
 
 % ITI
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
     [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
+if ~rem(i,3) && ExpInfo.practice ~= 2 % every three trials give feedback, if not practice
+    DrawFormattedText(windowPtr, ['Score: ' num2str(round(potentialPoint * potentialEnclosed,2))], 'center', 'center', ...
+        [255 255 255],[], [], [], [], [], ...
+        [ScreenInfo.xmid-20,yLoc-3,ScreenInfo.xmid+20,yLoc+3]);
+end
 Screen('Flip',windowPtr);
 WaitSecs(ExpInfo.ITI);
 
-% Record target location
+% calculate points
 Resp.target_idx = ExpInfo.randVisIdx(i); % visual location that corresponds to speaker index
-Resp.target_cm = ExpInfo.randVisCM(i);
-Resp.target_pixel = ExpInfo.randVisPixel(i);
-Resp.target_deg = ExpInfo.randVisVA(i);
+Resp.target_cm = ExpInfo.speakerLocCM(Resp.target_idx);
+Resp.target_deg = rad2deg(atan(Resp.target_cm/ExpInfo.sittingDistance));
+Resp.enclosed = abs(Resp.target_cm - Resp.response_cm) <= Resp.conf_radius_cm;
+bestRadius_cm = abs(Resp.target_cm - Resp.response_cm);
+Resp.maxPtPossible = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * bestRadius_cm, ExpInfo.minPoint);
+if Resp.enclosed
+    Resp.point = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * Resp.conf_radius_cm, ExpInfo.minPoint);
+else
+    Resp.point = 0;
+end
 
 end

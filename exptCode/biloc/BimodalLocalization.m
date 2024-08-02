@@ -13,11 +13,11 @@ end
 
 switch ExpInfo.practice
     case 1
-        outFileName                          = sprintf('biLoc_sub%i_ses%i', ExpInfo.subjID, ExpInfo.session);
+        outFileName                          = sprintf('biLoc_sub%s_ses%i', ExpInfo.subjID, ExpInfo.session);
         ExpInfo.nRep                         = 10; % number of trial per condition level
         ExpInfo.numBlocks                    = 8;
     case 2
-        outFileName                          = sprintf('biLoc_practice_sub%i_ses%i', ExpInfo.subjID, ExpInfo.session);
+        outFileName                          = sprintf('biLoc_practice_sub%s_ses%i', ExpInfo.subjID, ExpInfo.session);
         ExpInfo.nRep                         = 2; % number of trial per condition level
         ExpInfo.numBlocks                    = 2;
 end
