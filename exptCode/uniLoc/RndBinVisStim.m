@@ -6,10 +6,8 @@ noise_sd = 20;
 stim_sd = VSinfo.SD_blob(i) .* 8;
 wBack = 0.55;
 stimTx = generateRippleStim(VSinfo,ExpInfo,ScreenInfo,windowPtr,i, height, noise_sd, stim_sd, wBack);
-ExpInfo.maxPoint = 100; %%%%%%%%%%%%%%%%% NEEDS TO BE ADDED BACK TO EXP MAIN SCRIPT!
-ExpInfo.dropRate = 2;
-ExpInfo.minPoint = 1;
 dialScaler = 2;
+
 %% start the trial
 
 % fixation
@@ -69,6 +67,7 @@ Resp.response_pixel = x;
 Resp.response_cm    = (Resp.response_pixel -  ScreenInfo.xmid)/ScreenInfo.numPixels_perCM;
 Resp.response_deg   = rad2deg(atan(Resp.response_cm/ExpInfo.sittingDistance));
 HideCursor;
+
 % confidence response
 Screen('TextSize',windowPtr,15);
 SetMouse(x*2, yLoc*2, windowPtr);

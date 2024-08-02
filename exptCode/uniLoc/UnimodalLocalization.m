@@ -1,28 +1,10 @@
 
-% Updated: 24/05/28 
-% In the unimodal localization task, participants localized
-% visual and auditory stimuli presented alone in separate sessions. Each
-% trial began with a fixation cross presented straight ahead for 500 ms,
-% followed by a 300 ms blank screen. Then, either an auditory or a visual
-% 50 ms-long stimulus was presented. Next, the response cursor appeared,
-% and participants adjusted the horizontal location of the cursor to match
-% that of the stimulus. They pressed a button to reflect their confidence
-% level (1 to 4, from less to more confident), which also registered their
-% location report. There was no time constraint for the response. Visual
-% feedback of the cursor location was provided during its adjustment, but
-% error feedback was not provided. The inter-trial interval (ITI) was 300
-% ms. 
-% Auditory or visual stimuli were presented at six locations, ranging
-% from -10 to 10 degrees of visual angle, linearly spaced. Each location
-% was tested 20 times pseudorandomly, resulting in 120 trials. The visual
-% stimuli mixed two reliabilities, resulting in 240 trials.
-
 %% Enter experiment info
 clear; close all;  rng('Shuffle');
 
-ExpInfo.subjID = [];
-while isempty(ExpInfo.subjID) == 1
-    try ExpInfo.subjID = input('Participant ID#: ') ;
+ExpInfo.subjInit = [];
+while isempty(ExpInfo.subjInit) == 1
+    try ExpInfo.subjInit = input('Participant ID#: ') ;
         ExpInfo.session = input('Session: A/V#: ','s');
         ExpInfo.practice  = input('Main expt: 1; Practice: 2#: ');
     catch
@@ -36,10 +18,9 @@ switch ExpInfo.session
         ExpInfo.nReliability = 2;
 end
 
-
 switch ExpInfo.practice
     case 1
-        outFileName = sprintf('uniLoc_sub%s_ses-%s', ExpInfo.subjID, ExpInfo.session);
+        outFileName = sprintf('uniLoc_sub%s_ses-%s', ExpInfo.subjInit, ExpInfo.session);
         ExpInfo.nRep = 20; % number of trial per condition level
         ExpInfo.numBlocks = 8;
     case 2
@@ -49,7 +30,7 @@ switch ExpInfo.practice
             case 'V'
                 ExpInfo.nRep = 2;          
         end
-        outFileName = sprintf('uniLoc_practice_sub%s_ses-%s', ExpInfo.subjID, ExpInfo.session);
+        outFileName = sprintf('uniLoc_practice_sub%s_ses-%s', ExpInfo.subjInit, ExpInfo.session);
         ExpInfo.numBlocks = 2;
 end
 
@@ -69,23 +50,13 @@ if exist(fullfile(outDir, [outFileName '.mat']), 'file')
     end
 end
 
-% switch between debug mode
-ExpInfo.mode  = 2; %input('Experiment mode: 1; Debug mode: 2#: ');
-switch ExpInfo.mode
-    case 1 % experiment mode
-        windowSize = [];
-        opacity = 1;
-        HideCursor();
-    case 2 % debug mode
-        windowSize = [100 100 1000 600]; % open a smaller window
-        opacity = 0.4;
-end
 if strcmp(ExpInfo.session, 'A')
     % Use INSTRFIND to determine if other instrument objects are connected to the requested device.
     %Arduino = serial('/dev/cu.usbmodemFD131','BaudRate',115200); % make sure this value matches with the baudrate in the arduino code
     Arduino = serial('/dev/cu.usbmodem14301','BaudRate',115200);
     fopen(Arduino);
 end
+
 %% Screen Setup
 PsychDefaultSetup(2);
 AssertOpenGL();
@@ -140,18 +111,6 @@ ExpInfo.randV = reshape(ExpInfo.randV, [], 1)';
 ExpInfo.randAudIdx = ExpInfo.audLevel(ExpInfo.randA);
 ExpInfo.randVisIdx = ExpInfo.audLevel(ceil(ExpInfo.randV./2));
 
-% ================
-% TO BE UPDATED: CALCUALTE VA CONSIDERING THE FLAT SCREEN
-% calculate VA considering a flat screen
-% sitDistance = 113; % cm
-% LRmostSpeakers2center = 65.5; % cm
-% nSpeaker = 16;
-% speakerCM = linspace(0, LRmostSpeakers2center*2, nSpeaker) - LRmostSpeakers2center;
-% speakerVA = (180/pi) * atan(speakerCM/sitDistance);
-% ================
-% This is done.
-% ================
-
 % location of speakers in CM, visual angle, and pixel
 ExpInfo.sittingDistance              = 113.0; %cm
 ExpInfo.numSpeaker                   = 16;
@@ -169,8 +128,8 @@ ExpInfo.randAudPixel  = ExpInfo.randAudCM .* ScreenInfo.numPixels_perCM;
 
 % visual locations in different units
 ExpInfo.randVisCM     = ExpInfo.speakerLocCM(ExpInfo.randVisIdx);
-ExpInfo.randVisVA    = rad2deg(atan(ExpInfo.randVisCM/ExpInfo.sittingDistance));
-ExpInfo.randVisPixel = ExpInfo.randVisCM .* ScreenInfo.numPixels_perCM;
+ExpInfo.randVisVA     = rad2deg(atan(ExpInfo.randVisCM/ExpInfo.sittingDistance));
+ExpInfo.randVisPixel  = ExpInfo.randVisCM .* ScreenInfo.numPixels_perCM;
 
 % split all the trials into blocks
 ExpInfo.nTrials = ExpInfo.nLevel * ExpInfo.nRep * ExpInfo.nReliability;
@@ -180,16 +139,15 @@ ExpInfo.firstTrial = blocks(1:ExpInfo.numBlocks)+1;
 ExpInfo.lastTrial = blocks(2:(ExpInfo.numBlocks+1));
 ExpInfo.numTrialsPerBlock = ExpInfo.breakTrials(1);
 
+% cost function setup
+ExpInfo.maxPoint = 100;
+ExpInfo.minPoint = 1;
+ExpInfo.dropRate = (ExpInfo.maxPoint - ExpInfo.minPoint)/(ScreenInfo.xaxis/2);
+
 % define durations
 ExpInfo.tFixation = 0.5;
 ExpInfo.tBlank1 = 0.3;
-switch ExpInfo.mode
-    case 1 % experiment mode
-        ExpInfo.tStimFrame = 3; % in frame
-    case 2 % debug mode
-        ExpInfo.tStimFrame = 60; % in frame
-end
-
+ExpInfo.tStimFrame = 3;
 ExpInfo.ITI = 0.3;
 ExpInfo.tIFI = ScreenInfo.ifi;
 
@@ -265,6 +223,7 @@ VSinfo.Cloud                         = reshape(cloud_temp,length(x),length(y)) .
 
 %% Run the experiment
 instruction = ['In the following session, you will be presented \nan auditory or visual stimulus on each trial.','\nAfter the presentation, please use the cursor \nto locate the center of the sound source \n or the center of the visual cloud of dots, not the mode of the cloud.','\nPress key A, S, D, or F to report your confidence in this localization response. ','\nA = Very Low  S = Low  D = High  F = Very High','\nThe key press is used to register localization response.','\nPlease use the whole confidence range.','\nPlease use the same strategy to report your confidence in every session.','\nPress any key to start the unimodal localization task.'];
+
 %start the experiment
 c                   = clock;
 ExpInfo.start       = sprintf('%04d/%02d/%02d_%02d:%02d:%02d',c(1),c(2),c(3),c(4),c(5),ceil(c(6)));
@@ -290,7 +249,7 @@ for i = 1:ExpInfo.nTrials
     else
         SetMouse(ScreenInfo.xaxis*2, ScreenInfo.yaxis*2, windowPtr);
         HideCursor;
-        Resp(i)= LocalizeVisualStim(i, ExpInfo,...
+        Resp(i)= RndBinVisStim(i, ExpInfo,...
             ScreenInfo,VSinfo,windowPtr);
         
     end
@@ -312,9 +271,6 @@ for i = 1:ExpInfo.nTrials
         DrawFormattedText(windowPtr, blockInfo,...
             'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis,...
             [255 255 255]);
-%         DrawFormattedText(windowPtr, '\nPress any button to resume the experiment.',...
-%             'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis,...
-%             [255 255 255]);
         Screen('Flip',windowPtr); KbWait(-3); WaitSecs(1);
         
     end
@@ -339,7 +295,6 @@ if ExpInfo.session == 'V'
     save(fullfile(outDir,outFileName),'Resp','reliSortResp','ExpInfo','ScreenInfo','VSinfo','AudInfo','sortedReli1Resp','sortedReli2Resp')
     
 else
-    
     % sort trials by location level
     [~, temp2] = sort([Resp(1:end).target_idx]);
     sortedResp = Resp(temp2);

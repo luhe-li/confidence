@@ -3,9 +3,6 @@ function Resp = LocalizePointStim(i, ExpInfo,...
 
 %% precompute visual stimuli
 height = 200;
-ExpInfo.maxPoint = 100; %%%%%%%%%%%%%%%%% NEEDS TO BE ADDED BACK TO EXP MAIN SCRIPT!
-ExpInfo.dropRate = 2;
-ExpInfo.minPoint = 1;
 dialScaler = 2;
 %first compute the location of the visual stimulus in pixels
 jitter = VSinfo.jitter_lb + (VSinfo.jitter_ub - VSinfo.jitter_lb) * rand;

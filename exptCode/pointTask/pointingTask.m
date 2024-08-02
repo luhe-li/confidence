@@ -1,9 +1,9 @@
 %% Enter experiment info
 clear; close all;  rng('Shuffle');
 
-ExpInfo.subjID = [];
-while isempty(ExpInfo.subjID) == 1
-    try ExpInfo.subjID = input('Participant ID#: ') ;
+ExpInfo.subjInit = [];
+while isempty(ExpInfo.subjInit) == 1
+    try ExpInfo.subjInit = input('Participant Initial: ') ;
         ExpInfo.practice  = input('Main expt: 1; Practice: 2#: ');
     catch
     end
@@ -12,14 +12,12 @@ ExpInfo.session =  'Pointing';
 
 switch ExpInfo.practice
     case 1
-        outFileName = sprintf('point_sub%i_ses-%s', ExpInfo.subjID,ExpInfo.session);
+        outFileName = sprintf('point_sub%s_ses-%s', ExpInfo.subjInit, ExpInfo.session);
         ExpInfo.nRep = 20; % number of trial per condition level
         ExpInfo.numBlocks = 8;
     case 2
-
         ExpInfo.nRep = 4;
-
-        outFileName = sprintf('point_practice_sub%i_ses-%s', ExpInfo.subjID, ExpInfo.session);
+        outFileName = sprintf('point_practice_sub%i_ses-%s', ExpInfo.subjInit, ExpInfo.session);
         ExpInfo.numBlocks = 2;
 end
 
@@ -32,8 +30,6 @@ if ~exist(outDir,'dir') mkdir(outDir); end
 addpath(genpath(PsychtoolboxRoot))
 
 % avoid rewriting data
-
-
 if exist(fullfile(outDir, [outFileName '.mat']), 'file')
     resp = input('Replace the existing file? Y/N', 's');
     if ~strcmp(resp,'Y')
@@ -42,17 +38,17 @@ if exist(fullfile(outDir, [outFileName '.mat']), 'file')
     end
 end
 
-% switch between debug mode
-ExpInfo.mode  = 1; %input('Experiment mode: 1; Debug mode: 2#: ');
-switch ExpInfo.mode
-    case 1 % experiment mode
-        windowSize = [];
-        opacity = 1;
-        HideCursor();
-    case 2 % debug mode
-        windowSize = [100 100 1000 600]; % open a smaller window
-        opacity = 0.4;
-end
+% % switch between debug mode
+% ExpInfo.mode  = 1; %input('Experiment mode: 1; Debug mode: 2#: ');
+% switch ExpInfo.mode
+%     case 1 % experiment mode
+%         windowSize = [];
+%         opacity = 1;
+%         HideCursor();
+%     case 2 % debug mode
+%         windowSize = [100 100 1000 600]; % open a smaller window
+%         opacity = 0.4;
+% end
 
 %% Screen Setup
 PsychDefaultSetup(2);
@@ -60,10 +56,7 @@ AssertOpenGL();
 GetSecs();
 WaitSecs(0.1);
 KbCheck();
-% ListenChar(2); % silence the keyboard
-% if you silence it at least leave one key on the other keyboard able to
-% stop the script. Otherwise you can't even stop the program when
-% debugging since you SetMouse after every click.
+ListenChar(2); % silence the keyboard
 
 Screen('Preference', 'VisualDebugLevel', 1);
 Screen('Preference', 'SkipSyncTests', 1);
@@ -126,7 +119,8 @@ VSinfo.Cloud                         = reshape(cloud_temp,length(x),length(y)) .
 
 %% Experiment set up
 ExpInfo.nReliability = 1;
-% choose auditory locations out of 16 speakers, in index
+
+% choose auditory locations out of 16 speakers, in level
 ExpInfo.audLevel = 5:12;
 ExpInfo.nLevel = numel(ExpInfo.audLevel);
 for tt = 1:ExpInfo.nRep
@@ -163,11 +157,11 @@ ExpInfo.lastTrial    = blocks(2:(ExpInfo.numBlocks+1));
 ExpInfo.numTrialsPerBlock = ExpInfo.breakTrials(1);
 
 % points set up
-ExpInfo.maxPoint = 100;
-ExpInfo.minPoint = 1; % if enclosed
-% maxPoint - droprate * 2 * confidence_radius = minPoint
-% % we define max 2 * confidence_radius as half of the screen size
-ExpInfo.dropRate = (ExpInfo.maxPoint - ExpInfo.minPoint)/ScreenInfo.halfScreenSize;
+ExpInfo.maxPoint = 100; 
+ExpInfo.minPoint = 1;
+% if enclosed, maxPoint - droprate * 2 * confidence_radius = minPoint
+% % we define max 2 * confidence_radius as half of the screen size in pixel
+ExpInfo.dropRate = (ExpInfo.maxPoint - ExpInfo.minPoint)/(ScreenInfo.xaxis/2);
 
 % define durations
 ExpInfo.tFixation = 0.5;
@@ -199,8 +193,6 @@ for i = 1:ExpInfo.nTrials
     Resp(i)= LocalizePointStim(i, ExpInfo,...
         ScreenInfo,VSinfo,windowPtr);
 
-
-
     %% save by trial
     save(fullfile(outDir,outFileName),'Resp','ExpInfo','ScreenInfo','VSinfo');
 
@@ -226,7 +218,6 @@ end
 %% Save sorted data and end the experiment
 c  = clock;
 ExpInfo.finish  = sprintf('%04d/%02d/%02d_%02d:%02d:%02d',c(1),c(2),c(3),c(4),c(5),ceil(c(6)));
-
 
 % sort trials by location level
 [~, temp2] = sort([Resp(1:end).target_idx]);
