@@ -4,7 +4,7 @@ clear; close all;  rng('Shuffle');
 
 ExpInfo.subjInit = [];
 while isempty(ExpInfo.subjInit) == 1
-    try ExpInfo.subjInit = input('Participant ID#: ') ;
+    try ExpInfo.subjInit = input('Participant Initial#: ','s') ;
         ExpInfo.session = input('Session: A/V#: ','s');
         ExpInfo.practice  = input('Main expt: 1; Practice: 2#: ');
     catch
@@ -37,9 +37,10 @@ end
 % path control
 curDir = pwd;
 [projectDir, ~]  = fileparts(fileparts(curDir));
+[git_dir, ~] = fileparts(projectDir);
 outDir = fullfile(projectDir, 'data','uniLoc');
 if ~exist(outDir,'dir') mkdir(outDir); end
-addpath(genpath(PsychtoolboxRoot))
+addpath(genpath(fullfile(git_dir, 'Psychtoolbox-3')))
 
 % avoid rewriting data
 if exist(fullfile(outDir, [outFileName '.mat']), 'file')
@@ -57,6 +58,18 @@ if strcmp(ExpInfo.session, 'A')
     fopen(Arduino);
 end
 
+% switch between debug mode
+ExpInfo.mode  = 1; %input('Experiment mode: 1; Debug mode: 2#: ');
+switch ExpInfo.mode
+    case 1 % experiment mode
+        windowSize = [];
+        opacity = 1;
+        HideCursor();
+    case 2 % debug mode
+        windowSize = [100 100 1000 600]; % open a smaller window
+        opacity = 0.4;
+end
+
 %% Screen Setup
 PsychDefaultSetup(2);
 AssertOpenGL();
@@ -67,7 +80,6 @@ ListenChar(2);
 
 Screen('Preference', 'VisualDebugLevel', 1);
 Screen('Preference', 'SkipSyncTests', 1);
-PsychDebugWindowConfiguration([], opacity)
 screens = Screen('Screens');
 screenNumber = max(screens);
 [windowPtr,rect] = Screen('OpenWindow', screenNumber, [0,0,0], windowSize);
@@ -142,12 +154,12 @@ ExpInfo.numTrialsPerBlock = ExpInfo.breakTrials(1);
 % cost function setup
 ExpInfo.maxPoint = 100;
 ExpInfo.minPoint = 1;
-ExpInfo.dropRate = (ExpInfo.maxPoint - ExpInfo.minPoint)/(ScreenInfo.xaxis/2);
+ExpInfo.dropRate = 2;
 
 % define durations
 ExpInfo.tFixation = 0.5;
 ExpInfo.tBlank1 = 0.3;
-ExpInfo.tStimFrame = 3;
+ExpInfo.tStimFrame = 6;
 ExpInfo.ITI = 0.3;
 ExpInfo.tIFI = ScreenInfo.ifi;
 

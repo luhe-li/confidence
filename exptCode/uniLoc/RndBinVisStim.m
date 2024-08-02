@@ -2,7 +2,7 @@ function Resp = RndBinVisStim(i, ExpInfo, ScreenInfo,VSinfo,windowPtr)
 
 %% precompute visual stimuli
 height = 200;
-noise_sd = 20;
+noise_sd = 15;%20;
 stim_sd = VSinfo.SD_blob(i) .* 8;
 wBack = 0.55;
 stimTx = generateRippleStim(VSinfo,ExpInfo,ScreenInfo,windowPtr,i, height, noise_sd, stim_sd, wBack);
@@ -41,7 +41,7 @@ Screen('Flip',windowPtr);
 
 % perceptual response
 yLoc = ScreenInfo.yaxis-ScreenInfo.liftingYaxis;
-SetMouse(randi(ScreenInfo.xaxis*2,1), yLoc*2, windowPtr);
+SetMouse(randi(ScreenInfo.xaxis,1), yLoc, windowPtr);
 HideCursor;
 buttons = 0;
 tic;
@@ -123,9 +123,10 @@ Resp.conf_radius_cm  = Resp.conf_radius_pixel/ScreenInfo.numPixels_perCM;
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
     [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
 if ~rem(i,3) && ExpInfo.practice ~= 2 % every three trials give feedback, if not practice
-    DrawFormattedText(windowPtr, ['Score: ' num2str(round(potentialPoint * potentialEnclosed,2))], 'center', 'center', ...
+    DrawFormattedText(windowPtr, ['Score of the last trial: ' num2str(round(potentialPoint * potentialEnclosed,2))], 'center', 'center', ...
         [255 255 255],[], [], [], [], [], ...
         [ScreenInfo.xmid-20,yLoc-3,ScreenInfo.xmid+20,yLoc+3]);
+    WaitSecs(0.1);
 end
 Screen('Flip',windowPtr);
 WaitSecs(ExpInfo.ITI);
