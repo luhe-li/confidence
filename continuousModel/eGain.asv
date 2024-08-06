@@ -85,10 +85,10 @@ end
 
 %% check plot
 
-% figure; hold on
-% for tt = 1:100
-%     plot(myPDF(tt,:))
-% end
+   figure; hold on
+for tt = 1:100
+  plot(myPDF(tt,:))
+end
 
 end
 

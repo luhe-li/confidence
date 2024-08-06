@@ -19,7 +19,7 @@ switch useCluster
         hpc_job_number = str2double(getenv('SLURM_ARRAY_TASK_ID'));
         if isnan(hpc_job_number), error('Problem with array assigment'); end
         fprintf('Job number: %i \n', hpc_job_number);
-        
+
 
         % make sure Matlab does not exceed this
         fprintf('Number of cores: %i  \n', numCores);
@@ -30,7 +30,7 @@ switch useCluster
 
     case false
         numCores = feature('numcores');
-       
+
 end
 
 %% manage paths
@@ -74,7 +74,7 @@ GT = [   1.1,   0.1,    1,    3,    4,    8,   0.6,   4,    0.5];
 n_para    = length(GT);
 
 % main models
-model_names = {'Optimal','Gaussian optimal','Gaussian suboptimal','Heuristic'};
+model_names = {'Optimal','MAP optimal','MAP suboptimal','Heuristic'};
 folders = {'optimal','gauss_optimal','gauss_suboptimal','heuristic'};
 n_model = numel(model_names);
 
@@ -114,9 +114,69 @@ fixP.sigMotor = 1.36; % in deg, measured from first four participants
 
 % 2 modalities(1 = aud, 2 = vis)
 % 2 visual reliabilities
-% num_rep
+% n_rep
 % [org_loc, org_conf] = deal(NaN(n_sa,n_sa, n_cue, numel(sigVs), n_rep));
 
 [org_loc, org_conf] = sim_optimal(...
     aA, bA, sigA, sigV1, sigV2, muP, sigP, sigConf, pCommon, fixP);
+
+%% plot set up
+
+lw = 2;
+fontSZ = 15;
+titleSZ = 20;
+dotSZ = 80;
+clt = [30, 120, 180; % blue
+    227, 27, 27;  % dark red
+    repmat(125, 1, 3)]./255;
+
+%% check localization data
+
+uni_loc = zeros(size(org_loc));
+
+loc_a = repmat((sA*aA+bA)',[1,numel(sV)]);
+loc_v = repmat(sV,[numel(sA),1]);
+
+uni_loc(:,:,1,1:2,:) = repmat(loc_a, [1, 1, 1, 2, n_rep]);
+uni_loc(:,:,2,1:2,:) = repmat(loc_v, [1, 1, 1, 2, n_rep]);
+
+% loc at uni minus loc at bi
+ve =  mean(org_loc,5) - mean(uni_loc, 5);
+
+% diff x cue x reliability
+[ve_by_raw_diff, raw_diff] = org_by_raw_diffs_4D(ve, sA);
+
+% assume participants localized perfectly in the unisensory
+% condition
+figure; hold on
+t = tiledlayout(1, 2);
+title(t,sprintf('%s, rep: %i', model_names{sim_d}, n_rep))
+xlabel(t, 'Audiovisual discrepancy (V-A, deg)');
+ylabel(t, 'Shift of localization');
+t.TileSpacing = 'compact';
+t.Padding = 'compact';
+
+for cue = 1:n_cue
+    nexttile
+    title(cue_label{cue})
+    axis equal
+    hold on
+
+    for rel = 1: numel(sigVs)
+
+        i_ve = squeeze(ve_by_raw_diff(:, cue, rel));
+        plot(raw_diff, i_ve, 'Color',clt(rel+1,:))
+
+    end
+    xlim([min(raw_diff), max(raw_diff)])
+    xticks(raw_diff)
+    yline(0,'--')
+    if cue == 1
+        plot(raw_diff, raw_diff,'k--')
+    else
+        plot(raw_diff, -raw_diff,'k--')
+    end
+end
+
+%% check confidence data
 
