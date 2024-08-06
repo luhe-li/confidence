@@ -159,7 +159,7 @@ ExpInfo.dropRate = 2;
 % define durations
 ExpInfo.tFixation = 0.5;
 ExpInfo.tBlank1 = 0.3;
-ExpInfo.tStimFrame = 6;
+ExpInfo.tStimFrame = 9;
 ExpInfo.ITI = 0.3;
 ExpInfo.tIFI = ScreenInfo.ifi;
 
@@ -206,32 +206,13 @@ end
 % randomize visual reliability by horizontal blob S.D.
 VSinfo.SD_blob(~~rem(ExpInfo.randV,2)) = 8; % in CM
 VSinfo.SD_blob(~rem(ExpInfo.randV,2)) = 20; % in CM
-
-VSinfo.SD_yaxis            = 5; %SD of the blob in cm (vertical)
-VSinfo.num_randomDots      = 10; %number of blobs
 VSinfo.numFrames           = ExpInfo.tStimFrame; %for visual stimuli
-VSinfo.numFramesMasker     = 30; % for mask
 
 % create background
 VSinfo.pblack              = 1/8; % set contrast to 1*1/8 for the "black" background, so it's not too dark and the projector doesn't complain
 VSinfo.greyScreen          = VSinfo.pblack * ones(ScreenInfo.xaxis,ScreenInfo.yaxis)*255;
 VSinfo.grey_texture        = Screen('MakeTexture', windowPtr, VSinfo.greyScreen,[],[],[],2);
 VSinfo.blankScreen         = zeros(ScreenInfo.xaxis,ScreenInfo.yaxis);
-
-% white noise background
-VSinfo.GWNnumPixel         = 4; % 4 pixels will have the same color
-VSinfo.GWNnumFrames        = 10;
-VSinfo.gwn_texture         = generateNoisyBackground(VSinfo,ScreenInfo,windowPtr);
-
-% draw one blob
-VSinfo.width                         = 8; %(pixel) Increasing this value will make the cloud more blurry (arbituary value)
-VSinfo.boxSize                       = 15; %This is the box size for each cloud (arbituary value)
-VSinfo.maxBrightness                 = 128; %indirectly control contrast
-x = 1:1:VSinfo.boxSize; y = x;
-[X,Y]                                = meshgrid(x,y);
-cloud_temp                           = mvnpdf([X(:) Y(:)],[median(x) median(y)],...
-    [VSinfo.width 0; 0 VSinfo.width]);
-VSinfo.Cloud                         = reshape(cloud_temp,length(x),length(y)) .* (VSinfo.maxBrightness/max(cloud_temp));
 
 %% Run the experiment
 instruction = ['In the following session, you will be presented \nan auditory or visual stimulus on each trial.','\nAfter the presentation, please use the cursor \nto locate the center of the sound source \n or the center of the visual cloud of dots, not the mode of the cloud.','\nPress key A, S, D, or F to report your confidence in this localization response. ','\nA = Very Low  S = Low  D = High  F = Very High','\nThe key press is used to register localization response.','\nPlease use the whole confidence range.','\nPlease use the same strategy to report your confidence in every session.','\nPress any key to start the unimodal localization task.'];
@@ -263,7 +244,6 @@ for i = 1:ExpInfo.nTrials
         HideCursor;
         Resp(i)= RndBinVisStim(i, ExpInfo,...
             ScreenInfo,VSinfo,windowPtr);
-        
     end
     
     %% save by trial

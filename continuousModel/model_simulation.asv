@@ -52,7 +52,7 @@ screen_cm = 170; % cm
 
 % pixel
 screen_px = 1024; % pixel
-px_axis = 1:screen_px; % add fence
+px_axis = 0:screen_px; % add fence
 pixel_per_cm = screen_px/screen_cm;
 
 % dva
@@ -95,8 +95,7 @@ fixP.bi_nrep = n_rep;
 fixP.px_axis = px_axis;
 fixP.maxScore = 100;
 fixP.minScore = 1;
-fixP.dropRate = 2;
-fixP.elbow = (fixP.maxScore - fixP.minScore)/fixP.dropRate;
+fixP.elbow = 50;
 fixP.screenX = screen_px;
 
 aA                    = GT(1);
