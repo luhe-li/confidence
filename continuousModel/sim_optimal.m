@@ -53,20 +53,20 @@ for cue = 1:numel(sigVs)
     sHat_A_C2  = (mA./JA + muP/JP)./(1/JA + 1/JP);
     sHat_V_C2  = (mV./JV + muP/JP)./(1/JV + 1/JP);
 
-    % simulate posterior pdf for each trial, convert to non-negative
-    % coordinate (1:1024)
-    for xx = 1:numel(fixP.px_axis)
-        post(:,:,1,cue,:,xx) = post_C1.*normpdf(fixP.px_axis(xx), sHat_C1 + 512, repmat(sqrt(const1), size(sHat_C1))) + post_C2.*normpdf(fixP.px_axis(xx), sHat_A_C2  + 512, repmat(sqrt(constA), size(sHat_A_C2)));
-        post(:,:,2,cue,:,xx) = post_C1.*normpdf(fixP.px_axis(xx), sHat_C1 + 512, repmat(sqrt(const1), size(sHat_C1))) + post_C2.*normpdf(fixP.px_axis(xx), sHat_V_C2  + 512, repmat(sqrt(constV), size(sHat_V_C2)));
+    % simulate posterior pdf for each trial using center coordinate
+    for xx = 1:numel(fixP.center_axis)
+        post(:,:,1,cue,:,xx) = post_C1.*normpdf(fixP.screen_cm(xx), sHat_C1, repmat(sqrt(const1), size(sHat_C1))) + post_C2.*normpdf(fixP.screen_cm(xx), sHat_A_C2, repmat(sqrt(constA), size(sHat_A_C2)));
+        post(:,:,2,cue,:,xx) = post_C1.*normpdf(fixP.screen_cm(xx), sHat_C1, repmat(sqrt(const1), size(sHat_C1))) + post_C2.*normpdf(fixP.screen_cm(xx), sHat_V_C2, repmat(sqrt(constV), size(sHat_V_C2)));
     end
 
 end
 
 % for each possible estimate, given the posterior, calculate the optimal
-% radius in 1:1024 pixels
-post_2d = reshape(post, [prod([n_sA, n_sA, 2, 2, bi_nrep]), numel(fixP.px_axis)]);
-for xx = 1:numel(fixP.px_axis) % loop by pixel (starting from 1), not pixel grid (starting from 0)
-    [radius(:,xx), gain(:,xx)] = eGain(post_2d, ones(size(post_2d,1),1).* xx, fixP.maxScore, fixP.minScore, fixP.elbow, numel(fixP.px_axis));
+% radius
+post_2d = reshape(post, [prod([n_sA, n_sA, 2, 2, bi_nrep]), numel(fixP.screen_cm)]);
+
+for xx = 1:numel(fixP.center_axis) 
+    [radius(:,xx), gain(:,xx)] = eGain(post_2d, ones(size(post_2d,1),1).* xx, fixP.maxScore, fixP.minScore, fixP.elbow, fixP.center_axis;
 end
 
 % find max gain across all possible estimated pixels for each trial

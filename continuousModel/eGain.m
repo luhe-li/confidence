@@ -1,86 +1,104 @@
-function [optRadius,maxGain,AllGainFun] = eGain(myPDF, estX, maxScore, minScore, elbow, screenX)
-% myPDF    : two-dimensional, size equals [trial, screenX]
+function [optRadius,maxGain,AllGainFun] = eGain(myPDF, estX, maxScore, minScore, elbow, center_axis)
+% myPDF    : two-dimensional, size equals [trial, screen_cm]
 % estX     : the estimated location for each trial, size equals [trial, 1]
 % maxScore : the maximum possible score given to the participant
 % minScore : the minimum possible score given to the participant
 % elbow    : the length where the score no longer decreases and stays at
 %            minScore
-% screenX  : grid of possible estimates
+% screen_cm  : grid of possible estimates
 
-myPDF = myPDF ./ sum(myPDF,2); % normalize the PDF before any operation
+% normalize the PDF before any operation
+myPDF = myPDF ./ sum(myPDF,2);
 
-confRadiusMax = min([estX - 1, screenX - estX],[],2); 
+% posterior is defined on the center axis
+screen_cm = max(center_axis) * 2;
+step = center_axis(2) - center_axis(1);
+
+% Calculate the closest elements for each value in estX and indices
+[~, idx_est_array] = min(abs(center_axis - estX.'), [], 2);
+app_est_array = center_axis(idx_est_array);
+
 % picking the minimum allowed value as the max possible radius length
-% estX - 1 is how far the estimation point is from the left edge of screen
-% screenX - estX is how far from the right edge of screen
+% estX - screen_cm/2 is how far the estimation point is from the left edge of screen
+% screen_cm/2 - estX is how far from the right edge of screen
 % if confRadius is more than the min of these two, it would grow out of the
 % screen
+confRadiusMax = min([app_est_array - screen_cm/2, screen_cm/2 - app_est_array],[],2);
+% convert confidence unit from cm to axis unit by index
+[~, idx_conf_array] = min(abs(center_axis - confRadiusMax.'), [], 2); 
 
-maxGain = NaN(length(estX),1);
-optRadius = NaN(length(estX),1);
 % initialize an array to store the best radius for each estimation location
 % estX
+maxGain = NaN(length(estX),1);
+optRadius = NaN(length(estX),1);
 
 % loop by trials
 for i = 1:length(estX)
-    
-    % max posisble radius has to be nonzero
-    if confRadiusMax == 0
+
+    % index of approxiamted estimate on the sampling axis of this trial
+    idx_est = idx_est_array(i);
+    idx_conf = idx_conf_array(i);
+
+    if idx_conf < 1
+        maxGain(i) = 1;
         optRadius(i) = 0;
-        maxGain(i) = minScore;
-        AllGainFun{i} = [];
+        AllGainFun{i}  = [];
+
     else
-        
-    confRadius = 0 : confRadiusMax(i); 
-    % for each estimation location estX, it has its distinct max radius
+        % for each estimation location estX, it has its distinct max radius
+        confRadius = 0 : idx_conf;
 
-    lengthRatio = confRadius ./ elbow;
-    % calculate the ratio between the current radius and 
-    % the radius where the score stops dropping (because it's too wide) 
-    % if confRadius >= elbow, this ratio is >= 1, participant gets the
-    % minimum point
-    % if confRadius < elbow, this ratio < 1, participant gets the score
-    % proportional to their confRadius. e.g. ratio = 0.25, so 25% of the 
-    % score is deduced, they get 75% score
-    
-    penaltyRange = maxScore - minScore;
-    % This is the max possible penalty they can get. when ratio = 1, they
-    % get the entire penalty. 
-    rawScore = maxScore - lengthRatio .* penaltyRange;
-    % rawScore is calculated by deducting the penalty from the max possible
-    % points
-    costFun = max(rawScore, minScore);
-    % We don't let participants get negative scores, so we will take the
-    % max between their raw score or the minimum score
+        % calculate the ratio between the current radius and
+        % the radius where the score stops dropping (because it's too wide)
+        % if confRadius >= elbow, this ratio is >= 1, participant gets the
+        % minimum point
+        % if confRadius < elbow, this ratio < 1, participant gets the score
+        % proportional to their confRadius. e.g. ratio = 0.25, so 25% of the
+        % score is deduced, they get 75% score
+        lengthRatio = confRadius ./ elbow;
 
-    erPDFright = myPDF(i,(estX(i)+1) : (estX(i) + confRadiusMax(i))); 
-    erPDFleft  = myPDF(i,(estX(i)-1) : -1 : (estX(i) - confRadiusMax(i)));
-    % Error pdf: For this specific estX(i) that we are working on, truncate
-    % the part of the pdf from the minimum radius to the maximum radius
-    % we do left and right because we can't assume symmetry in PDF around
-    % estX
-    erCDF = [myPDF(i,estX(i)) , cumsum(erPDFright) + cumsum(erPDFleft) + myPDF(i,estX(i))]; 
-    % Error cdf, i.e. erf: Transform the PDF from left and right into CDF,
-    % add them up along with the probability density at the estimated
-    % location estX. The sum of this addition is our "error function". 
-    % We concatenate this with the probability density at estX because that
-    % is the CDF when the confidence radius encloses nothing but the estX. 
-    % Conceptually, this error CDF is the probability that the stimulus is
-    % in the range enclosed by each possible radii. 
-    % e.g. p(stimulus is within 20 pixels from estX) = erCDF(20)
-    gainFun = costFun .* erCDF;
-    % The expected gain is taking the dot product between the cost function
-    % and the error CDF. 
-    % e.g. p(stimulus is within 20 pixels from estX) * cost(radius = 20)
-    % = erCDF(20) * costFun(20)
-    [maxGain(i), optRadius(i)] = max(gainFun);
-    % We look for the index that corresponds to the maximum expected gain. 
-    % That index is the value of the radius we are looking for.
-    AllGainFun{i} = gainFun;
-    % We also save this entire eGain array in case we need it later
-    % (totally fine to remove, just remember to change function output)
+        % This is the max possible penalty they can get. when ratio = 1, they
+        % get the entire penalty.
+        penaltyRange = maxScore - minScore;
+
+        % rawScore is calculated by deducting the penalty from the max possible
+        % points
+        rawScore = maxScore - lengthRatio .* penaltyRange;
+
+        % We don't let participants get negative scores, so we will take the
+        % max between their raw score or the minimum score
+        costFun = max(rawScore, minScore);
+
+        % Error pdf: For this specific estX(i) that we are working on, truncate
+        % the part of the pdf from the minimum radius to the maximum radius
+        % we do left and right because we can't assume symmetry in PDF around
+        % estX
+        erPDFright = myPDF(i, (idx_est+1) : (idx_est + idx_conf));
+        erPDFleft  = myPDF(i, (idx_est-1) : -1 : (idx_est - idx_conf));
+
+        erCDF = [myPDF(i,idx_est) , cumsum(erPDFright) + cumsum(erPDFleft) + myPDF(i,idx_est)];
+        % Error cdf, i.e. erf: Transform the PDF from left and right into CDF,
+        % add them up along with the probability density at the estimated
+        % location estX. The sum of this addition is our "error function".
+        % We concatenate this with the probability density at estX because that
+        % is the CDF when the confidence radius encloses nothing but the estX.
+        % Conceptually, this error CDF is the probability that the stimulus is
+        % in the range enclosed by each possible radii.
+        % e.g. p(stimulus is within 20 pixels from estX) = erCDF(20)
+        gainFun = costFun .* erCDF;
+        % The expected gain is taking the dot product between the cost function
+        % and the error CDF.
+        % e.g. p(stimulus is within 20 pixels from estX) * cost(radius = 20)
+        % = erCDF(20) * costFun(20)
+        [maxGain(i), optRadius(i)] = max(gainFun);
+        % We look for the index that corresponds to the maximum expected gain.
+        % That index is the value of the radius we are looking for.
+        AllGainFun{i} = gainFun;
+        % We also save this entire eGain array in case we need it later
+        % (totally fine to remove, just remember to change function output)
 
     end
+end
 end
 
 %% check plot
@@ -90,7 +108,6 @@ end
 %     plot(myPDF(tt,:))
 % end
 
-end
 
 
 

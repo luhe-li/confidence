@@ -61,7 +61,8 @@ screen_dva = rad2deg(atan(screen_cm / 2 / sitting_dist)) .* 2;
 % stimulus location in pixel, dva
 aud_level = [5 8 9 12];
 speaker_level = linspace(-speaker_cm, speaker_cm, 16);
-sA = round(speaker_level(aud_level) * pixel_per_cm);
+sA = round(speaker_level(aud_level),2);
+sA_dva = rad2deg(atan(sA / pixel_per_cm / 2 / sitting_dist)) .* 2;
 sV = sA; % assume audiovisual bias corrected
 sAV = combvec(sA, sV);
 delta_px = unique(abs(sA - sV'));
@@ -69,9 +70,9 @@ delta_dva = rad2deg(atan(delta_px / pixel_per_cm / 2 / sitting_dist)) .* 2;
 
 %% set simulation parameters
 
-%         aA,     bA, sigV1,  sigA,   sigV2,  sigP,  sigConf, sig pCC
-GT = [   1.1,   0.1,    1,    3,    4,    8,   0.6,   4,    0.5];
-n_para    = length(GT);
+%         aA,     bA, sigV1,  sigA,   sigV2,  sigP,  sigConf,   pCC
+GT = [   1.1,    0.1,     2,    10,       7,    5,        3,   0.9];
+n_para = length(GT);
 
 % main models
 model_names = {'Optimal','MAP optimal','MAP suboptimal','Heuristic'};
@@ -92,12 +93,14 @@ fixP.bi_sV = sAV(2,:);
 fixP.n_sA = numel(sA);
 fixP.sim_d = sim_d;
 fixP.bi_nrep = n_rep;
-fixP.px_axis = px_axis;
+fixP.screen_cm = screen_cm;
+% fixP.left_axis = linspace(1, screen_cm, 1e3);
+fixP.center_axis = linspace(-screen_cm/2, screen_cm/2, 1e3);
 fixP.maxScore = 100;
 fixP.minScore = 1;
 fixP.dropRate = 2;
 fixP.elbow = (fixP.maxScore - fixP.minScore)/fixP.dropRate;
-fixP.screenX = screen_px;
+
 
 aA                    = GT(1);
 bA                    = GT(2);
@@ -180,3 +183,33 @@ end
 
 %% check confidence data
 
+% organize confidence data: {diff} cue x reliability x rep
+[conf_by_diff, all_diffs] = org_by_diffs(org_conf, sA);
+
+%%
+figure; hold on
+set(gcf, 'Position',[10 10 700 400])
+t = tiledlayout(2, 5);
+title(t,sprintf('%s, rep: %i', model_names{sim_d}, n_rep))
+xlabel(t, 'Absolute audiovisual discrepancy (pixel)');
+ylabel(t, 'Confidence radius (pixel)');
+t.TileSpacing = 'compact';
+t.Padding = 'compact';
+
+for cue = 1:n_cue
+    for diff = 1:numel(all_diffs)
+        nexttile
+        hold on
+        title(sprintf('delta = %i, %s', all_diffs(diff), cue_label{cue}))
+        for rel = 2%1: numel(sigVs)
+            i_conf = squeeze(conf_by_diff{diff}(cue, rel, :))';
+            [counts, bins] = histcounts(i_conf, 10);%, 'Normalization', 'probability');
+            barh((bins(2:end) + bins(1:end-1))/2, counts, 'FaceAlpha', 0.5, 'EdgeAlpha', 0.5, 'FaceColor', clt(rel+1,:), 'EdgeColor', clt(rel+1,:));
+            yline(mean(i_conf), 'r-', 'LineWidth', 1.5);
+%             ylim([10, 45])
+        end
+    end
+end
+
+% Adjust x-label position for centering
+xl = xlabel(t, 'Absolute audiovisual discrepancy (deg)');

@@ -64,23 +64,19 @@ end
 % for each possible estimate, given the posterior, calculate the optimal
 % radius in 1:1024 pixels
 post_2d = reshape(post, [prod([n_sA, n_sA, 2, 2, bi_nrep]), numel(fixP.px_axis)]);
-for xx = 1:numel(fixP.px_axis) % loop by pixel (starting from 1), not pixel grid (starting from 0)
-    [radius(:,xx), gain(:,xx)] = eGain(post_2d, ones(size(post_2d,1),1).* xx, fixP.maxScore, fixP.minScore, fixP.elbow, numel(fixP.px_axis));
+for xx = 1:numel(fixP.px_axis) % loop by pixel, not pixel grid
+    [radius(xx,:), gain(xx,:)] = eGain(post_2d, ones(size(post_2d,1),1).* xx, fixP.maxScore, fixP.minScore, fixP.elbow, numel(fixP.px_axis));
 end
-% find max gain across all possible estimated pixels for each trial
-[~, idx_opt] = max(gain, [], 2);
-opt_est = fixP.px_axis(idx_opt) - 512; % convert back to -512:512 center coordinate
-opt_radius = zeros(size(fixP.px_axis));
-for xx = 1:numel(fixP.px_axis)
-    opt_radius(xx) = radius(xx,idx_opt(xx));    
-end
+[~, idx_opt] = max(gain, 1);
+opt_est = fixP.px_axis(idx_opt);
+opt_radius = radius(idx_opt);
 
 % motor noise to location estimation
-bi_loc = randn(size(opt_est)).*sigMotor + opt_est;
-bi_loc = reshape(bi_loc, [n_sA, n_sA, 2, 2, bi_loc]);
+bi_loc = randn(size(opt_radius)).*sigMotor + opt_est;
+bi_loc = reshape(bi_loc, [n_sA, n_sA, 2, 2, bi_loc]) - 512;
 
 % adjustment noise to confidence radius
 bi_conf = randn(size(opt_radius)).*sigConf + opt_radius;
-bi_conf = reshape(bi_conf, [n_sA, n_sA, 2, 2, bi_nrep]);
+bi_conf = reshape(bi_conf, [n_sA, n_sA, 2, 2, bi_nrep]) - 512;
 
 end
