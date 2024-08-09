@@ -1,49 +1,31 @@
-function [optRadiusCM,maxGain,AllGainFun] = eGain(myPDF, estX, maxScore, minScore, elbow, center_axis)
-% myPDF    : two-dimensional, size equals [trial, screen_cm]
-% estX     : the estimated location for each trial, size equals [trial, 1]
+function [opt_est,opt_radius] = eGain(myPDF, maxScore, minScore, elbow, center_axis)
+% myPDF    : two-dimensional, size equals [trial, posterior defined by center_axis]
 % maxScore : the maximum possible score given to the participant
 % minScore : the minimum possible score given to the participant
 % elbow    : the length where the score no longer decreases and stays at
 %            minScore
 % screen_cm  : grid of possible estimates
 
-% normalize the PDF before any operation
 myPDF = myPDF ./ sum(myPDF,2);
-
-% Calculate the closest elements for each value in estX and indices
-[~, idx_est_array] = min(abs(center_axis - estX), [], 2);
-app_est_array = center_axis(idx_est_array)';
-
-% picking the minimum allowed value as the max possible radius length
-% estX - screen_cm/2 is how far the estimation point is from the left edge of screen
-% screen_cm/2 - estX is how far from the right edge of screen
-% if confRadius is more than the min of these two, it would grow out of the
-% screen
-screen_cm = max(center_axis) * 2;
-confRadiusMax = min([app_est_array - (-screen_cm/2), screen_cm/2 - app_est_array],[],2);
-% convert confidence unit from cm to axis unit
+n_trial = size(myPDF,1);
+n_est = numel(center_axis);
 step = center_axis(2) - center_axis(1);
-bin_conf = round(confRadiusMax./step);
-bin_elbow = round(elbow/step);
+idx_elbow = round(elbow/step);
+[maxGain,optRadius] = deal(NaN(n_trial, n_est));
 
-% initialize an array to store the best radius for each estimation location
-% estX
-maxGain = NaN(length(estX),1);
-optRadius = NaN(length(estX),1);
+% loop by possible estimate on the axis
+for xx = 1:n_est
 
-% loop by trials
-for i = 1:length(estX)
+    % estimate and max confidence for each possible loctaion, same across trials
+    idx_est = xx;
+    idx_conf = min([idx_est - 1, n_est - idx_est]);
 
-    % index of approxiamted estimate on the sampling axis of this trial
-    idx_est = idx_est_array(i);
-    idx_conf = bin_conf(i);
-
+    % same error function across trials, only compute for nonzero max confidence radius
     if idx_conf < 1
-        maxGain(i) = 1;
-        optRadius(i) = 0;
-        AllGainFun{i}  = [];
-
+        maxGain(:, xx) = 0;
+        optRadius(:, xx) = 0;
     else
+
         % for each estimation location estX, it has its distinct max radius
         confRadius = 0 : idx_conf;
 
@@ -54,7 +36,7 @@ for i = 1:length(estX)
         % if confRadius < elbow, this ratio < 1, participant gets the score
         % proportional to their confRadius. e.g. ratio = 0.25, so 25% of the
         % score is deduced, they get 75% score
-        lengthRatio = confRadius ./ bin_elbow;
+        lengthRatio = confRadius ./ idx_elbow;
 
         % This is the max possible penalty they can get. when ratio = 1, they
         % get the entire penalty.
@@ -68,37 +50,52 @@ for i = 1:length(estX)
         % max between their raw score or the minimum score
         costFun = max(rawScore, minScore);
 
-        % Error pdf: For this specific estX(i) that we are working on, truncate
-        % the part of the pdf from the minimum radius to the maximum radius
-        % we do left and right because we can't assume symmetry in PDF around
-        % estX
-        erPDFright = myPDF(i, (idx_est+1) : (idx_est + idx_conf));
-        erPDFleft  = myPDF(i, (idx_est-1) : -1 : (idx_est - idx_conf));
+        % loop by trials
+        for tt = 1:n_trial
 
-        erCDF = [myPDF(i,idx_est) , cumsum(erPDFright) + cumsum(erPDFleft) + myPDF(i,idx_est)];
-        % Error cdf, i.e. erf: Transform the PDF from left and right into CDF,
-        % add them up along with the probability density at the estimated
-        % location estX. The sum of this addition is our "error function".
-        % We concatenate this with the probability density at estX because that
-        % is the CDF when the confidence radius encloses nothing but the estX.
-        % Conceptually, this error CDF is the probability that the stimulus is
-        % in the range enclosed by each possible radii.
-        % e.g. p(stimulus is within 20 pixels from estX) = erCDF(20)
-        gainFun = costFun .* erCDF;
-        % The expected gain is taking the dot product between the cost function
-        % and the error CDF.
-        % e.g. p(stimulus is within 20 pixels from estX) * cost(radius = 20)
-        % = erCDF(20) * costFun(20)
-        [maxGain(i), optRadius(i)] = max(gainFun);
-        % We look for the index that corresponds to the maximum expected gain.
-        % That index is the value of the radius we are looking for.
-        AllGainFun{i} = gainFun;
-        % We also save this entire eGain array in case we need it later
-        % (totally fine to remove, just remember to change function output)
+            erPDFright = myPDF(tt, (idx_est+1) : (idx_est + idx_conf));
+            erPDFleft  = myPDF(tt, (idx_est-1) : -1 : (idx_est - idx_conf));
+            % Error pdf: For this specific estX(i) that we are working on, truncate
+            % the part of the pdf from the minimum radius to the maximum radius
+            % we do left and right because we can't assume symmetry in PDF around
+            % estX
 
+            % Error cdf, i.e. erf: Transform the PDF from left and right into CDF,
+            % add them up along with the probability density at the estimated
+            % location estX. The sum of this addition is our "error function".
+            % We concatenate this with the probability density at estX because that
+            % is the CDF when the confidence radius encloses nothing but the estX.
+            % Conceptually, this error CDF is the probability that the stimulus is
+            % in the range enclosed by each possible radii.
+            % e.g. p(stimulus is within 20 pixels from estX) = erCDF(20)
+            erCDF = [myPDF(tt,idx_est) , cumsum(erPDFright) + cumsum(erPDFleft) + myPDF(tt,idx_est)];
+
+            % The expected gain is taking the dot product between the cost function
+            % and the error CDF.
+            % e.g. p(stimulus is within 20 pixels from estX) * cost(radius = 20)
+            % erCDF(20) * costFun(20)
+            gainFun = costFun .* erCDF;
+
+            % We look for the index that corresponds to the maximum expected gain.
+            % That index is the value of the radius we are looking for.
+            [maxGain(tt, xx), optRadius(tt, xx)] = max(gainFun);
+
+        end
     end
+
 end
+
+% convert optimal radius from axis unit to cm
 optRadiusCM = optRadius.*step;
+
+% find max gain across all possible estimated pixels for each trial
+[~, idx_opt] = max(maxGain, [], 2);
+opt_est = center_axis(idx_opt);
+opt_radius = zeros(size(center_axis));
+for tt = 1:numel(idx_opt)
+    opt_radius(tt) = optRadiusCM(tt,idx_opt(tt));
+end
+
 end
 
 %% check plot
@@ -107,7 +104,7 @@ end
 % for tt = 1:100
 %     plot(myPDF(tt,:))
 % end
-%
+
 % figure; hold on
 % plot(confRadius.*step, costFun);
 % plot(confRadius.*step, erCDF);

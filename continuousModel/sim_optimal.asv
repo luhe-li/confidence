@@ -53,30 +53,35 @@ for cue = 1:numel(sigVs)
     sHat_A_C2  = (mA./JA + muP/JP)./(1/JA + 1/JP);
     sHat_V_C2  = (mV./JV + muP/JP)./(1/JV + 1/JP);
 
-    % simulate posterior pdf for each trial
-    for xx = 1:numel(fixP.px_axis)
-        post(:,:,1,cue,:,xx) = post_C1.*normpdf(fixP.px_axis(xx), sHat_C1, repmat(sqrt(const1), size(sHat_C1))) + post_C2.*normpdf(fixP.px_axis(xx), sHat_A_C2, repmat(sqrt(constA), size(sHat_A_C2)));
-        post(:,:,2,cue,:,xx) = post_C1.*normpdf(fixP.px_axis(xx), sHat_C1, repmat(sqrt(const1), size(sHat_C1))) + post_C2.*normpdf(fixP.px_axis(xx), sHat_V_C2, repmat(sqrt(constV), size(sHat_V_C2)));
+    % simulate posterior pdf for each trial using center coordinate
+        post(:,:,1,cue,:,xx) = post_C1.*normpdf(fixP.center_axis(xx), sHat_C1, repmat(sqrt(const1), size(sHat_C1))) + post_C2.*normpdf(fixP.center_axis(xx), sHat_A_C2, repmat(sqrt(constA), size(sHat_A_C2)));
+        post(:,:,2,cue,:,xx) = post_C1.*normpdf(fixP.center_axis(xx), sHat_C1, repmat(sqrt(const1), size(sHat_C1))) + post_C2.*normpdf(fixP.center_axis(xx), sHat_V_C2, repmat(sqrt(constV), size(sHat_V_C2)));
     end
 
 end
 
 % for each possible estimate, given the posterior, calculate the optimal
-% radius in 1:1024 pixels
-post_2d = reshape(post, [prod([n_sA, n_sA, 2, 2, bi_nrep]), numel(fixP.px_axis)]);
-for xx = 1:numel(fixP.px_axis) % loop by pixel, not pixel grid
-    [radius(xx,:), gain(xx,:)] = eGain(post_2d, ones(size(post_2d,1),1).* xx, fixP.maxScore, fixP.minScore, fixP.elbow, numel(fixP.px_axis));
+% radius
+post_2d = reshape(post, [prod([n_sA, n_sA, 2, 2, bi_nrep]), numel(fixP.center_axis)]);
+
+for xx = 1:numel(fixP.center_axis) 
+    [radius(:,xx), gain(:,xx)] = eGain(post_2d, ones(size(post_2d,1),1).* fixP.center_axis(xx), fixP.maxScore, fixP.minScore, fixP.elbow, fixP.center_axis);
 end
-[~, idx_opt] = max(gain, 1);
-opt_est = fixP.px_axis(idx_opt);
-opt_radius = radius(idx_opt);
+
+% find max gain across all possible estimated pixels for each trial
+[~, idx_opt] = max(gain, [], 2);
+opt_est = fixP.center_axis(idx_opt); 
+opt_radius = zeros(size(fixP.center_axis));
+for tt = 1:numel(idx_opt)
+    opt_radius(tt) = radius(tt,idx_opt(tt));    
+end
 
 % motor noise to location estimation
-bi_loc = randn(size(opt_radius)).*sigMotor + opt_est;
-bi_loc = reshape(bi_loc, [n_sA, n_sA, 2, 2, bi_loc]) - 512;
+bi_loc = randn(size(opt_est)).*sigMotor + opt_est;
+bi_loc = reshape(bi_loc, [n_sA, n_sA, 2, 2, bi_nrep]);
 
 % adjustment noise to confidence radius
 bi_conf = randn(size(opt_radius)).*sigConf + opt_radius;
-bi_conf = reshape(bi_conf, [n_sA, n_sA, 2, 2, bi_nrep]) - 512;
+bi_conf = reshape(bi_conf, [n_sA, n_sA, 2, 2, bi_nrep]);
 
 end
