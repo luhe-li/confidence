@@ -34,7 +34,8 @@ for tt = 1:length(estX)
     if idx_conf < 1
         opt_gain(tt) = 0;
         idx_opt_radius(tt) = 0;
-       
+        AllGainFun{tt}  = [];
+
     else
         % for each estimation location estX, it has its distinct max radius
         confRadius = 0 : idx_conf;
@@ -108,3 +109,4 @@ end
 % plot(confRadius.*step, erCDF);
 % plot(confRadius.*step, gainFun);
 % xlabel('Confidence radius (cm)')
+

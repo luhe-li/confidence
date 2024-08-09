@@ -1,4 +1,4 @@
-function [opt_est,opt_radius] = eGain(myPDF, maxScore, minScore, elbow, center_axis)
+function [opt_est,opt_radius,opt_gain] = eGain(myPDF, maxScore, minScore, elbow, center_axis)
 % myPDF    : two-dimensional, size equals [trial, posterior defined by center_axis]
 % maxScore : the maximum possible score given to the participant
 % minScore : the minimum possible score given to the participant
@@ -53,12 +53,13 @@ for xx = 1:n_est
         % loop by trials
         for tt = 1:n_trial
 
-            erPDFright = myPDF(tt, (idx_est+1) : (idx_est + idx_conf));
-            erPDFleft  = myPDF(tt, (idx_est-1) : -1 : (idx_est - idx_conf));
             % Error pdf: For this specific estX(i) that we are working on, truncate
             % the part of the pdf from the minimum radius to the maximum radius
             % we do left and right because we can't assume symmetry in PDF around
             % estX
+
+            erPDFright = myPDF(tt, (idx_est+1) : (idx_est + idx_conf));
+            erPDFleft  = myPDF(tt, (idx_est-1) : -1 : (idx_est - idx_conf));
 
             % Error cdf, i.e. erf: Transform the PDF from left and right into CDF,
             % add them up along with the probability density at the estimated
@@ -89,7 +90,7 @@ end
 optRadiusCM = optRadius.*step;
 
 % find max gain across all possible estimated pixels for each trial
-[~, idx_opt] = max(maxGain, [], 2);
+[opt_gain, idx_opt] = max(maxGain, [], 2);
 opt_est = center_axis(idx_opt);
 opt_radius = zeros(size(center_axis));
 for tt = 1:numel(idx_opt)
@@ -110,6 +111,3 @@ end
 % plot(confRadius.*step, erCDF);
 % plot(confRadius.*step, gainFun);
 % xlabel('Confidence radius (cm)')
-
-
-
