@@ -1,4 +1,4 @@
-function [optRadius,maxGain,AllGainFun] = eGain(myPDF, estX, maxScore, minScore, elbow, center_axis)
+function [optRadiusCM,maxGain,AllGainFun] = eGain(myPDF, estX, maxScore, minScore, elbow, center_axis)
 % myPDF    : two-dimensional, size equals [trial, screen_cm]
 % estX     : the estimated location for each trial, size equals [trial, 1]
 % maxScore : the maximum possible score given to the participant
@@ -10,22 +10,21 @@ function [optRadius,maxGain,AllGainFun] = eGain(myPDF, estX, maxScore, minScore,
 % normalize the PDF before any operation
 myPDF = myPDF ./ sum(myPDF,2);
 
-% posterior is defined on the center axis
-screen_cm = max(center_axis) * 2;
-step = center_axis(2) - center_axis(1);
-
 % Calculate the closest elements for each value in estX and indices
-[~, idx_est_array] = min(abs(center_axis - estX.'), [], 2);
-app_est_array = center_axis(idx_est_array);
+[~, idx_est_array] = min(abs(center_axis - estX), [], 2);
+app_est_array = center_axis(idx_est_array)';
 
 % picking the minimum allowed value as the max possible radius length
 % estX - screen_cm/2 is how far the estimation point is from the left edge of screen
 % screen_cm/2 - estX is how far from the right edge of screen
 % if confRadius is more than the min of these two, it would grow out of the
 % screen
-confRadiusMax = min([app_est_array - screen_cm/2, screen_cm/2 - app_est_array],[],2);
-% convert confidence unit from cm to axis unit by index
-[~, idx_conf_array] = min(abs(center_axis - confRadiusMax.'), [], 2); 
+screen_cm = max(center_axis) * 2;
+confRadiusMax = min([app_est_array - (-screen_cm/2), screen_cm/2 - app_est_array],[],2);
+% convert confidence unit from cm to axis unit
+step = center_axis(2) - center_axis(1);
+bin_conf = round(confRadiusMax./step);
+bin_elbow = round(elbow/step);
 
 % initialize an array to store the best radius for each estimation location
 % estX
@@ -37,7 +36,7 @@ for i = 1:length(estX)
 
     % index of approxiamted estimate on the sampling axis of this trial
     idx_est = idx_est_array(i);
-    idx_conf = idx_conf_array(i);
+    idx_conf = bin_conf(i);
 
     if idx_conf < 1
         maxGain(i) = 1;
@@ -55,7 +54,7 @@ for i = 1:length(estX)
         % if confRadius < elbow, this ratio < 1, participant gets the score
         % proportional to their confRadius. e.g. ratio = 0.25, so 25% of the
         % score is deduced, they get 75% score
-        lengthRatio = confRadius ./ elbow;
+        lengthRatio = confRadius ./ bin_elbow;
 
         % This is the max possible penalty they can get. when ratio = 1, they
         % get the entire penalty.
@@ -99,6 +98,7 @@ for i = 1:length(estX)
 
     end
 end
+optRadiusCM = optRadius.*step;
 end
 
 %% check plot
@@ -107,7 +107,12 @@ end
 % for tt = 1:100
 %     plot(myPDF(tt,:))
 % end
-
+%
+% figure; hold on
+% plot(confRadius.*step, costFun);
+% plot(confRadius.*step, erCDF);
+% plot(confRadius.*step, gainFun);
+% xlabel('Confidence radius (cm)')
 
 
 

@@ -55,24 +55,24 @@ for cue = 1:numel(sigVs)
 
     % simulate posterior pdf for each trial using center coordinate
     for xx = 1:numel(fixP.center_axis)
-        post(:,:,1,cue,:,xx) = post_C1.*normpdf(fixP.screen_cm(xx), sHat_C1, repmat(sqrt(const1), size(sHat_C1))) + post_C2.*normpdf(fixP.screen_cm(xx), sHat_A_C2, repmat(sqrt(constA), size(sHat_A_C2)));
-        post(:,:,2,cue,:,xx) = post_C1.*normpdf(fixP.screen_cm(xx), sHat_C1, repmat(sqrt(const1), size(sHat_C1))) + post_C2.*normpdf(fixP.screen_cm(xx), sHat_V_C2, repmat(sqrt(constV), size(sHat_V_C2)));
+        post(:,:,1,cue,:,xx) = post_C1.*normpdf(fixP.center_axis(xx), sHat_C1, repmat(sqrt(const1), size(sHat_C1))) + post_C2.*normpdf(fixP.center_axis(xx), sHat_A_C2, repmat(sqrt(constA), size(sHat_A_C2)));
+        post(:,:,2,cue,:,xx) = post_C1.*normpdf(fixP.center_axis(xx), sHat_C1, repmat(sqrt(const1), size(sHat_C1))) + post_C2.*normpdf(fixP.center_axis(xx), sHat_V_C2, repmat(sqrt(constV), size(sHat_V_C2)));
     end
 
 end
 
 % for each possible estimate, given the posterior, calculate the optimal
 % radius
-post_2d = reshape(post, [prod([n_sA, n_sA, 2, 2, bi_nrep]), numel(fixP.screen_cm)]);
+post_2d = reshape(post, [prod([n_sA, n_sA, 2, 2, bi_nrep]), numel(fixP.center_axis)]);
 
-for xx = 1:numel(fixP.center_axis) 
-    [radius(:,xx), gain(:,xx)] = eGain(post_2d, ones(size(post_2d,1),1).* xx, fixP.maxScore, fixP.minScore, fixP.elbow, fixP.center_axis;
+for xx = 300%1:numel(fixP.center_axis) 
+    [radius(:,xx), gain(:,xx)] = eGain(post_2d, ones(size(post_2d,1),1).* fixP.center_axis(xx), fixP.maxScore, fixP.minScore, fixP.elbow, fixP.center_axis);
 end
 
 % find max gain across all possible estimated pixels for each trial
 [~, idx_opt] = max(gain, [], 2);
-opt_est = fixP.px_axis(idx_opt) - 512; % convert back to -512:512 center coordinate
-opt_radius = zeros(size(fixP.px_axis));
+opt_est = fixP.center_axis(idx_opt); 
+opt_radius = zeros(size(fixP.center_axis));
 for tt = 1:numel(idx_opt)
     opt_radius(tt) = radius(tt,idx_opt(tt));    
 end

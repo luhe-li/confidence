@@ -96,11 +96,10 @@ fixP.bi_nrep = n_rep;
 fixP.screen_cm = screen_cm;
 % fixP.left_axis = linspace(1, screen_cm, 1e3);
 fixP.center_axis = linspace(-screen_cm/2, screen_cm/2, 1e3);
-fixP.maxScore = 100;
-fixP.minScore = 1;
-fixP.dropRate = 2;
-fixP.elbow = (fixP.maxScore - fixP.minScore)/fixP.dropRate;
-
+fixP.maxScore = 1;
+fixP.minScore = 0.01;
+fixP.elbow = 25;
+fixP.dropRate = (fixP.maxScore - fixP.minScore)/fixP.elbow;
 
 aA                    = GT(1);
 bA                    = GT(2);
