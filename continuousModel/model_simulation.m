@@ -83,7 +83,7 @@ n_model = numel(model_names);
 cue_label = {'Post-cue: A','Post-cue: V'};
 n_cue = numel(cue_label);
 rel_label = {'High visual reliability','Low visual reliability'};
-n_rep = 30; % repitition per condition
+n_rep = 100; % repitition per condition
 
 %% simulate fake data
 
@@ -155,36 +155,36 @@ ve =  mean(org_loc,5) - mean(uni_loc, 5);
 save('sim_data.mat','org_loc','org_conf','ve_by_raw_diff','raw_diff','conf_by_diff','diff','model_names','sim_d','cue_label','rel_label','n_rep');
 
 % %%
-
-figure; hold on
-t = tiledlayout(1, 2);
-title(t,sprintf('%s, rep: %i', model_names{sim_d}, n_rep))
-xlabel(t, 'Audiovisual discrepancy (V-A, cm)');
-ylabel(t, 'Shift of localization');
-t.TileSpacing = 'compact';
-t.Padding = 'compact';
-
-for cue = 1:n_cue
-    nexttile
-    title(cue_label{cue})
-    axis equal
-    hold on
-
-    for rel = 1: numel(sigVs)
-
-        i_ve = squeeze(ve_by_raw_diff(:, cue, rel));
-        plot(raw_diff, i_ve, 'Color',clt(rel+1,:))
-
-    end
-    xlim([min(raw_diff), max(raw_diff)])
-    xticks(raw_diff)
-    yline(0,'--')
-    if cue == 1
-        plot(raw_diff, raw_diff,'k--')
-    else
-        plot(raw_diff, -raw_diff,'k--')
-    end
-end
+% 
+% figure; hold on
+% t = tiledlayout(1, 2);
+% title(t,sprintf('%s, rep: %i', model_names{sim_d}, n_rep))
+% xlabel(t, 'Audiovisual discrepancy (V-A, cm)');
+% ylabel(t, 'Shift of localization');
+% t.TileSpacing = 'compact';
+% t.Padding = 'compact';
+% 
+% for cue = 1:n_cue
+%     nexttile
+%     title(cue_label{cue})
+%     axis equal
+%     hold on
+% 
+%     for rel = 1: numel(sigVs)
+% 
+%         i_ve = squeeze(ve_by_raw_diff(:, cue, rel));
+%         plot(raw_diff, i_ve, 'Color',clt(rel+1,:))
+% 
+%     end
+%     xlim([min(raw_diff), max(raw_diff)])
+%     xticks(raw_diff)
+%     yline(0,'--')
+%     if cue == 1
+%         plot(raw_diff, raw_diff,'k--')
+%     else
+%         plot(raw_diff, -raw_diff,'k--')
+%     end
+% end
 % 
 % %% check confidence data
 % 
