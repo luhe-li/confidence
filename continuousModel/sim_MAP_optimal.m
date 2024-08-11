@@ -6,9 +6,9 @@ n_sA = fixP.n_sA;
 sigVs = [sigV1, sigV2];
 
 [shat] = deal(NaN(n_sA, n_sA, 2, 2, bi_nrep));
-for cue = 1:numel(sigVs)
+for rel = 1:numel(sigVs)
 
-    sigV = sigVs(cue);
+    sigV = sigVs(rel);
 
     % simulate measurements, which are drawn from Gaussian distributions
     % stimulus location combination x num of trial
@@ -58,26 +58,26 @@ for cue = 1:numel(sigVs)
     %two intermediate location estimates, weighted by the corresponding
     %causal structure.
     %Eq. 4 in Wozny et al., 2010
-    shat(:,:,1,cue,:) = post_C1.* sHat_C1 + post_C2.* sHat_A_C2;
-    shat(:,:,2,cue,:) = post_C1.* sHat_C1 + post_C2.* sHat_V_C2;
+    shat(:,:,1,rel,:) = post_C1.* sHat_C1 + post_C2.* sHat_A_C2;
+    shat(:,:,2,rel,:) = post_C1.* sHat_C1 + post_C2.* sHat_V_C2;
 
-    % simulate posterior pdf for each trial
-    for xx = 1:numel(fixP.px_axis)
-        post(:,:,1,cue,:,xx) = post_C1.*normpdf(fixP.px_axis(xx), sHat_C1, repmat(sqrt(const1), size(sHat_C1))) + post_C2.*normpdf(fixP.px_axis(xx), sHat_A_C2, repmat(sqrt(constA), size(sHat_A_C2)));
-        post(:,:,2,cue,:,xx) = post_C1.*normpdf(fixP.px_axis(xx), sHat_C1, repmat(sqrt(const1), size(sHat_C1))) + post_C2.*normpdf(fixP.px_axis(xx), sHat_V_C2, repmat(sqrt(constV), size(sHat_V_C2)));
+    % simulate posterior pdf for each trial using center coordinate
+    for xx = 1:numel(fixP.center_axis)
+        post(:,:,1,rel,:,xx) = post_C1.*normpdf(fixP.center_axis(xx), sHat_C1, repmat(sqrt(JA+JV+JP), size(sHat_C1))) + post_C2.*normpdf(fixP.center_axis(xx), sHat_A_C2, repmat(sqrt(constA), size(sHat_A_C2)));
+        post(:,:,2,rel,:,xx) = post_C1.*normpdf(fixP.center_axis(xx), sHat_C1, repmat(sqrt(JA+JV+JP), size(sHat_C1))) + post_C2.*normpdf(fixP.center_axis(xx), sHat_V_C2, repmat(sqrt(constV), size(sHat_V_C2)));
     end
 end
 
-% add motor noise to localization
-bi_loc = randn(size(shat)).*sigMotor + shat;
-
 % optimal radius given posterior and estimate
-post_2d = reshape(post, [prod([n_sA, n_sA, 2, 2, bi_nrep]), numel(fixP.px_axis)]);
-shat_1d = round(reshape(shat, [prod([n_sA, n_sA, 2, 2, bi_nrep]), 1])) + 512; % shift to positive range
-opt_radius = eGain(post_2d, shat_1d, fixP.maxScore, fixP.minScore, fixP.elbow, numel(fixP.px_axis));
+post_2d = reshape(post, [prod([n_sA, n_sA, 2, 2, bi_nrep]), numel(fixP.center_axis)]);
+shat_1d = reshape(shat, [prod([n_sA, n_sA, 2, 2, bi_nrep]), 1]);
+opt_radius = eGain_MAP(post_2d, shat_1d, fixP.maxScore, fixP.minScore, fixP.elbow, fixP.center_axis);
+
+% motor noise to location estimation
+bi_loc = randn(size(shat)).*sigMotor + shat;
 
 % adjustment noise to confidence radius
 bi_conf = randn(size(opt_radius)).*sigConf + opt_radius;
-bi_conf = reshape(bi_conf, [n_sA, n_sA, 2, 2, bi_nrep]) - 512;
+bi_conf = reshape(bi_conf, [n_sA, n_sA, 2, 2, bi_nrep]);
 
 end

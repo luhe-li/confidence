@@ -1,11 +1,11 @@
-function [opt_radius,opt_gain] = eGain_est(myPDF, estX, maxScore, minScore, elbow, center_axis)
-% myPDF    : two-dimensional, size equals [trial, screen_cm]
+function [opt_radius,opt_gain] = eGain_MAP(myPDF, estX, maxScore, minScore, elbow, center_axis)
+% myPDF    : two-dimensional, size equals [trial, posterior defined by center_axis]
 % estX     : the estimated location for each trial, size equals [trial, 1]
 % maxScore : the maximum possible score given to the participant
 % minScore : the minimum possible score given to the participant
 % elbow    : the length where the score no longer decreases and stays at
 %            minScore
-% screen_cm  : grid of possible estimates
+% center_axis : grid of possible estimates
 
 myPDF = myPDF ./ sum(myPDF,2);
 n_trial = size(myPDF,1);
@@ -99,10 +99,12 @@ end
 %% check plot
 
 % figure; hold on
-% for tt = 1:100
+% for tt = 26:30
 %     plot(myPDF(tt,:))
 % end
-%
+
+%%
+% 
 % figure; hold on
 % plot(confRadius.*step, costFun);
 % plot(confRadius.*step, erCDF);

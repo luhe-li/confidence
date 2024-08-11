@@ -5,7 +5,6 @@ bi_nrep = fixP.bi_nrep;
 n_sA = fixP.n_sA;
 sigVs = [sigV1, sigV2];
 
-% [shat] = deal(NaN(n_sA, n_sA, 2, 2, bi_nrep));
 for cue = 1:numel(sigVs)
 
     sigV = sigVs(cue);

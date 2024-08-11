@@ -2,7 +2,7 @@ clear; close all; rng('shuffle');
 
 %% set environment
 
-useCluster                  = true;
+useCluster                  = false;
 
 % set cores
 if ~exist('useCluster', 'var') || isempty(useCluster)

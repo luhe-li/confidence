@@ -71,23 +71,23 @@ delta_dva = rad2deg(atan(delta_px / pixel_per_cm / 2 / sitting_dist)) .* 2;
 %% set simulation parameters
 
 %         aA,     bA,  sigV1,   sigA,   sigV2,  sigP, sigConf,   pCC
-GT = [   1.1,    0.1,      2,     10,       7,     5,      3,   0.4];
+GT = [     1,    0.1,     1,     10,     20,    30,      3,   0.7];
 n_para = length(GT);
 
 % main models
 model_names = {'Optimal','MAP optimal','MAP suboptimal','Heuristic'};
-folders = {'optimal','gauss_optimal','gauss_suboptimal','heuristic'};
+folders = {'optimal','MAP_optimal','MAP_suboptimal','heuristic'};
 n_model = numel(model_names);
 
 % conditions
-cue_label = {'Post-cue: A','Post-cue: V'};
+cue_label = {'Auditory post-cue','Visual post-cue'};
 n_cue = numel(cue_label);
 rel_label = {'High visual reliability','Low visual reliability'};
 n_rep = 100; % repitition per condition
 
 %% simulate fake data
 
-sim_d = 1;
+sim_d = 2;
 fixP.bi_sA = sAV(1,:);
 fixP.bi_sV = sAV(2,:);
 fixP.n_sA = numel(sA);
@@ -116,9 +116,10 @@ fixP.sigMotor = 1.36; % in deg, measured from first four participants
 % 2 modalities(1 = aud, 2 = vis)
 % 2 visual reliabilities
 % n_rep
-% [org_loc, org_conf] = deal(NaN(n_sa,n_sa, n_cue, numel(sigVs), n_rep));
+% [org_loc, org_conf] = deal(NaN(n_sa,n_sa, n_cue, n_rel, n_rep));
+curr_func = str2func(['sim_' folders{sim_d}]);
 
-[org_loc, org_conf] = sim_optimal(...
+[org_loc, org_conf] = curr_func(...
     aA, bA, sigA, sigV1, sigV2, muP, sigP, sigConf, pCommon, fixP);
 
 %% plot set up
@@ -152,66 +153,36 @@ ve =  mean(org_loc,5) - mean(uni_loc, 5);
 % organize confidence data: {diff} cue x reliability x rep
 [conf_by_diff, diff] = org_by_diffs(org_conf, sA);
 
-save('sim_data.mat','org_loc','org_conf','ve_by_raw_diff','raw_diff','conf_by_diff','diff','model_names','sim_d','cue_label','rel_label','n_rep');
+save(sprintf('sim_%s.mat',folders{sim_d}),'org_loc','org_conf','ve_by_raw_diff','raw_diff','conf_by_diff','diff','model_names','sim_d','cue_label','rel_label','n_rep');
 
-% %%
-% 
-% figure; hold on
-% t = tiledlayout(1, 2);
-% title(t,sprintf('%s, rep: %i', model_names{sim_d}, n_rep))
-% xlabel(t, 'Audiovisual discrepancy (V-A, cm)');
-% ylabel(t, 'Shift of localization');
-% t.TileSpacing = 'compact';
-% t.Padding = 'compact';
-% 
-% for cue = 1:n_cue
-%     nexttile
-%     title(cue_label{cue})
-%     axis equal
-%     hold on
-% 
-%     for rel = 1: numel(sigVs)
-% 
-%         i_ve = squeeze(ve_by_raw_diff(:, cue, rel));
-%         plot(raw_diff, i_ve, 'Color',clt(rel+1,:))
-% 
-%     end
-%     xlim([min(raw_diff), max(raw_diff)])
-%     xticks(raw_diff)
-%     yline(0,'--')
-%     if cue == 1
-%         plot(raw_diff, raw_diff,'k--')
-%     else
-%         plot(raw_diff, -raw_diff,'k--')
-%     end
-% end
-% 
-% %% check confidence data
-% 
-% %%
-% figure; hold on
-% set(gcf, 'Position',[10 10 700 400])
-% t = tiledlayout(2, 5);
-% title(t,sprintf('%s, rep: %i', model_names{sim_d}, n_rep))
-% xlabel(t, 'Absolute audiovisual discrepancy (cm)');
-% ylabel(t, 'Confidence radius (cm)');
-% t.TileSpacing = 'compact';
-% t.Padding = 'compact';
-% 
-% for cue = 1:n_cue
-%     for diff = 1:numel(diff)
-%         nexttile
-%         hold on
-%         title(sprintf('delta = %i, %s', diff(diff), cue_label{cue}))
-%         for rel = 2%1: numel(sigVs)
-%             i_conf = squeeze(conf_by_diff{diff}(cue, rel, :))';
-%             [counts, bins] = histcounts(i_conf, 10);%, 'Normalization', 'probability');
-%             barh((bins(2:end) + bins(1:end-1))/2, counts, 'FaceAlpha', 0.5, 'EdgeAlpha', 0.5, 'FaceColor', clt(rel+1,:), 'EdgeColor', clt(rel+1,:));
-%             yline(mean(i_conf), 'r-', 'LineWidth', 1.5);
-% %             ylim([10, 45])
-%         end
-%     end
-% end
-% 
-% % Adjust x-label position for centering
-% xl = xlabel(t, 'Absolute audiovisual discrepancy (cm)');
+%% double check here
+
+figure; hold on
+t = tiledlayout(1, 2);
+title(t,sprintf('%s, rep: %i', model_names{sim_d}, n_rep))
+xlabel(t, 'Audiovisual discrepancy (V-A, deg)');
+ylabel(t, 'Shift of localization');
+t.TileSpacing = 'compact';
+t.Padding = 'compact';
+
+for cue = 1:n_cue
+    nexttile
+    title(cue_label{cue})
+    axis equal
+    hold on
+
+    for rel = 1: 2
+
+        i_ve = squeeze(ve_by_raw_diff(:, cue, rel));
+        plot(raw_diff, i_ve, 'Color',clt(rel+1,:))
+
+    end
+    xlim([min(raw_diff), max(raw_diff)])
+    xticks(raw_diff)
+    yline(0,'--')
+    if cue == 1
+        plot(raw_diff, raw_diff,'k--')
+    else
+        plot(raw_diff, -raw_diff,'k--')
+    end
+end

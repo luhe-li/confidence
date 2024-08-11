@@ -4,7 +4,7 @@ function [opt_est,opt_radius,opt_gain] = eGain(myPDF, maxScore, minScore, elbow,
 % minScore : the minimum possible score given to the participant
 % elbow    : the length where the score no longer decreases and stays at
 %            minScore
-% screen_cm  : grid of possible estimates
+% center_axis : grid of possible estimates
 
 myPDF = myPDF ./ sum(myPDF,2);
 n_trial = size(myPDF,1);
