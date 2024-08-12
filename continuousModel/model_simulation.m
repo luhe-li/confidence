@@ -75,8 +75,8 @@ GT = [     1,    0.1,     1,     10,     20,     30,      3,   0.7];
 n_para = length(GT);
 
 % main models
-model_names = {'Optimal','MAP optimal','MAP suboptimal','Heuristic'};
-folders = {'optimal','MAP_optimal','MAP_suboptimal','heuristic'};
+model_names = {'Optimal','Model average','Model selection','Heuristic'};
+folders = {'optimal','MA','MS','heuristic'};
 n_model = numel(model_names);
 
 % conditions
@@ -87,7 +87,7 @@ n_rep = 100; % repitition per condition
 
 %% simulate fake data
 
-sim_d = 2;
+sim_d = 1;
 fixP.bi_sA = sAV(1,:);
 fixP.bi_sV = sAV(2,:);
 fixP.n_sA = numel(sA);

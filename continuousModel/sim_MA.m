@@ -1,4 +1,4 @@
-function [bi_loc, bi_conf, func] = sim_MAP_optimal(aA, bA, sigA, sigV1, sigV2, muP, sigP, sigConf, pCommon, fixP)
+function [bi_loc, bi_conf, func] = sim_MA(aA, bA, sigA, sigV1, sigV2, muP, sigP, sigConf, pCommon, fixP)
 
 sigMotor = fixP.sigMotor;
 bi_nrep = fixP.bi_nrep;

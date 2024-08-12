@@ -11,9 +11,10 @@ script_dir = @__DIR__
 cd(script_dir)
 
 # Load the .mat file
-model_names = ["Optimal", "MAP_optimal", "MAP_suboptimal", "Heuristic"]
-sim_d = 2;
-curr_model = model_names[sim_d];
+model_names = ["Optimal", "Model average","Model selection","Heuristic"];
+folders = ["optimal","MA","MS","Heuristic"];
+sim_d = 1;
+curr_model = folders[sim_d];
 filename = "sim_$curr_model.mat"
 data = matread(filename)
 
@@ -35,7 +36,7 @@ plt = plot(layout = l, size = (900, 700), dpi=300,
     guidefont = font("Helvetica", 12),
     tickfont = font("Helvetica", 10),
     legendfont = font("Helvetica", 8))
-plot!(plt[1], title=curr_model,framestyle=nothing,showaxis=false,xticks=false,yticks=false,margin=0mm)
+plot!(plt[1], title=model_names[Int(sim_d)],framestyle=nothing,showaxis=false,xticks=false,yticks=false)
 direction = [1, -1];
 
 for cue in 1:n_cue
@@ -64,7 +65,7 @@ for cue in 1:n_cue
     plot!(plt[cue+1], raw_diff, direction[cue] .* raw_diff,
           linestyle = :dash,
           color = :black,
-          label = (cue == 1 ? "full capture" : false))  # Only label the first subplot
+          label = (cue == 1 ? "Full capture" : false))  # Only label the first subplot
 end
 
 # Plot conf
@@ -89,10 +90,10 @@ for cue in 1:n_cue
             show_median = true,
             side = sides[rel],  # Set the side of the violin plot
             linewidth = 0, 
-            fillalpha = 0.7,
+            fillalpha = 1,
             color = colors[rel],  # Set the color based on rel
             xlims = (minimum(scaled_diffs) - 1, maximum(scaled_diffs) + 1),
-            ylims = (0, ylim_max),
+            ylims = (0, 21),
             tick_direction = :out,
             xticks = (scaled_diffs, Int.(round.(diffs))),
             ylabel = "Confidence radius (cm)",
@@ -118,4 +119,4 @@ output_dir = joinpath(pwd(), script_name_without_extension)  # Full path in the 
 if !isdir(output_dir)
     mkpath(output_dir)
 end
-savefig(joinpath(output_dir, "figure.png"))
+savefig(joinpath(output_dir, "sim_$curr_model.png"))

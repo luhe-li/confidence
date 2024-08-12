@@ -6,9 +6,9 @@ n_sA = fixP.n_sA;
 sigVs = [sigV1, sigV2];
 
 post = NaN(n_sA, n_sA, 2, 2, bi_nrep, numel(fixP.center_axis));
-for cue = 1:numel(sigVs)
+for rel = 1:numel(sigVs)
 
-    sigV = sigVs(cue);
+    sigV = sigVs(rel);
 
     % simulate measurements, which are drawn from Gaussian distributions
     % stimulus location combination x num of trial
