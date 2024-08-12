@@ -29,18 +29,20 @@ n_rel = length(rel_label)
 
 # Plot VE
 colors = [:brown4, :pink];  # Colors for rel=1 and rel=2
-plt = plot(layout = (2, 2), size = (900, 700),
+l = @layout [a{0.01h}; grid(2,2)]
+plt = plot(layout = l, size = (900, 700), dpi=300,
     titlefont = font("Helvetica", 14),
     guidefont = font("Helvetica", 12),
     tickfont = font("Helvetica", 10),
-    legendfont = font("Helvetica", 12))
+    legendfont = font("Helvetica", 8))
+plot!(plt[1], title=curr_model,framestyle=nothing,showaxis=false,xticks=false,yticks=false,margin=0mm)
 direction = [1, -1];
 
 for cue in 1:n_cue
     for rel in 1:n_rel
         i_ve = ve_by_raw_diff[:, cue, rel]
         
-        plot!(plt[cue], raw_diff, i_ve,
+        plot!(plt[cue+1], raw_diff, i_ve,
               color = colors[rel],
               linewidth = 2,
               xticks = round.(raw_diff), 
@@ -48,26 +50,22 @@ for cue in 1:n_cue
               ylabel = "Shift of localization (cm)",
               xlabel = "Audiovisual discrepancy (V-A, cm)",
               title = cue_label[cue],
-              label = (cue == 1 ? rel_label[rel] : false))  # Only label the first subplot
+              label = (cue == 1 ? rel_label[rel] : false),
+              legend = :bottomright)  # Only label the first subplot
     end
 
     # y = 0
-    plot!(plt[cue], raw_diff, zeros(size(raw_diff)),
+    plot!(plt[cue+1], raw_diff, zeros(size(raw_diff)),
           color = :black,
           linestyle = :solid,
           label = (cue == 1 ? "No effect" : false))  # Only label the first subplot
     
     # identity line
-    plot!(plt[cue], raw_diff, direction[cue] .* raw_diff,
+    plot!(plt[cue+1], raw_diff, direction[cue] .* raw_diff,
           linestyle = :dash,
           color = :black,
           label = (cue == 1 ? "full capture" : false))  # Only label the first subplot
 end
-plot!(plt[1], legendfontsize=8, legend=:bottomright) 
-
-using StatsPlots
-
-# Assuming plt and other variables (e.g., colors, rel_label, etc.) are already defined.
 
 # Plot conf
 ylim_min = minimum([minimum(conf_by_diff[i_diff][cue, rel, :]) for i_diff in 1:length(diffs), cue in 1:n_cue, rel in 1:n_rel])
@@ -86,7 +84,7 @@ for cue in 1:n_cue
         label = !label_added[rel] ? rel_label[rel] : raw""
 
         # Create the violin plot
-        violin!(plt[cue+2], x_data, y_data,
+        violin!(plt[cue+3], x_data, y_data,
             bandwidth = 1,
             show_median = true,
             side = sides[rel],  # Set the side of the violin plot
@@ -109,3 +107,15 @@ for cue in 1:n_cue
 end
 
 display(plt)
+
+# save figure
+# Step 1: Get the name of the current script
+script_name = basename(@__FILE__)  # Get the script name with extension
+script_name_without_extension = splitext(script_name)[1]  # Remove the extension
+
+# Step 2: Create a directory with the script name if it doesn't exist
+output_dir = joinpath(pwd(), script_name_without_extension)  # Full path in the current directory
+if !isdir(output_dir)
+    mkpath(output_dir)
+end
+savefig(joinpath(output_dir, "figure.png"))

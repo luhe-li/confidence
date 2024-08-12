@@ -1,4 +1,4 @@
-function [opt_radius,opt_gain] = eGain_MAP(myPDF, estX, maxScore, minScore, elbow, center_axis)
+function [opt_radius,opt_gain, func] = eGain_MAP(myPDF, estX, maxScore, minScore, elbow, center_axis)
 % myPDF    : two-dimensional, size equals [trial, posterior defined by center_axis]
 % estX     : the estimated location for each trial, size equals [trial, 1]
 % maxScore : the maximum possible score given to the participant
@@ -13,6 +13,7 @@ n_est = numel(center_axis);
 step = center_axis(2) - center_axis(1);
 idx_elbow = round(elbow/step);
 [opt_gain,idx_opt_radius] = deal(NaN(n_trial,1));
+func = repmat(struct('costFun', [], 'erCDF', [], 'gainFun', []), n_trial, 1);
 
 % Calculate the closest elements for each value in estX and indices
 [~, vec_idx_est] = min(abs(center_axis - estX), [], 2);
@@ -34,7 +35,9 @@ for tt = 1:length(estX)
     if idx_conf < 1
         opt_gain(tt) = 0;
         idx_opt_radius(tt) = 0;
-       
+        func(tt).costFun = [];
+        func(tt).erCDF = [];
+        func(tt).gainFun = [];
     else
         % for each estimation location estX, it has its distinct max radius
         confRadius = 0 : idx_conf;
@@ -83,6 +86,9 @@ for tt = 1:length(estX)
         % e.g. p(stimulus is within 20 pixels from estX) * cost(radius = 20)
         % erCDF(20) * costFun(20)
         gainFun = costFun .* erCDF;
+        func(tt).costFun = costFun;
+        func(tt).erCDF = erCDF;
+        func(tt).gainFun = gainFun;
 
         % We look for the index that corresponds to the maximum expected gain.
         % That index is the radius we are looking for in the unit of axis defined.
@@ -96,15 +102,15 @@ opt_radius = idx_opt_radius.*step;
 
 end
 
-%% check plot
+%% check posterior
 
 % figure; hold on
 % for tt = 26:30
 %     plot(myPDF(tt,:))
 % end
 
-%%
-% 
+%% check functions
+
 % figure; hold on
 % plot(confRadius.*step, costFun);
 % plot(confRadius.*step, erCDF);

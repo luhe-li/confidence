@@ -1,14 +1,14 @@
-function [bi_loc, bi_conf] = sim_optimal(aA, bA, sigA, sigV1, sigV2, muP, sigP, sigConf, pCommon, fixP)
+function [bi_loc, bi_conf, func] = sim_MAP_optimal(aA, bA, sigA, sigV1, sigV2, muP, sigP, sigConf, pCommon, fixP)
 
 sigMotor = fixP.sigMotor;
 bi_nrep = fixP.bi_nrep;
 n_sA = fixP.n_sA;
 sigVs = [sigV1, sigV2];
 
-post = NaN(n_sA, n_sA, 2, 2, bi_nrep, numel(fixP.center_axis));
-for cue = 1:numel(sigVs)
+[shat] = deal(NaN(n_sA, n_sA, 2, 2, bi_nrep));
+for rel = 1:numel(sigVs)
 
-    sigV = sigVs(cue);
+    sigV = sigVs(rel);
 
     % simulate measurements, which are drawn from Gaussian distributions
     % stimulus location combination x num of trial
@@ -53,27 +53,45 @@ for cue = 1:numel(sigVs)
     sHat_A_C2  = (mA./JA + muP/JP)./(1/JA + 1/JP);
     sHat_V_C2  = (mV./JV + muP/JP)./(1/JV + 1/JP);
 
+    %compute the final location estimates if we assume model averaging.
+    %Based on this strategy, the final location estimate is the sum of the
+    %two intermediate location estimates, weighted by the corresponding
+    %causal structure.
+    %Eq. 4 in Wozny et al., 2010
+    shat(:,:,1,rel,:) = post_C1.* sHat_C1 + post_C2.* sHat_A_C2;
+    shat(:,:,2,rel,:) = post_C1.* sHat_C1 + post_C2.* sHat_V_C2;
+
     % simulate posterior pdf for each trial using center coordinate
     for xx = 1:numel(fixP.center_axis)
-        post(:,:,1,rel,:,xx) = post_C1.*normpdf(fixP.center_axis(xx), sHat_C1, repmat(sqrt(1/(1/JA+1/JV+1/JP)), size(sHat_C1)))...
-            + post_C2.*normpdf(fixP.center_axis(xx), sHat_A_C2, repmat(sqrt(1/(1/JA+1/JP)), size(sHat_A_C2)));
-        post(:,:,2,rel,:,xx) = post_C1.*normpdf(fixP.center_axis(xx), sHat_C1, repmat(sqrt(1/(1/JA+1/JV+1/JP)), size(sHat_C1)))...
-            + post_C2.*normpdf(fixP.center_axis(xx), sHat_V_C2, repmat(sqrt(1/(1/JV+1/JP)), size(sHat_V_C2)));
+        post(:,:,1,rel,:,xx) = post_C1.*normpdf(fixP.center_axis(xx), sHat_C1, repmat(sqrt(JA+JV+JP), size(sHat_C1))) + post_C2.*normpdf(fixP.center_axis(xx), sHat_A_C2, repmat(sqrt(constA), size(sHat_A_C2)));
+        post(:,:,2,rel,:,xx) = post_C1.*normpdf(fixP.center_axis(xx), sHat_C1, repmat(sqrt(JA+JV+JP), size(sHat_C1))) + post_C2.*normpdf(fixP.center_axis(xx), sHat_V_C2, repmat(sqrt(constV), size(sHat_V_C2)));
     end
-
 end
 
-% for each possible estimate, given the posterior, calculate the optimal
-% radius
+% optimal radius given posterior and estimate
 post_2d = reshape(post, [prod([n_sA, n_sA, 2, 2, bi_nrep]), numel(fixP.center_axis)]);
-[opt_est,opt_radius] = eGain(post_2d, fixP.maxScore, fixP.minScore, fixP.elbow, fixP.center_axis);
+shat_1d = reshape(shat, [prod([n_sA, n_sA, 2, 2, bi_nrep]), 1]);
+[opt_radius, ~, func]= eGain_MAP(post_2d, shat_1d, fixP.maxScore, fixP.minScore, fixP.elbow, fixP.center_axis);
 
 % motor noise to location estimation
-bi_loc = randn(size(opt_est)).*sigMotor + opt_est;
-bi_loc = reshape(bi_loc, [n_sA, n_sA, 2, 2, bi_nrep]);
+bi_loc = randn(size(shat)).*sigMotor + shat;
 
 % adjustment noise to confidence radius
 bi_conf = randn(size(opt_radius)).*sigConf + opt_radius;
 bi_conf = reshape(bi_conf, [n_sA, n_sA, 2, 2, bi_nrep]);
 
 end
+
+%% check cost functions/posteriors
+
+dims = [n_sA, n_sA, 2, 2, bi_nrep];
+lin_index = sub2ind(dims, 2, 3, 1, 1, 1);
+
+figure; hold on
+plot(func(lin_index).costFun);
+plot(func(lin_index).erCDF);
+plot(func(lin_index).gainFun);
+xlabel('Confidence unit')
+
+figure; 
+plot(post_2d(lin_index, :))

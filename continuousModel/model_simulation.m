@@ -71,7 +71,7 @@ delta_dva = rad2deg(atan(delta_px / pixel_per_cm / 2 / sitting_dist)) .* 2;
 %% set simulation parameters
 
 %         aA,     bA,  sigV1,   sigA,   sigV2,  sigP, sigConf,   pCC
-GT = [     1,    0.1,     1,     10,     20,    30,      3,   0.7];
+GT = [     1,    0.1,     1,     10,     20,     30,      3,   0.7];
 n_para = length(GT);
 
 % main models
