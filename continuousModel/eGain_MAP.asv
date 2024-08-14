@@ -102,16 +102,16 @@ opt_radius = idx_opt_radius.*step;
 
 end
 
-% % check posterior
-% 
-% figure; hold on
-% for tt = 1:2
-%     plot(myPDF(tt,:))
-% end
-% 
-% % check functions
-% figure; hold on
-% plot(confRadius.*step, costFun);
-% plot(confRadius.*step, erCDF);
-% plot(confRadius.*step, gainFun);
-% xlabel('Confidence radius (cm)')
+% check posterior
+
+figure; hold on
+for tt = 1:2
+    plot(myPDF(tt,:))
+end
+
+% check functions
+figure; hold on
+plot(confRadius.*step, costFun);
+plot(confRadius.*step, erCDF);
+plot(confRadius.*step, gainFun);
+xlabel('Confidence radius (cm)')

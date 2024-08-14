@@ -3,7 +3,7 @@ clear; close all; rng('shuffle');
 
 %% set environment
 
-sim_d = 3;
+sim_d = 1;
 useCluster = false;
 
 % set cores
@@ -72,7 +72,7 @@ delta_dva = rad2deg(atan(delta_px / pixel_per_cm / 2 / sitting_dist)) .* 2;
 %% set simulation parameters
 
 %         aA,     bA,  sigV1,   sigA,   sigV2,  sigP, sigConf,   pCC
-GT = [     1,    0.1,     1,     10,     7,     30,      1,    0.7];
+GT = [     1,    0.1,     1,     10,     15,     30,      1,    0.7];
 n_para = length(GT);
 
 % main models
@@ -84,7 +84,7 @@ n_model = numel(model_names);
 cue_label = {'Auditory post-cue','Visual post-cue'};
 n_cue = numel(cue_label);
 rel_label = {'High visual reliability','Low visual reliability'};
-n_rep = 1000; % repitition per condition
+n_rep = 100; % repitition per condition
 
 %% simulate fake data
 
