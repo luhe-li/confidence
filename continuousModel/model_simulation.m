@@ -3,7 +3,7 @@ clear; close all; rng('shuffle');
 
 %% set environment
 
-sim_d = 3;
+sim_d = 1;
 useCluster = false;
 
 % set cores
@@ -98,7 +98,7 @@ fixP.screen_cm = screen_cm;
 fixP.center_axis = linspace(-screen_cm/2, screen_cm/2, 1e3);
 fixP.maxScore = 1;
 fixP.minScore = 0.01;
-fixP.elbow = 85/2;
+fixP.elbow = 170/3;
 fixP.dropRate = (fixP.maxScore - fixP.minScore)/fixP.elbow;
 
 aA                    = GT(1);

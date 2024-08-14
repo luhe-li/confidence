@@ -13,7 +13,7 @@ cd(script_dir)
 # Load the .mat file
 model_names = ["Optimal", "Model average","Model selection","Heuristic"];
 folders = ["optimal","MA","MS","Heuristic"];
-sim_d = 2;
+sim_d = 1;
 curr_model = folders[sim_d];
 filename = "sim_$curr_model.mat"
 data = matread(filename)
@@ -27,7 +27,7 @@ raw_diff = vec(raw_diff)
 diffs = vec(diff)
 n_cue = length(cue_label)
 n_rel = length(rel_label)
-elbow_value = fixP["elbow"]
+elbow_value = round(fixP["elbow"], digits = 1)
 
 # Plot VE
 colors = [:brown4, :pink];  # Colors for rel=1 and rel=2
