@@ -3,7 +3,7 @@ clear; close all; rng('shuffle');
 
 %% set environment
 
-sim_d = 1;
+sim_d = 2;
 useCluster = false;
 
 % set cores
@@ -84,7 +84,7 @@ n_model = numel(model_names);
 cue_label = {'Auditory post-cue','Visual post-cue'};
 n_cue = numel(cue_label);
 rel_label = {'High visual reliability','Low visual reliability'};
-n_rep = 1000; % repitition per condition
+n_rep = 60; % repitition per condition
 
 %% simulate fake data
 

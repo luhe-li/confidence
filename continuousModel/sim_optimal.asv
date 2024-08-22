@@ -54,6 +54,7 @@ for cue = 1:numel(sigVs)
     sHat_V_C2  = (mV./JV + muP/JP)./(1/JV + 1/JP);
 
     % simulate posterior pdf for each trial using center coordinate
+    for xx = 1:numel(fixP.center_axis)
         post(:,:,1,cue,:,xx) = post_C1.*normpdf(fixP.center_axis(xx), sHat_C1, repmat(sqrt(const1), size(sHat_C1))) + post_C2.*normpdf(fixP.center_axis(xx), sHat_A_C2, repmat(sqrt(constA), size(sHat_A_C2)));
         post(:,:,2,cue,:,xx) = post_C1.*normpdf(fixP.center_axis(xx), sHat_C1, repmat(sqrt(const1), size(sHat_C1))) + post_C2.*normpdf(fixP.center_axis(xx), sHat_V_C2, repmat(sqrt(constV), size(sHat_V_C2)));
     end

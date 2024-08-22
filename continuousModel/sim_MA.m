@@ -1,4 +1,4 @@
-function [bi_loc, bi_conf, func] = sim_MA(aA, bA, sigA, sigV1, sigV2, muP, sigP, sigConf, pCommon, fixP)
+function [bi_loc, bi_conf, opt_gain, func] = sim_MA(aA, bA, sigA, sigV1, sigV2, muP, sigP, sigConf, pCommon, fixP)
 
 sigMotor = fixP.sigMotor;
 bi_nrep = fixP.bi_nrep;
@@ -74,7 +74,7 @@ end
 % optimal radius given posterior and estimate
 post_2d = reshape(post, [prod([n_sA, n_sA, 2, 2, bi_nrep]), numel(fixP.center_axis)]);
 shat_1d = reshape(shat, [prod([n_sA, n_sA, 2, 2, bi_nrep]), 1]);
-[opt_radius, ~, func]= eGain_MAP(post_2d, shat_1d, fixP.maxScore, fixP.minScore, fixP.elbow, fixP.center_axis);
+[opt_radius, opt_gain, func]= eGain_MAP(post_2d, shat_1d, fixP.maxScore, fixP.minScore, fixP.elbow, fixP.center_axis);
 
 % motor noise to location estimation
 bi_loc = randn(size(shat)).*sigMotor + shat;
@@ -82,6 +82,8 @@ bi_loc = randn(size(shat)).*sigMotor + shat;
 % adjustment noise to confidence radius
 bi_conf = randn(size(opt_radius)).*sigConf + opt_radius;
 bi_conf = reshape(bi_conf, [n_sA, n_sA, 2, 2, bi_nrep]);
+
+opt_gain = reshape(opt_gain,[n_sA, n_sA, 2, 2, bi_nrep]);
 
 check_plot=0;
 if check_plot

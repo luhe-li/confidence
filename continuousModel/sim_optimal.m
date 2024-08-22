@@ -1,4 +1,4 @@
-function [bi_loc, bi_conf] = sim_optimal(aA, bA, sigA, sigV1, sigV2, muP, sigP, sigConf, pCommon, fixP)
+function [bi_loc, bi_conf, opt_gain] = sim_optimal(aA, bA, sigA, sigV1, sigV2, muP, sigP, sigConf, pCommon, fixP)
 
 sigMotor = fixP.sigMotor;
 bi_nrep = fixP.bi_nrep;
@@ -66,7 +66,7 @@ end
 % for each possible estimate, given the posterior, calculate the optimal
 % radius
 post_2d = reshape(post, [prod([n_sA, n_sA, 2, 2, bi_nrep]), numel(fixP.center_axis)]);
-[opt_est,opt_radius] = eGain(post_2d, fixP.maxScore, fixP.minScore, fixP.elbow, fixP.center_axis);
+[opt_est,opt_radius,opt_gain] = eGain(post_2d, fixP.maxScore, fixP.minScore, fixP.elbow, fixP.center_axis);
 
 % motor noise to location estimation
 bi_loc = randn(size(opt_est)).*sigMotor + opt_est;
@@ -75,5 +75,8 @@ bi_loc = reshape(bi_loc, [n_sA, n_sA, 2, 2, bi_nrep]);
 % adjustment noise to confidence radius
 bi_conf = randn(size(opt_radius)).*sigConf + opt_radius;
 bi_conf = reshape(bi_conf, [n_sA, n_sA, 2, 2, bi_nrep]);
+
+% reshape best gain possible
+opt_gain = reshape(opt_gain, [n_sA, n_sA, 2, 2, bi_nrep]);
 
 end

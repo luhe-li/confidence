@@ -76,7 +76,7 @@ ylim_min = minimum([minimum(conf_by_diff[i_diff][cue, rel, :]) for i_diff in 1:l
 ylim_max = maximum([maximum(conf_by_diff[i_diff][cue, rel, :]) for i_diff in 1:length(diffs), cue in 1:n_cue, rel in 1:n_rel])
 sides = [:left, :right];  # Sides for rel=1 and rel=2
 label_added = Dict(1 => false, 2 => false)
-scaled_diffs = diffs / 6
+scaled_diffs = diffs / 10
 
 for cue in 1:n_cue
     for rel in 1:n_rel
