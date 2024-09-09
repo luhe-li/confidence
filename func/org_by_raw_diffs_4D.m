@@ -20,7 +20,7 @@
 function [data_by_diff, raw_diffs] = org_by_raw_diffs_4D(data, sA)
 
 sV = sA;
-raw_diffs = unique(sV' - sA)';
+raw_diffs = unique(round((sV' - sA),2))';
 num_diffs = length(raw_diffs);
 data_by_diff = nan(num_diffs, 2, 2); % diff x cue x reliability
 
@@ -29,7 +29,7 @@ for i = 1:num_diffs
     diff = raw_diffs(i);
     
     % Find pairs of audIdx and visIdx that match this difference
-    [visPairs, audPairs] = find((sV' - sA) == diff);
+    [visPairs, audPairs] = find(round((sV' - sA),2) == diff);
     
     tempData = [];
     % For each pair, extract and store the corresponding data
