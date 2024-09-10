@@ -16,7 +16,7 @@ center_y = height / 2;
 mean_luminance = 1.0;
 targetLoc = [center_y,ScreenInfo.xmid + x_loc_pixel];
 
-back_gaussian = mean_luminance * exp(-((x - center_x).^2 / (2 * noise_sd_y^2) + (y - center_y).^2 / (2 * back_sd_y^2)));
+back_gaussian = mean_luminance * exp(-((x - center_x).^2 / (2 * back_sd_y^2) + (y - center_y).^2 / (2 * back_sd_y^2)));
 
 % Perform Fourier transformation on the anisotropic Gaussian blob
 background_gaussian_fft = fftshift(fft2(back_gaussian));

@@ -215,10 +215,10 @@ end
 
 %% make visual stimuli
 
-% define ripple stimulus
+% define ripple stimulus 
 VSinfo.height = 200;
 VSinfo.noise_sd = 15; % in pixel?
-VSinfo.stim_sd = VSinfo.SD_blob .* VSinfo.px_per_cm; % doesnt change by trial
+VSinfo.stim_sd = VSinfo.SD_blob .* ExpInfo.px_per_cm; % doesnt change by trial
 VSinfo.wBack = 0.55;
 
 % create background
