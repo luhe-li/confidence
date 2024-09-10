@@ -60,6 +60,7 @@ KbCheck();
 % ListenChar(2);
 
 Screen('Preference', 'SkipSyncTests', 1);
+PsychDebugWindowConfiguration([], 0.7)
 screens = Screen('Screens');
 screenNumber = max(screens);
 [windowPtr,rect] = Screen('OpenWindow', screenNumber, [0,0,0], windowSize);
@@ -182,7 +183,7 @@ instruction = ['In the following session, you will see two visual stimuli in seq
 c                   = clock;
 ExpInfo.start       = sprintf('%04d/%02d/%02d_%02d:%02d:%02d',c(1),c(2),c(3),c(4),c(5),ceil(c(6)));
 
-Screen('TextSize',windowPtr,10);
+Screen('TextSize',windowPtr,5);
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
     [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
 DrawFormattedText(windowPtr, instruction ,...

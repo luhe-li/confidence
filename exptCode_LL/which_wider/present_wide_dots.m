@@ -39,7 +39,7 @@ end
 
 %% generate comparison stimulus
 
-current_sig = 20;%[0:4:16];
+current_sig = 40;%[0:4:16];
 delta_sample_loc = randn(1, ExpInfo.n_frame/2) .* current_sig; % sample target locations per frame
 sample_loc = [target_loc + delta_sample_loc, target_loc - delta_sample_loc];
 sorted_loc = sort(sample_loc);
