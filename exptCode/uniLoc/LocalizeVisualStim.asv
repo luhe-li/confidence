@@ -1,15 +1,13 @@
-function Resp = LocalizeVisualStimAllDial(i, ExpInfo, ScreenInfo,VSinfo,windowPtr)
+function Resp = LocalizeVisualStim(i, ExpInfo, ScreenInfo,VSinfo,windowPtr)
 
 %% precompute visual stimuli
 height = 200;
-noise_sd = 20;
-stim_sd = VSinfo.SD_blob(i) .* 6;
-wBack = 0.5;
+noise_sd = 15;%20;
+stim_sd = VSinfo.SD_blob(i) .* 8;
+wBack = 0.55;
 stimTx = generateRippleStim(VSinfo,ExpInfo,ScreenInfo,windowPtr,i, height, noise_sd, stim_sd, wBack);
-ExpInfo.maxPoint = 100; %%%%%%%%%%%%%%%%% NEEDS TO BE ADDED BACK TO EXP MAIN SCRIPT!
-ExpInfo.dropRate = 2;
-ExpInfo.minPoint = 1;
 dialScaler = 2;
+
 %% start the trial
 
 % fixation
@@ -40,18 +38,15 @@ Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
 Screen('Flip',windowPtr);
 
 %% response
-pm = PsychPowerMate('Open');
-[buttonPM, dialPos] = PsychPowerMate('Get',pm); %initalize powermate
-initDialPos = dialPos;
 
 % perceptual response
 yLoc = ScreenInfo.yaxis-ScreenInfo.liftingYaxis;
-SetMouse(randi(ScreenInfo.xaxis*2,1), yLoc*2, windowPtr);
+SetMouse(randi(ScreenInfo.xaxis,1), yLoc, windowPtr);
 HideCursor;
+buttons = 0;
 tic;
-while ~buttonPM
-    [buttonPM, dialPos] = PsychPowerMate('Get',pm); %update dial postion
-    x = dialScaler * abs(dialPos - initDialPos);
+while sum(buttons)==0
+    [x,~,buttons] = GetMouse(windowPtr);
     HideCursor;
     x = min(x, ScreenInfo.xmid*2); 
     x = max(0,x);
@@ -72,13 +67,14 @@ Resp.response_pixel = x;
 Resp.response_cm    = (Resp.response_pixel -  ScreenInfo.xmid)/ScreenInfo.numPixels_perCM;
 Resp.response_deg   = rad2deg(atan(Resp.response_cm/ExpInfo.sittingDistance));
 HideCursor;
+
 % confidence response
 Screen('TextSize',windowPtr,15);
 SetMouse(x*2, yLoc*2, windowPtr);
 HideCursor;
 WaitSecs(0.2);
 tic;
-
+pm = PsychPowerMate('Open');
 [buttonPM, dialPos] = PsychPowerMate('Get',pm); %initalize powermate
 initDialPos = dialPos;
 while ~buttonPM
@@ -86,10 +82,9 @@ while ~buttonPM
     
     conf_radius = dialScaler * abs(dialPos - initDialPos);
     potentialconfRcm = conf_radius/ScreenInfo.numPixels_perCM;
-    potentialconfRdeg = rad2deg(atan(potentialconfRcm/ExpInfo.sittingDistance));
-    potentialPoint = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * potentialconfRdeg, ExpInfo.minPoint);
+    potentialPoint = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * potentialconfRcm, ExpInfo.minPoint);
     
-    potentialEnclosed = abs(ExpInfo.speakerLocCM(ExpInfo.randVisIdx(i)) - Resp.response_cm) <= potentialconfRdeg;
+    potentialEnclosed = abs(ExpInfo.speakerLocCM(ExpInfo.randVisIdx(i)) - Resp.response_cm) <= potentialconfRcm;
     
     Screen('DrawTexture',windowPtr, VSinfo.grey_texture,[],...
         [0,0,ScreenInfo.xaxis, ScreenInfo.yaxis]);
@@ -97,19 +92,11 @@ while ~buttonPM
     Screen('DrawLine', windowPtr, [255 255 255],x-conf_radius, yLoc, x+conf_radius, yLoc, 1);
     Screen('DrawLine', windowPtr, [255 255 255],x-conf_radius, yLoc+height/2, x-conf_radius, yLoc-height/2, 1);
     Screen('DrawLine', windowPtr, [255 255 255],x+conf_radius, yLoc+height/2, x+conf_radius, yLoc-height/2, 1);
+    Screen('FillRect', windowPtr, [255 255 255], [x-conf_radius-1, yLoc+height/2 - 3, x+conf_radius, yLoc-height/2 + 3]);
     
-    if ExpInfo.practice == 2
-    DrawFormattedText(windowPtr, ['Actual score: ' num2str(round(potentialPoint * potentialEnclosed,2))], 'center', 'center', ...
-        [255 255 255],[], [], [], [], [], ...
-        [x-20,yLoc-25,x+20,yLoc-19]);
     DrawFormattedText(windowPtr, ['Potential score: ' num2str(round(potentialPoint,2))], 'center', 'center', ...
         [255 255 255],[], [], [], [], [], ...
         [x-20,yLoc-12,x+20,yLoc-6]);
-    else
-    DrawFormattedText(windowPtr, num2str(round(potentialPoint,2)), 'center', 'center', ...
-        [255 255 255],[], [], [], [], [], ...
-        [x-20,yLoc-12,x+20,yLoc-6]);
-    end
     
     Screen('Flip',windowPtr);
     [~, ~, keyCode] = KbCheck(-1);
@@ -127,23 +114,25 @@ Resp.conf_radius_cm  = Resp.conf_radius_pixel/ScreenInfo.numPixels_perCM;
 % ITI
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
     [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
-if ~rem(i,3) && ExpInfo.practice ~= 2 % every three trials give feedback, if not practice
-    DrawFormattedText(windowPtr, ['Score: ' num2str(round(potentialPoint * potentialEnclosed,2))], 'center', 'center', ...
+if ~rem(i,3) || ExpInfo.practice == 2 % every three trials give feedback, if not practice
+    DrawFormattedText(windowPtr, ['Score of the last trial: ' num2str(round(potentialPoint * potentialEnclosed,2))], 'center', 'center', ...
         [255 255 255],[], [], [], [], [], ...
         [ScreenInfo.xmid-20,yLoc-3,ScreenInfo.xmid+20,yLoc+3]);
+    WaitSecs(0.1);
 end
 Screen('Flip',windowPtr);
 WaitSecs(ExpInfo.ITI);
 
 % calculate points
 Resp.target_idx = ExpInfo.randVisIdx(i); % visual location that corresponds to speaker index
-Resp.target_cm = ExpInfo.speakerLocCM(Resp.target_idx);
-Resp.target_deg = rad2deg(atan(Resp.target_cm/ExpInfo.sittingDistance));
-Resp.enclosed = abs(Resp.target_cm - Resp.response_cm) <= Resp.conf_radius_cm;
-bestRadius_cm = abs(Resp.target_cm - Resp.response_cm);
-Resp.maxPtPossible = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * bestRadius_cm, ExpInfo.minPoint);
+Resp.target_pixel = ExpInfo.randVisPixel(i);
+Resp.target_cm = ExpInfo.randVisCM(i);
+Resp.target_deg = ExpInfo.randVisVA(i);
+Resp.enclosed = abs(Resp.target_pixel - Resp.response_pixel) <= Resp.conf_radius_cm;
+bestRadius_pixel = abs(Resp.target_pixel - Resp.response_pixel);
+Resp.maxPtPossible = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * bestRadius_pixel, ExpInfo.minPoint);
 if Resp.enclosed
-    Resp.point = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * Resp.conf_radius_cm, ExpInfo.minPoint);
+    Resp.point = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * Resp.bestRadius_pixel, ExpInfo.minPoint);
 else
     Resp.point = 0;
 end

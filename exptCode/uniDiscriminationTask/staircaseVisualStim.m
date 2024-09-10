@@ -1,12 +1,15 @@
-function Resp = LocalizeVisualStim(i, ExpInfo, ScreenInfo,VSinfo,windowPtr)
+function Resp = staircaseVisualStim(i, j, ExpInfo, ScreenInfo, VSinfo, windowPtr)
 
-%% precompute visual stimuli
-height = 200;
-noise_sd = 15;%20;
-stim_sd = VSinfo.SD_blob(i) .* 8;
-wBack = 0.55;
-stimTx = generateRippleStim(VSinfo,ExpInfo,ScreenInfo,windowPtr,i, height, noise_sd, stim_sd, wBack);
-dialScaler = 2;
+%% precompute
+
+% standard stimulus
+x_loc_pixel = round(ExpInfo.standard_loc * ExpInfo.px_per_cm);
+std_stimTx = generateRippleStim(VSinfo,ScreenInfo,windowPtr, x_loc_pixel);
+Resp.standard_loc(i) = ExpInfo.standard_loc;
+
+% comparison stimulus
+x_loc_pixel = round(Resp.comparison_loc(i) * ExpInfo.px_per_cm);
+cmp_stimTx = generateRippleStim(VSinfo,ScreenInfo,windowPtr, x_loc_pixel);
 
 %% start the trial
 
@@ -28,7 +31,7 @@ WaitSecs(ExpInfo.tBlank1);
 
 % display visual stimulus
 for jj = 1:VSinfo.numFrames
-Screen('DrawTexture', windowPtr, stimTx(jj),[],...
+Screen('DrawTexture', windowPtr, std_stimTx(jj),[],...
          [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
 Screen('Flip',windowPtr);
 end
@@ -38,6 +41,32 @@ Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
 Screen('Flip',windowPtr);
 
 %% response
+
+DrawFormattedText(windowPtr, 'The first one is more to the right: press 1',...
+    'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis-60,[255 255 255]);
+DrawFormattedText(windowPtr, 'The second one is more to the right: press 2',...
+    'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis-30,[255 255 255]);
+Screen('Flip',windowPtr); WaitSecs(0.1);
+
+tic
+while 1
+    [~, ~, keyCode] = KbCheck(-1);
+    Resp.RT(i) = toc;
+    if keyCode(KbName('ESCAPE'))
+        sca;
+        ShowCursor;
+        Screen('CloseAll');
+        error('Escape');
+    elseif keyCode(KbName('1'))
+        break;
+    elseif keyCode(KbName('2'))
+        break;
+    end
+end
+Screen('Flip',windowPtr);
+
+
+
 
 % perceptual response
 yLoc = ScreenInfo.yaxis-ScreenInfo.liftingYaxis;
@@ -80,7 +109,7 @@ initDialPos = dialPos;
 while ~buttonPM
     [buttonPM, dialPos] = PsychPowerMate('Get',pm); %update dial postion
     
-    conf_radius = dialScaler * abs(dialPos - initDialPos);
+    conf_radius = ExpInfo.dialScaler * abs(dialPos - initDialPos);
     potentialconfRcm = conf_radius/ScreenInfo.numPixels_perCM;
     potentialPoint = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * potentialconfRcm, ExpInfo.minPoint);
     

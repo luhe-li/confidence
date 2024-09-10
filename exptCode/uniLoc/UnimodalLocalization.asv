@@ -11,6 +11,7 @@ clear; close all;  rng('Shuffle');
 %     end
 % end
 
+
  ExpInfo.subjInit = 'LL';
  ExpInfo.session = 'V';
  ExpInfo.practice  = 1;
@@ -62,13 +63,25 @@ if strcmp(ExpInfo.session, 'A')
     fopen(Arduino);
 end
 
+% switch between debug mode
+ExpInfo.mode  = 1; %input('Experiment mode: 1; Debug mode: 2#: ');
+switch ExpInfo.mode
+    case 1 % experiment mode
+        windowSize = [];
+        opacity = 1;
+        HideCursor();
+    case 2 % debug mode
+        windowSize = [100 100 1000 600]; % open a smaller window
+        opacity = 0.4;
+end
+
 %% Screen Setup
 PsychDefaultSetup(2);
 AssertOpenGL();
 GetSecs();
 WaitSecs(0.1);
 KbCheck();
-% ListenChar(2);
+ListenChar(2);
 
 Screen('Preference', 'VisualDebugLevel', 1);
 Screen('Preference', 'SkipSyncTests', 1);
@@ -93,7 +106,7 @@ ScreenInfo.numPixels_perCM = ScreenInfo.xaxis/(ScreenInfo.halfScreenSize*2);
 %fixation locations
 ScreenInfo.x1_lb = ScreenInfo.xmid-7; ScreenInfo.x2_lb = ScreenInfo.xmid-1;
 ScreenInfo.x1_ub = ScreenInfo.xmid+7; ScreenInfo.x2_ub = ScreenInfo.xmid+1;
-ScreenInfo.y1_lb = ScreenInfo.yaxis-ScreenInfo.liftingYaxis-1; 
+ScreenInfo.y1_lb = ScreenInfo.yaxis-ScreenInfo.liftingYaxis-1;
 ScreenInfo.y1_ub = ScreenInfo.yaxis-ScreenInfo.liftingYaxis+1;
 ScreenInfo.y2_lb = ScreenInfo.yaxis-ScreenInfo.liftingYaxis-7;
 ScreenInfo.y2_ub = ScreenInfo.yaxis-ScreenInfo.liftingYaxis+7;
@@ -195,7 +208,7 @@ end
 
 %% make visual stimuli
 
-% randomize visual reliability by horizontal blob S.D. 
+% randomize visual reliability by horizontal blob S.D.
 VSinfo.SD_blob(~~rem(ExpInfo.randV,2)) = 8; % in CM
 VSinfo.SD_blob(~rem(ExpInfo.randV,2)) = 20; % in CM
 VSinfo.numFrames           = ExpInfo.tStimFrame; %for visual stimuli
@@ -211,7 +224,7 @@ instruction = ['In the following session, you will be presented \nan auditory or
 
 %start the experiment
 c                   = clock;
-ExpInfo.start       = sprintf('%04d/%02d/%02d_%02d:%02d:%02d',c(1),c(2),c(3),c(4),c(5) ,ceil(c(6)));
+ExpInfo.start       = sprintf('%04d/%02d/%02d_%02d:%02d:%02d',c(1),c(2),c(3),c(4),c(5),ceil(c(6)));
 
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
     [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
@@ -234,7 +247,7 @@ for i = 1:ExpInfo.nTrials
     else
         SetMouse(ScreenInfo.xaxis*2, ScreenInfo.yaxis*2, windowPtr);
         HideCursor;
-          Resp(i)= LocalizeVisualStim(i, ExpInfo,...
+        Resp(i)= LocalizeVisualStim(i, ExpInfo,...
             ScreenInfo,VSinfo,windowPtr);
     end
     
