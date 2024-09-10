@@ -4,13 +4,16 @@
 
 clear; close all; clc; rng('Shuffle');
 
-ExpInfo.sub_init = [];
-while isempty(ExpInfo.sub_init) == 1
-    try ExpInfo.sub_init = input('Participant Initial: ','s') ;
-        ExpInfo.practice  = input('Main expt: 1; Practice: 2#: ');
-    catch
-    end
-end
+% ExpInfo.sub_init = [];
+% while isempty(ExpInfo.sub_init) == 1
+%     try ExpInfo.sub_init = input('Participant Initial: ','s') ;
+%         ExpInfo.practice  = input('Main expt: 1; Practice: 2#: ');
+%     catch
+%     end
+% end
+
+ExpInfo.sub_init = 'LL';
+ExpInfo.practice = 1;
 
 switch ExpInfo.practice
     case 1
@@ -56,7 +59,6 @@ WaitSecs(0.1);
 KbCheck();
 % ListenChar(2);
 
-Screen('Preference', 'VisualDebugLevel', 1);
 Screen('Preference', 'SkipSyncTests', 1);
 screens = Screen('Screens');
 screenNumber = max(screens);
@@ -74,7 +76,7 @@ ScreenInfo.ymid            = center(2); % vertical center
 ScreenInfo.backgroundColor = 105;
 ScreenInfo.liftingYaxis    = 300;
 ScreenInfo.halfScreenSize  = 85; %cm
-ScreenInfo.numPixels_perCM = ScreenInfo.xaxis/(ScreenInfo.halfScreenSize*2);
+ScreenInfo.px_per_cm = ScreenInfo.xaxis/(ScreenInfo.halfScreenSize*2);
 
 %fixation locations
 ScreenInfo.x1_lb = ScreenInfo.xmid-7; ScreenInfo.x2_lb = ScreenInfo.xmid-1;
@@ -98,53 +100,59 @@ ExpInfo.n_total_trial = ExpInfo.n_staircase * ExpInfo.n_trial;
 ExpInfo.speaker_cm = 65.5; % cm, left to center
 ExpInfo.sitting_dist = 113; % cm
 ExpInfo.screen_cm = 170; % cm
-ExpInfo.px_per_cm = rect(3)/ExpInfo.screen_cm;
+ExpInfo.px_per_cm = ScreenInfo.px_per_cm;
 
 % choose speaker/visual location
 ExpInfo.speaker_idx = 6:11;
 ExpInfo.speaker_level_cm = linspace(-ExpInfo.speaker_cm, ExpInfo.speaker_cm, 16);
 ExpInfo.sA_cm = ExpInfo.speaker_level_cm(ExpInfo.speaker_idx);
-ExpInfo.sV_cm = ExpInfo.sA;
+ExpInfo.sV_cm = ExpInfo.sA_cm;
+ExpInfo.sV_px = round(ExpInfo.sV_cm.*ExpInfo.px_per_cm);
 
 % duration
-ExpInfo.n_frame = 12;
+ExpInfo.n_frame = 10;
 ExpInfo.t_fixation = 0.5;
 ExpInfo.t_blank1 = 0.2;
+ExpInfo.ISI = 0.5;
 ExpInfo.ITI = 0.3;
 ExpInfo.tIFI = ScreenInfo.ifi;
+ExpInfo.stay_frame = 6;
 
 %% define visual stimuli
 
-VSinfo.width            = 401; %(pixel) Increasing this value will make the cloud more blurry
-VSinfo.boxSize          = 201; %This is the box size for each cloud.
-VSinfo.intensity        = 10;  %This determines the height of the clouds. 
-                               %Lowering this value will make them have lower contrast
-
-%set the parameters for the visual stimuli
+% create background
 VSinfo.pblack              = 1/8; % set contrast to 1*1/8 for the "black" background, so it's not too dark and the projector doesn't complain
 VSinfo.greyScreen          = VSinfo.pblack * ones(ScreenInfo.xaxis,ScreenInfo.yaxis)*255;
 VSinfo.grey_texture        = Screen('MakeTexture', windowPtr, VSinfo.greyScreen,[],[],[],2);
 VSinfo.blankScreen = zeros(ScreenInfo.xaxis,ScreenInfo.yaxis);
+
+% draw one blob
+VSinfo.n_dots      = 2; %number of blobs
+VSinfo.SD_yaxis    = 3; %SD of the blob in cm (vertical)
+VSinfo.width       = 4; %(pixel) Increasing this value will make the cloud more blurry
+VSinfo.boxSize     = 11; %(pixel) This is the box size for each cloud, needs to be an odd number
+VSinfo.maxBrightness= 128; %control contrast of the cloud
+
 x                  = 1:1:VSinfo.boxSize; y = x;
 [X,Y]              = meshgrid(x,y);
 cloud              = 1e2.*mvnpdf([X(:) Y(:)],[median(x) median(y)],...
-                        [VSinfo.width 0; 0 VSinfo.width]);
-% VSinfo.Cloud       = (1-VSinfo.pblack).*255.*VSinfo.intensity.*reshape(cloud,length(x),length(y)); 
+    [VSinfo.width 0; 0 VSinfo.width]);
+VSinfo.Cloud       = reshape(cloud,length(x),length(y)) .* (VSinfo.maxBrightness/max(cloud));
 
 %% initializing vectors that store the data
 
-[Conditions,Response,Order,RTs] = deal(NaN(ExpInfo.n_staircase, ExpInfo.n_trial)); 
-%------------------------------Conditions----------------------------------
-%odd number: \sig_sample starts of 0, smaller than \sig_dot(1-up-2-down) 
+[ExpInfo.Conditions,ExpInfo.Order,updated_sig,Response, RTs] = deal(NaN(ExpInfo.n_staircase, ExpInfo.n_trial));
+%------------------------------ExpInfo.Conditions----------------------------------
+%odd number: \sig_sample starts of 0, smaller than \sig_dot(1-up-2-down)
 %even number: \sig_sample starts from the max tested value, larger than \sig_dot (2-up-1-down)
 for i = 1:ExpInfo.n_trial
-    Conditions(:,i) = randperm(ExpInfo.n_staircase, ExpInfo.n_staircase);
+    ExpInfo.Conditions(:,i) = randperm(ExpInfo.n_staircase, ExpInfo.n_staircase);
 end
-%---------------------------------Order------------------------------------
+%---------------------------------ExpInfo.Order------------------------------------
 %1: present standard stimulus first
 %2: present comparison stimulus first
 for i = 1:ExpInfo.n_trial
-    Order(:,i) = Shuffle(repmat([1,2],[1, ExpInfo.n_staircase/2]));
+    ExpInfo.Order(:,i) = Shuffle(repmat([1,2],[1, ExpInfo.n_staircase/2]));
 end
 %-------------------------------Response-----------------------------------
 %1: participants think the first is wider
@@ -160,31 +168,79 @@ for i = 1:ExpInfo.n_staircase
         [ExpInfo.n_trial/ExpInfo.n_block, ExpInfo.n_block]);
     for j = 1:ExpInfo.n_easy_trial_per_s
         trial_slc = [trial_slc, trialIdx_staircase(randi(...
-            ExpInfo.n_trial/ExpInfo.n_block),j)]; 
+            ExpInfo.n_trial/ExpInfo.n_block),j)];
     end
-end 
-%To see whether the catch trials are evenly spread out. Do:
-T = zeros(ExpInfo.n_staircase, ExpInfo.n_trial);
-T(trial_slc) = 1; imagesc(T);
+end
+% %To see whether the catch trials are evenly spread out. Do:
+% T = zeros(ExpInfo.n_staircase, ExpInfo.n_trial);
+% T(trial_slc) = 1; imagesc(T);
 
 %% run staircase
 
-instruction = ['In the following session, you will see two visual stimuli in sequence on each trial.','\nPress 1 if you think the first stimulus is wider.', '\nPress 2 if you think the second stimulus is wider.'];
+instruction = ['In the following session, you will see two visual stimuli in sequence on each trial.','\nPress 1 if you think the first stimulus is wider.', '\nPress 2 if you think the second stimulus is wider.','\nPress any button to start.'];
 
 c                   = clock;
 ExpInfo.start       = sprintf('%04d/%02d/%02d_%02d:%02d:%02d',c(1),c(2),c(3),c(4),c(5),ceil(c(6)));
 
+Screen('TextSize',windowPtr,10);
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
     [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
 DrawFormattedText(windowPtr, instruction ,...
-    'center',ScreenInfo.yaxis-500,[255 255 255]);
+    'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis,[255 255 255]);
 Screen('Flip',windowPtr);
-KbWait(-3);
+% KbWait(-3);
 WaitSecs(1);
 
-for ii = 1:ExpInfo.n_trial
+Resp = [];
 
-for jj = 1:E 
-end
+for i = 1:ExpInfo.n_trial
+
+    for j = 1:ExpInfo.n_staircase   
+
+        if i == 1
+            current_sig = ExpInfo.sig_sample(j);
+        end 
+
+        idx_s = ExpInfo.Conditions(j,i);
+        Resp = present_wide_dots(i, j, current_sig, ScreenInfo, ExpInfo, VSinfo, windowPtr, Resp);
+
+%      
+%         if i == 1
+%             history = []; 
+%             current_sig = ExpInfo.sig_sample(j); 
+%         else 
+%             history = Response(idx_s,1:(i-1)); 
+%             current_sig = updated_sig(idx_s,i);
+%         end
+% 
+%         [Response(idx_s,i),RTs(idx_s,i),updated_sig(idx_s,i+1)] = ...
+%             interleaved_staircase(i, idx_s, current_sig, history, updated_sig(idx_s, j), ExpInfo.Order(idx_s,i), ...
+%             ScreenInfo,ExpInfo,VSinfo, windowPtr);
+% 
+%         %inserted an easy trial for calculating the lapse rate later
+%         idx_t = (i-1)*ExpInfo.n_staircase+j;
+
+    end
+
+    %% save by trial
+    save(fullfile(out_dir,out_flnm),'Resp','ExpInfo','ScreenInfo','VSinfo','AudInfo');
+    
+    %% add breaks
+    if ismember(i,ExpInfo.breakTrials)
+        
+        Screen('TextSize',windowPtr,30);
+        idxBlock = find(ExpInfo.breakTrials==i);
+        firstTrial = ExpInfo.firstTrial(idxBlock);
+        lastTrial = ExpInfo.lastTrial(idxBlock);
+
+        blockInfo = sprintf('You''ve finished block %i/%i. Please take a break.',idxBlock,ExpInfo.numBlocks);
+        Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
+            [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
+        DrawFormattedText(windowPtr, blockInfo,...
+            'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis,...
+            [255 255 255]);
+        Screen('Flip',windowPtr); KbWait(-3); WaitSecs(1);
+        
+    end
 
 end
