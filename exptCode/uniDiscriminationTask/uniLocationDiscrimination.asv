@@ -1,6 +1,5 @@
 % Run seperately for A, V1, V2
 % Standard: center
-% Comparison: start at []
 
 %% Enter experiment info
 clear; close all;  rng('Shuffle');
@@ -25,6 +24,7 @@ switch ExpInfo.practice
         outFileName = sprintf('uniDis_practice_sub%s_ses-%s', ExpInfo.subjInit, ExpInfo.session);
 end
 
+
 % path control
 curDir = pwd;
 [projectDir, ~]  = fileparts(fileparts(curDir));
@@ -45,6 +45,10 @@ addpath(genpath(fullfile(git_dir, 'Psychtoolbox-3')))
 if strcmp(ExpInfo.session, 'A')
     Arduino = serial('/dev/cu.usbmodem14301','BaudRate',115200);
     fopen(Arduino);
+elseif strcmp(ExpInfo.session, 'V1')
+    VSinfo.SD_blob = 4; % cm
+elseif strcmp(ExpInfo.session, 'V2')
+    VSinfo.SD_blob = 10; % cm
 end
 
 %% Screen Setup
@@ -59,7 +63,7 @@ Screen('Preference', 'VisualDebugLevel', 1);
 Screen('Preference', 'SkipSyncTests', 1);
 screens = Screen('Screens');
 screenNumber = max(screens);
-[windowPtr,rect] = Screen('OpenWindow', screenNumber, [0,0,0]);
+[windowPtr,rect] = Screen('OpenWindow', screenNumber, [0,0,0],[0,0,800,600]);
 [ScreenInfo.xaxis, ScreenInfo.yaxis] = Screen('WindowSize',windowPtr);
 ScreenInfo.screenNumber = screenNumber;
 Screen('TextSize', windowPtr, 30);
@@ -73,7 +77,7 @@ ScreenInfo.ymid            = center(2); % vertical center
 ScreenInfo.backgroundColor = 105;
 ScreenInfo.liftingYaxis    = 300;
 ScreenInfo.halfScreenSize  = 85; %cm
-ScreenInfo.numPixels_perCM = ScreenInfo.xaxis/(ScreenInfo.halfScreenSize*2);
+ScreenInfo.px_per_cm = ScreenInfo.xaxis/(ScreenInfo.halfScreenSize*2);
 
 %fixation locations
 ScreenInfo.x1_lb = ScreenInfo.xmid-7; ScreenInfo.x2_lb = ScreenInfo.xmid-1;
@@ -86,8 +90,10 @@ ScreenInfo.y2_ub = ScreenInfo.yaxis-ScreenInfo.liftingYaxis+7;
 %% Experiment set up
 
 % trial info
+ExpInfo.standard_loc = 0; % cm
 ExpInfo.n_trial = 36; % for each staircase
-ExpInfo.n_staircase = 2; % one up and one down
+ExpInfo.n_staircase = 2; % one from left and one from right
+ExpInfo.StepSizes = [4, 2, 0.5];
 ExpInfo.n_block = 2;
 ExpInfo.n_total_trial = ExpInfo.n_staircase * ExpInfo.n_trial;
 
@@ -102,7 +108,6 @@ ExpInfo.speaker_idx = 6:11;
 ExpInfo.speaker_level_cm = linspace(-ExpInfo.speaker_cm, ExpInfo.speaker_cm, 16);
 ExpInfo.sA_cm = ExpInfo.speaker_level_cm(ExpInfo.speaker_idx);
 ExpInfo.sV_cm = ExpInfo.sA_cm;
-ExpInfo.sV_px = round(ExpInfo.sV_cm.*ExpInfo.px_per_cm);
 
 % duration
 ExpInfo.n_frame = 10;
@@ -110,21 +115,70 @@ ExpInfo.t_fixation = 0.5;
 ExpInfo.t_blank1 = 0.2;
 ExpInfo.ISI = 0.5;
 ExpInfo.ITI = 0.3;
-ExpInfo.IFI = ScreenInfo.ifi;
+ExpInfo.IFI = ScreenInfo.ifi; 
 
 % split all the trials into blocks
 blocks = linspace(0,ExpInfo.n_total_trial, ExpInfo.n_block+1);
 ExpInfo.breakTrials = floor(blocks(2:(end-1)));
-ExpInfo.firstTrial = blocks(1:ExpInfo.numBlocks)+1;
-ExpInfo.lastTrial = blocks(2:(ExpInfo.numBlocks+1));
+ExpInfo.firstTrial = blocks(1:ExpInfo.n_block)+1;
+ExpInfo.lastTrial = blocks(2:(ExpInfo.n_block+1));
 ExpInfo.numTrialsPerBlock = ExpInfo.breakTrials(1);
 
 % define durations
 ExpInfo.tFixation = 0.5;
-ExpInfo.tBlank1 = 0.3;
-ExpInfo.tStimFrame = 9;
+ExpInfo.tBlank1 = 0.5;
+ExpInfo.tStimFrame = 18;
+ExpInfo.ISI = 1;
 ExpInfo.ITI = 0.3;
+ExpInfo.tBlank2 = 0.5;
 ExpInfo.tIFI = ScreenInfo.ifi;
+
+% dial
+ExpInfo.dialScaler = 2;
+
+%% define staircase conditions
+
+[ExpInfo.condition,ExpInfo.order] = deal(NaN(ExpInfo.n_staircase,ExpInfo.n_trial)); 
+[Resp.comparison_loc, Resp.standard_loc,...
+    Resp.discrepancy, Resp.resp] = deal(NaN(1,ExpInfo.n_total_trial)); 
+
+%------------------------------Conditions----------------------------------
+%odd number: starts from leftside of the standard (1-up-2-down) 
+%even number: starts from rightside of the standard (2-up-1-down)
+for i = 1:ExpInfo.n_trial
+    ExpInfo.condition(:,i) = randperm([1,2],ExpInfo.n_staircase);
+end 
+ExpInfo.condition = reshape(ExpInfo.condition, [1, ExpInfo.n_total_trial]);
+
+%---------------------------------ExpInfo.order------------------------------------
+%1: present the standard first
+%2: present the comparison first
+for i = 1:ExpInfo.n_trial
+    ExpInfo.order(:,i) = Shuffle(repmat([1,2],[1, ExpInfo.n_staircase/2]));
+end
+ExpInfo.order = reshape(ExpInfo.order, [1, ExpInfo.n_total_trial]);
+
+%-------------------------------Response-----------------------------------
+%-1: participants think the comparison is to the left of the standard
+%1: participants think the comparison is to the right of the standard
+
+%% Add easy trials to calculate lapse rate
+
+% catch trials are evenly spread across blocks
+ExpInfo.n_easy_trial_per_s = 4;
+trial_slc  = [];
+for i = 1:ExpInfo.n_staircase
+    trialIdx_staircase = reshape(i:ExpInfo.n_staircase:ExpInfo.n_total_trial, ...
+        [ExpInfo.n_trial/ExpInfo.n_block, ExpInfo.n_block]);
+    for j = 1:ExpInfo.n_easy_trial_per_s
+        trial_slc = [trial_slc, trialIdx_staircase(randi(...
+            ExpInfo.n_trial/ExpInfo.n_block),i)];
+    end
+end
+ExpInfo.easy_trial = trial_slc;
+% %To see whether the catch trials are evenly spread out. Do:
+% T = zeros(ExpInfo.n_staircase, ExpInfo.n_trial);
+% T(trial_slc) = 1; imagesc(T);
 
 %% Auditory set up
 
@@ -166,12 +220,15 @@ end
 
 %% make visual stimuli
 
-% randomize visual reliability by horizontal blob S.D. 
-VSinfo.SD_blob(~~rem(ExpInfo.randV,2)) = 4; % in CM
-VSinfo.SD_blob(~rem(ExpInfo.randV,2)) = 10; % in CM
-VSinfo.numFrames           = ExpInfo.tStimFrame; %for visual stimuli
+% define ripple stimulus 
+VSinfo.height = 200;
+VSinfo.noise_sd = 15; % in pixel?
+VSinfo.stim_sd = VSinfo.SD_blob .* ExpInfo.px_per_cm; % doesnt change by trial
+VSinfo.wBack = 0.55;
 
 % create background
+VSinfo.numFrames           = ExpInfo.tStimFrame; %for visual stimuli
+VSinfo.blank_n_frame       = 30; % for ITI, blank before and after
 VSinfo.pblack              = 1/8; % set contrast to 1*1/8 for the "black" background, so it's not too dark and the projector doesn't complain
 VSinfo.greyScreen          = VSinfo.pblack * ones(ScreenInfo.xaxis,ScreenInfo.yaxis)*255;
 VSinfo.grey_texture        = Screen('MakeTexture', windowPtr, VSinfo.greyScreen,[],[],[],2);
@@ -192,45 +249,57 @@ Screen('Flip',windowPtr);
 KbWait(-3);
 WaitSecs(1);
 
-for i = 1:ExpInfo.nTrials
-    
-    %% present stimuli
-    
-    if strcmp(ExpInfo.session, 'A')
-        SetMouse(ScreenInfo.xaxis*2, ScreenInfo.yaxis*2, windowPtr);
-        HideCursor;
-        Resp(i) = staircaseAStim(i, ExpInfo,...
-            ScreenInfo,AudInfo,VSinfo,Arduino,pahandle,windowPtr);
-        
-    else
-        SetMouse(ScreenInfo.xaxis*2, ScreenInfo.yaxis*2, windowPtr);
-        HideCursor;
-          Resp(i)= staircaseVisualStim(i, ExpInfo,...
-            ScreenInfo,VSinfo,windowPtr);
-    end
-    
-    %% save by trial
-    save(fullfile(outDir,outFileName),'Resp','ExpInfo','ScreenInfo','VSinfo','AudInfo');
-    
-    %% add breaks
-    if ismember(i,ExpInfo.breakTrials)
-        
-        Screen('TextSize',windowPtr,30);
-        idxBlock = find(ExpInfo.breakTrials==i);
-        firstTrial = ExpInfo.firstTrial(idxBlock);
-        lastTrial = ExpInfo.lastTrial(idxBlock);
+for i = 1:ExpInfo.n_total_trial
 
-        blockInfo = sprintf('You''ve finished block %i/%i. Please take a break.',idxBlock, ExpInfo.numBlocks);
-        Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
-            [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
-        DrawFormattedText(windowPtr, blockInfo,...
-            'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis,...
-            [255 255 255]);
-        Screen('Flip',windowPtr); KbWait(-3); WaitSecs(1);
+        %% present stimulus
+
+        i_cond = ExpInfo.condition(i);
         
-    end
+    Resp.comparison_loc(1,1) = ExpInfo.sV_cm(1);
+    Resp.comparison_loc(2,1) = ExpInfo.sV_cm(end);
+
+        SetMouse(ScreenInfo.xaxis*2, ScreenInfo.yaxis*2, windowPtr);
+        HideCursor;
+        if strcmp(ExpInfo.session, 'A')
+            Resp = staircaseAuditoryStim(i, i_cond, ExpInfo,...
+                ScreenInfo,AudInfo,VSinfo,Arduino,pahandle,windowPtr, Resp);
+        else
+            Resp = staircaseVisualStim(i, i_cond, ExpInfo,...
+                ScreenInfo,VSinfo,windowPtr,Resp);
+        end
+        
+        %% inserted an easy trial for calculating the lapse rate later
+        
+        idx_t = (i-1)*ExpInfo.n_staircase+j;
+        if ismember(idx_t,ExpInfo.easy_trial)
+%             index = find(D_easyTrials(1,:)==idx_t,1);
+%             [D_easyTrials(6,index),D_easyTrials(7,index)] = EasyTrials(...
+%                 currentAloc, D_easyTrials(4,index), D_easyTrials(3,index),...
+%                 D_easyTrials(5,index), ScreenInfo,VSinfo,AudInfo,ExpInfo,...
+%                 motorArduino,noOfSteps,pahandle,windowPtr);
+        end
+        
+        %% save by trial
+        save(fullfile(outDir,outFileName),'Resp','ExpInfo','ScreenInfo','VSinfo','AudInfo');
+        
+        %% add breaks
+        if ismember(i,ExpInfo.breakTrials)
+            
+            Screen('TextSize',windowPtr,30);
+            idxBlock = find(ExpInfo.breakTrials==i);
+            firstTrial = ExpInfo.firstTrial(idxBlock);
+            lastTrial = ExpInfo.lastTrial(idxBlock);
+            
+            blockInfo = sprintf('You''ve finished block %i/%i. Please take a break.',idxBlock, ExpInfo.numBlocks);
+            Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
+                [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
+            DrawFormattedText(windowPtr, blockInfo,...
+                'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis,...
+                [255 255 255]);
+            Screen('Flip',windowPtr); KbWait(-3); WaitSecs(1);
+            
+        end
 end
-
 %% Save sorted data and end the experiment
 c  = clock;
 ExpInfo.finish  = sprintf('%04d/%02d/%02d_%02d:%02d:%02d',c(1),c(2),c(3),c(4),c(5),ceil(c(6)));

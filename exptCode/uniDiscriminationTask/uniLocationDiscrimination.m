@@ -1,6 +1,5 @@
 % Run seperately for A, V1, V2
 % Standard: center
-% Comparison: start at []
 
 %% Enter experiment info
 clear; close all;  rng('Shuffle');
@@ -24,7 +23,6 @@ switch ExpInfo.practice
     case 2
         outFileName = sprintf('uniDis_practice_sub%s_ses-%s', ExpInfo.subjInit, ExpInfo.session);
 end
-
 
 
 % path control
@@ -65,7 +63,7 @@ Screen('Preference', 'VisualDebugLevel', 1);
 Screen('Preference', 'SkipSyncTests', 1);
 screens = Screen('Screens');
 screenNumber = max(screens);
-[windowPtr,rect] = Screen('OpenWindow', screenNumber, [0,0,0]);
+[windowPtr,rect] = Screen('OpenWindow', screenNumber, [0,0,0],[0,0,800,600]);
 [ScreenInfo.xaxis, ScreenInfo.yaxis] = Screen('WindowSize',windowPtr);
 ScreenInfo.screenNumber = screenNumber;
 Screen('TextSize', windowPtr, 30);
@@ -95,6 +93,7 @@ ScreenInfo.y2_ub = ScreenInfo.yaxis-ScreenInfo.liftingYaxis+7;
 ExpInfo.standard_loc = 0; % cm
 ExpInfo.n_trial = 36; % for each staircase
 ExpInfo.n_staircase = 2; % one from left and one from right
+ExpInfo.StepSizes = [4, 2, 0.5];
 ExpInfo.n_block = 2;
 ExpInfo.n_total_trial = ExpInfo.n_staircase * ExpInfo.n_trial;
 
@@ -109,7 +108,6 @@ ExpInfo.speaker_idx = 6:11;
 ExpInfo.speaker_level_cm = linspace(-ExpInfo.speaker_cm, ExpInfo.speaker_cm, 16);
 ExpInfo.sA_cm = ExpInfo.speaker_level_cm(ExpInfo.speaker_idx);
 ExpInfo.sV_cm = ExpInfo.sA_cm;
-ExpInfo.sV_px = round(ExpInfo.sV_cm.*ExpInfo.px_per_cm);
 
 % duration
 ExpInfo.n_frame = 10;
@@ -128,9 +126,11 @@ ExpInfo.numTrialsPerBlock = ExpInfo.breakTrials(1);
 
 % define durations
 ExpInfo.tFixation = 0.5;
-ExpInfo.tBlank1 = 0.3;
-ExpInfo.tStimFrame = 9;
+ExpInfo.tBlank1 = 0.5;
+ExpInfo.tStimFrame = 18;
+ExpInfo.ISI = 1;
 ExpInfo.ITI = 0.3;
+ExpInfo.tBlank2 = 0.5;
 ExpInfo.tIFI = ScreenInfo.ifi;
 
 % dial
@@ -138,29 +138,34 @@ ExpInfo.dialScaler = 2;
 
 %% define staircase conditions
 
-[ExpInfo.conditions,ExpInfo.order,Resp] = deal(NaN(ExpInfo.n_staircase,ExpInfo.n_trial)); 
+[ExpInfo.condition,ExpInfo.order] = deal(NaN(ExpInfo.n_staircase,ExpInfo.n_trial)); 
+[Resp.comparison_loc, Resp.standard_loc,...
+    Resp.discrepancy, Resp.resp] = deal(NaN(1,ExpInfo.n_total_trial)); 
 
 %------------------------------Conditions----------------------------------
 %odd number: starts from leftside of the standard (1-up-2-down) 
 %even number: starts from rightside of the standard (2-up-1-down)
 for i = 1:ExpInfo.n_trial
-    ExpInfo.conditions(:,i) = randperm(ExpInfo.n_staircase,ExpInfo.n_staircase);
-end
-%---------------------------------ExpInfo.orderf------------------------------------
+    ExpInfo.condition(:,i) = randperm([1,2],ExpInfo.n_staircase);
+end 
+ExpInfo.condition = reshape(ExpInfo.condition, [1, ExpInfo.n_total_trial]);
+
+%---------------------------------ExpInfo.order------------------------------------
 %1: present the standard first
 %2: present the comparison first
 for i = 1:ExpInfo.n_trial
     ExpInfo.order(:,i) = Shuffle(repmat([1,2],[1, ExpInfo.n_staircase/2]));
 end
+ExpInfo.order = reshape(ExpInfo.order, [1, ExpInfo.n_total_trial]);
+
 %-------------------------------Response-----------------------------------
 %-1: participants think the comparison is to the left of the standard
 %1: participants think the comparison is to the right of the standard
 
-
 %% Add easy trials to calculate lapse rate
 
 % catch trials are evenly spread across blocks
-ExpInfo.n_easy_trial_per_s  = 4;
+ExpInfo.n_easy_trial_per_s = 4;
 trial_slc  = [];
 for i = 1:ExpInfo.n_staircase
     trialIdx_staircase = reshape(i:ExpInfo.n_staircase:ExpInfo.n_total_trial, ...
@@ -223,6 +228,7 @@ VSinfo.wBack = 0.55;
 
 % create background
 VSinfo.numFrames           = ExpInfo.tStimFrame; %for visual stimuli
+VSinfo.blank_n_frame       = 30; % for ITI, blank before and after
 VSinfo.pblack              = 1/8; % set contrast to 1*1/8 for the "black" background, so it's not too dark and the projector doesn't complain
 VSinfo.greyScreen          = VSinfo.pblack * ones(ScreenInfo.xaxis,ScreenInfo.yaxis)*255;
 VSinfo.grey_texture        = Screen('MakeTexture', windowPtr, VSinfo.greyScreen,[],[],[],2);
@@ -243,20 +249,19 @@ Screen('Flip',windowPtr);
 KbWait(-3);
 WaitSecs(1);
 
-for j = 1:ExpInfo.n_staircase
-    
-    for i = 1:ExpInfo.n_trial
-        
+for i = 1:ExpInfo.n_total_trial
+
         %% present stimulus
-        
+
+        i_cond = ExpInfo.condition(i,j);
         SetMouse(ScreenInfo.xaxis*2, ScreenInfo.yaxis*2, windowPtr);
-            HideCursor;
+        HideCursor;
         if strcmp(ExpInfo.session, 'A')
-            Resp(i) = staircaseAuditoryStim(i, j, ExpInfo,...
-                ScreenInfo,AudInfo,VSinfo,Arduino,pahandle,windowPtr);
+            Resp = staircaseAuditoryStim(i, i_cond, ExpInfo,...
+                ScreenInfo,AudInfo,VSinfo,Arduino,pahandle,windowPtr, Resp);
         else
-            Resp(i)= staircaseVisualStim(i, j, ExpInfo,...
-                ScreenInfo,VSinfo,windowPtr);
+            Resp = staircaseVisualStim(i, i_cond, ExpInfo,...
+                ScreenInfo,VSinfo,windowPtr,Resp);
         end
         
         %% inserted an easy trial for calculating the lapse rate later
@@ -290,7 +295,7 @@ for j = 1:ExpInfo.n_staircase
             Screen('Flip',windowPtr); KbWait(-3); WaitSecs(1);
             
         end
-    end
+
 end
 %% Save sorted data and end the experiment
 c  = clock;

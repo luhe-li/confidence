@@ -1,12 +1,16 @@
-function stimTextureMatrix = generateRippleStim(VSinfo,ScreenInfo,windowPtr, x_loc_pixel)
+function stimTextureMatrix = generateRippleStim(VSinfo,ScreenInfo,windowPtr, x_loc_pixel,noise_only)
 %% Gaussian Atlas
 % Parameters
 
 increment = 0.2; %pi/VSinfo.numFrames;
 back_sd_y = VSinfo.noise_sd;
 stim_sd_y = VSinfo.stim_sd; %doesn't matter when repeating lines
-height = VSinfo.height;
 wBack = VSinfo.wBack;
+height = VSinfo.height;
+if noise_only
+    VSinfo.numFrames = VSinfo.blank_n_frame;
+    wBack = 1;
+end
 wGauss = 1 - wBack;
 
 % Generate the anisotropic Gaussian blob
@@ -75,11 +79,13 @@ repeated_center_line_frames = repmat(center_line, height, 1, VSinfo.numFrames);
 
 %%
 % weigh the two
-reduced_overlayed_frames = min(normalized_frames .* wBack + repeated_center_line_frames .* wGauss,255);
+reduced_overlayed_frames = min(normalized_frames .* wBack + repeated_center_line_frames .* wGauss, 255);
 upperBandEdge = ScreenInfo.yaxis - ScreenInfo.liftingYaxis - center_y ;
 lowerBandEdge = ScreenInfo.yaxis - ScreenInfo.liftingYaxis + center_y -1;
-fullImage = zeros(ScreenInfo.yaxis,ScreenInfo.xaxis,VSinfo.numFrames);
+% fullImage = zeros(ScreenInfo.yaxis,ScreenInfo.xaxis,VSinfo.numFrames);
+fullImage = repmat(VSinfo.greyScreen', [1,1,VSinfo.numFrames]);
 fullImage(upperBandEdge:lowerBandEdge,:,:) = reduced_overlayed_frames;
+
 for frame = 1:VSinfo.numFrames
     stimTextureMatrix(frame) =  Screen('MakeTexture', windowPtr, fullImage(:,:,frame));
 end
