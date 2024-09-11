@@ -63,7 +63,7 @@ Screen('Preference', 'VisualDebugLevel', 1);
 Screen('Preference', 'SkipSyncTests', 1);
 screens = Screen('Screens');
 screenNumber = max(screens);
-[windowPtr,rect] = Screen('OpenWindow', screenNumber, [0,0,0]); % ,[0,0,800,600]
+[windowPtr,rect] = Screen('OpenWindow', screenNumber, [0,0,0], [0,0,800,600]); % ,[0,0,800,600]
 [ScreenInfo.xaxis, ScreenInfo.yaxis] = Screen('WindowSize',windowPtr);
 ScreenInfo.screenNumber = screenNumber;
 Screen('TextSize', windowPtr, 30);
@@ -172,15 +172,20 @@ trial_slc  = [];
 for i = 1:ExpInfo.n_staircase
     trialIdx_staircase = reshape(i:ExpInfo.n_staircase:ExpInfo.n_total_trial, ...
         [ExpInfo.n_trial/ExpInfo.n_block, ExpInfo.n_block]);
-    for j = 1:ExpInfo.n_easy_trial_per_s
-        trial_slc = [trial_slc, trialIdx_staircase(randi(...
-            ExpInfo.n_trial/ExpInfo.n_block),i)];
+    for j = 1:ExpInfo.n_block
+        trial_slc = [trial_slc, trialIdx_staircase(randperm(ExpInfo.n_trial/ExpInfo.n_block,...
+            ExpInfo.n_easy_trial_per_s/ExpInfo.n_block), j)];
     end
 end
-ExpInfo.easy_trial = trial_slc;
+
 % %To see whether the catch trials are evenly spread out. Do:
 % T = zeros(ExpInfo.n_staircase, ExpInfo.n_trial);
 % T(trial_slc) = 1; imagesc(T);
+
+% set parameters for easy trials as the last few trials
+ExpInfo.easy_idx = ExpInfo.n_trial+1:ExpInfo.n_trial+ExpInfo.n_easy_trial_per_s;
+Resp.comparison_loc(1, ExpInfo.easy_idx) = min(ExpInfo.sV_cm);
+Resp.comparison_loc(2, ExpInfo.easy_idx) = max(ExpInfo.sV_cm);
 
 %% Auditory set up
 
