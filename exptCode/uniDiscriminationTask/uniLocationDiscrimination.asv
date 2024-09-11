@@ -146,17 +146,19 @@ ExpInfo.dialScaler = 2;
 %odd number: starts from leftside of the standard (1-up-2-down) 
 %even number: starts from rightside of the standard (2-up-1-down)
 for i = 1:ExpInfo.n_trial
-    ExpInfo.condition(:,i) = randperm([1,2],ExpInfo.n_staircase);
+    ExpInfo.condition(:,i) = randperm(ExpInfo.n_staircase,ExpInfo.n_staircase);
 end 
-ExpInfo.condition = reshape(ExpInfo.condition, [1, ExpInfo.n_total_trial]);
 
 %---------------------------------ExpInfo.order------------------------------------
 %1: present the standard first
 %2: present the comparison first
+idx = ExpInfo.condition==1;
+ExpInfo.condition(idx)
+
 for i = 1:ExpInfo.n_trial
+    
     ExpInfo.order(:,i) = Shuffle(repmat([1,2],[1, ExpInfo.n_staircase/2]));
 end
-ExpInfo.order = reshape(ExpInfo.order, [1, ExpInfo.n_total_trial]);
 
 %-------------------------------Response-----------------------------------
 %-1: participants think the comparison is to the left of the standard
@@ -249,22 +251,19 @@ Screen('Flip',windowPtr);
 KbWait(-3);
 WaitSecs(1);
 
-for i = 1:ExpInfo.n_total_trial
+for i = 1:ExpInfo.n_trial
 
+    for ss = 1:ExpInfo.n_staircase
         %% present stimulus
 
-        i_cond = ExpInfo.condition(i);
-        
-    Resp.comparison_loc(1,1) = ExpInfo.sV_cm(1);
-    Resp.comparison_loc(2,1) = ExpInfo.sV_cm(end);
-
+        j = ExpInfo.condition(ss,i);
         SetMouse(ScreenInfo.xaxis*2, ScreenInfo.yaxis*2, windowPtr);
         HideCursor;
         if strcmp(ExpInfo.session, 'A')
-            Resp = staircaseAuditoryStim(i, i_cond, ExpInfo,...
+            Resp = staircaseAuditoryStim(i, j, ExpInfo,...
                 ScreenInfo,AudInfo,VSinfo,Arduino,pahandle,windowPtr, Resp);
         else
-            Resp = staircaseVisualStim(i, i_cond, ExpInfo,...
+            Resp = staircaseVisualStim(i, j, ExpInfo,...
                 ScreenInfo,VSinfo,windowPtr,Resp);
         end
         
@@ -299,6 +298,9 @@ for i = 1:ExpInfo.n_total_trial
             Screen('Flip',windowPtr); KbWait(-3); WaitSecs(1);
             
         end
+        
+    end
+
 end
 %% Save sorted data and end the experiment
 c  = clock;

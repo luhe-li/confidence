@@ -121,7 +121,6 @@ if ~rem(i,3) || ExpInfo.practice == 2 % every three trials give feedback, if not
     WaitSecs(0.1);
 end
 Screen('Flip',windowPtr);
-WaitSecs(ExpInfo.ITI);
 
 % calculate points
 Resp.target_idx = ExpInfo.randVisIdx(i); % visual location that corresponds to speaker index

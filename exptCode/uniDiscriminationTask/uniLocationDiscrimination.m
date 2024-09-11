@@ -14,7 +14,7 @@ clear; close all;  rng('Shuffle');
 % end
 
  ExpInfo.subjInit = 'LL';
- ExpInfo.session = 'V1';
+ ExpInfo.session = 'V2';
  ExpInfo.practice  = 1;
         
 switch ExpInfo.practice
@@ -63,7 +63,7 @@ Screen('Preference', 'VisualDebugLevel', 1);
 Screen('Preference', 'SkipSyncTests', 1);
 screens = Screen('Screens');
 screenNumber = max(screens);
-[windowPtr,rect] = Screen('OpenWindow', screenNumber, [0,0,0],[0,0,800,600]);
+[windowPtr,rect] = Screen('OpenWindow', screenNumber, [0,0,0]); % ,[0,0,800,600]
 [ScreenInfo.xaxis, ScreenInfo.yaxis] = Screen('WindowSize',windowPtr);
 ScreenInfo.screenNumber = screenNumber;
 Screen('TextSize', windowPtr, 30);
@@ -93,7 +93,7 @@ ScreenInfo.y2_ub = ScreenInfo.yaxis-ScreenInfo.liftingYaxis+7;
 ExpInfo.standard_loc = 0; % cm
 ExpInfo.n_trial = 36; % for each staircase
 ExpInfo.n_staircase = 2; % one from left and one from right
-ExpInfo.StepSizes = [4, 2, 0.5];
+ExpInfo.StepSizes = [5, 2, 0.5];
 ExpInfo.n_block = 2;
 ExpInfo.n_total_trial = ExpInfo.n_staircase * ExpInfo.n_trial;
 
@@ -126,11 +126,11 @@ ExpInfo.numTrialsPerBlock = ExpInfo.breakTrials(1);
 
 % define durations
 ExpInfo.tFixation = 0.5;
-ExpInfo.tBlank1 = 0.5;
+ExpInfo.tBlank1 = 0.3;
 ExpInfo.tStimFrame = 18;
 ExpInfo.ISI = 1;
 ExpInfo.ITI = 0.3;
-ExpInfo.tBlank2 = 0.5;
+ExpInfo.tBlank2 = 0.3;
 ExpInfo.tIFI = ScreenInfo.ifi;
 
 % dial
@@ -146,17 +146,18 @@ ExpInfo.dialScaler = 2;
 %odd number: starts from leftside of the standard (1-up-2-down) 
 %even number: starts from rightside of the standard (2-up-1-down)
 for i = 1:ExpInfo.n_trial
-    ExpInfo.condition(:,i) = randperm([1,2],ExpInfo.n_staircase);
+    ExpInfo.condition(:,i) = randperm(ExpInfo.n_staircase,ExpInfo.n_staircase);
 end 
-ExpInfo.condition = reshape(ExpInfo.condition, [1, ExpInfo.n_total_trial]);
+
+Resp.comparison_loc(1,1) = min(ExpInfo.sV_cm);
+Resp.comparison_loc(2,1) = max(ExpInfo.sV_cm);
 
 %---------------------------------ExpInfo.order------------------------------------
 %1: present the standard first
 %2: present the comparison first
-for i = 1:ExpInfo.n_trial
-    ExpInfo.order(:,i) = Shuffle(repmat([1,2],[1, ExpInfo.n_staircase/2]));
-end
-ExpInfo.order = reshape(ExpInfo.order, [1, ExpInfo.n_total_trial]);
+order(ExpInfo.condition==1) = reshape(Shuffle(repmat([1,2],[1, ExpInfo.n_trial/2])),[2, ExpInfo.n_trial/2]);
+order(ExpInfo.condition==2) = reshape(Shuffle(repmat([1,2],[1, ExpInfo.n_trial/2])),[2, ExpInfo.n_trial/2]);
+order = reshape(order, [2, ExpInfo.n_trial]);
 
 %-------------------------------Response-----------------------------------
 %-1: participants think the comparison is to the left of the standard
@@ -166,6 +167,7 @@ ExpInfo.order = reshape(ExpInfo.order, [1, ExpInfo.n_total_trial]);
 
 % catch trials are evenly spread across blocks
 ExpInfo.n_easy_trial_per_s = 4;
+
 trial_slc  = [];
 for i = 1:ExpInfo.n_staircase
     trialIdx_staircase = reshape(i:ExpInfo.n_staircase:ExpInfo.n_total_trial, ...
@@ -221,14 +223,14 @@ end
 %% make visual stimuli
 
 % define ripple stimulus 
-VSinfo.height = 200;
-VSinfo.noise_sd = 15; % in pixel?
-VSinfo.stim_sd = VSinfo.SD_blob .* ExpInfo.px_per_cm; % doesnt change by trial
-VSinfo.wBack = 0.55;
+VSinfo.height = 200; % pixel
+VSinfo.noise_sd = 30; % pixel
+VSinfo.stim_sd = VSinfo.SD_blob.* ExpInfo.px_per_cm; % doesnt change by trial
+VSinfo.wBack = 0.6; % [0, 1]
+VSinfo.pContrast = 0.6; % [0, 1]
 
 % create background
 VSinfo.numFrames           = ExpInfo.tStimFrame; %for visual stimuli
-VSinfo.blank_n_frame       = 30; % for ITI, blank before and after
 VSinfo.pblack              = 1/8; % set contrast to 1*1/8 for the "black" background, so it's not too dark and the projector doesn't complain
 VSinfo.greyScreen          = VSinfo.pblack * ones(ScreenInfo.xaxis,ScreenInfo.yaxis)*255;
 VSinfo.grey_texture        = Screen('MakeTexture', windowPtr, VSinfo.greyScreen,[],[],[],2);
@@ -249,18 +251,23 @@ Screen('Flip',windowPtr);
 KbWait(-3);
 WaitSecs(1);
 
-for i = 1:ExpInfo.n_total_trial
+for i = 1:ExpInfo.n_trial
 
+    for ss = 1:ExpInfo.n_staircase
         %% present stimulus
 
-        i_cond = ExpInfo.condition(i,j);
+        % order by condition index
+        j = ExpInfo.condition(ss,i);
+        ExpInfo.order(j,i) = order(ss,i);
+        
+        % stimulus
         SetMouse(ScreenInfo.xaxis*2, ScreenInfo.yaxis*2, windowPtr);
         HideCursor;
         if strcmp(ExpInfo.session, 'A')
-            Resp = staircaseAuditoryStim(i, i_cond, ExpInfo,...
+            Resp = staircaseAuditoryStim(i, j, ExpInfo,...
                 ScreenInfo,AudInfo,VSinfo,Arduino,pahandle,windowPtr, Resp);
         else
-            Resp = staircaseVisualStim(i, i_cond, ExpInfo,...
+            Resp = staircaseVisualStim(i, j, ExpInfo,...
                 ScreenInfo,VSinfo,windowPtr,Resp);
         end
         
@@ -295,6 +302,8 @@ for i = 1:ExpInfo.n_total_trial
             Screen('Flip',windowPtr); KbWait(-3); WaitSecs(1);
             
         end
+        
+    end
 
 end
 %% Save sorted data and end the experiment

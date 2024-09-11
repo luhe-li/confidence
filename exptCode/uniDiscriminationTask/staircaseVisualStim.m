@@ -120,14 +120,14 @@ while 1
         ShowCursor;
         Screen('CloseAll');
         error('Escape');
-    elseif keyCode(KbName('1!'))
+    elseif keyCode(KbName('1'))
         if ExpInfo.order(j,i) == 1 % standard presented first
             Resp.resp(j,i) = -1; % participants think the comparison is to the left of the standard
         else
             Resp.resp(j,i) = 1; % participants think the comparison is to the right of the standard
         end
         break;
-    elseif keyCode(KbName('2@'))
+    elseif keyCode(KbName('2'))
         if ExpInfo.order(j,i) == 2 % comparison presented first
             Resp.resp(j,i) = -1; % participants think the comparison is to the left of the standard
         else
@@ -136,7 +136,6 @@ while 1
         break;
     end
 end
-Screen('Flip',windowPtr);
 
 % ITI
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
@@ -152,6 +151,5 @@ if i == 1; history = []; else; history = Resp.resp(j,1:(i-1)); end
 
 % update location of the comparison stimulus for the next trial
 Resp.comparison_loc(j,i+1) = findNextLocation(i,j,current_loc, current_resp, history, ExpInfo);
-disp(Resp.comparison_loc(:,1:i+1))
 
 end

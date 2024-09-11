@@ -79,7 +79,7 @@ repeated_center_line_frames = repmat(center_line, height, 1, VSinfo.numFrames);
 
 %%
 % weigh the two
-reduced_overlayed_frames = min(normalized_frames .* wBack + repeated_center_line_frames .* wGauss, 255);
+reduced_overlayed_frames = min(normalized_frames .* wBack + repeated_center_line_frames .* wGauss, 255) * VSinfo.pContrast;
 upperBandEdge = ScreenInfo.yaxis - ScreenInfo.liftingYaxis - center_y ;
 lowerBandEdge = ScreenInfo.yaxis - ScreenInfo.liftingYaxis + center_y -1;
 % fullImage = zeros(ScreenInfo.yaxis,ScreenInfo.xaxis,VSinfo.numFrames);
