@@ -197,8 +197,8 @@ ExpInfo.easy_trial = reshape(trial_slc,[ExpInfo.n_easy_trial_per_s, ExpInfo.n_st
 
 % set parameters for easy trials as the last few trials
 ExpInfo.easy_idx = ExpInfo.n_trial+1:ExpInfo.n_trial+ExpInfo.n_easy_trial_per_s;
-Resp.comparison_loc(1, ExpInfo.easy_idx) = min(ExpInfo.sV_cm);
-Resp.comparison_loc(2, ExpInfo.easy_idx) = max(ExpInfo.sV_cm);
+Resp.comparison_loc(1, ExpInfo.easy_idx) = min(ExpInfo.comparison_loc);
+Resp.comparison_loc(2, ExpInfo.easy_idx) = max(ExpInfo.comparison_loc);
 
 %% Auditory set up
 
@@ -210,13 +210,13 @@ our_device=devices(end).DeviceIndex;
 % Gaussian white noise
 AudInfo.fs                  = 44100;
 audioSamples                = linspace(1,AudInfo.fs,AudInfo.fs);
-standardFrequency_gwn       = 100;
 AudInfo.stimDura            = ExpInfo.tStimFrame * ExpInfo.IFI; % in sec
+standardFrequency_gwn       = 1/(ExpInfo.tStimFrame * ExpInfo.IFI);%100;
 duration_gwn                = length(audioSamples)*AudInfo.stimDura;
 timeline_gwn                = linspace(1,duration_gwn,duration_gwn);
 sineWindow_gwn              = sin(standardFrequency_gwn/2*2*pi*timeline_gwn/AudInfo.fs);
 carrierSound_gwn            = randn(1, numel(timeline_gwn));
-AudInfo.intensity_GWN       = 1; % too loud for debugging, originally 15
+AudInfo.intensity_GWN       = 1;
 AudInfo.GaussianWhiteNoise  = [AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn;...
     AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn];
 AudInfo.quietGaussianWhiteNoise  =0.5*[AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn;...
@@ -230,13 +230,13 @@ if strcmp(ExpInfo.session, 'A')
     testSpeaker = i;
     input_on = ['<',num2str(1),':',num2str(testSpeaker),'>']; 
     fprintf(Arduino,input_on);
-    PsychPortAudio('FillBuffer',pahandle, AudInfo.GaussianWhiteNoise) 
+    PsychPortAudio('FillBuffer',pahandle, AudInfo.GaussianWhiteNoise) ;
     PsychPortAudio('Start',pahandle,1,0,0);
-    WaitSecs(0.1);
+    WaitSecs(0.5);
     input_off = ['<',num2str(0),':',num2str(testSpeaker),'>'];
     fprintf(Arduino,input_off);
     PsychPortAudio('Stop',pahandle);
-    WaitSecs(0.5)
+    WaitSecs(0.1)
     end
 end
 
@@ -320,7 +320,7 @@ for i = 1:ExpInfo.n_trial
             firstTrial = ExpInfo.firstTrial(idxBlock);
             lastTrial = ExpInfo.lastTrial(idxBlock);
             
-            blockInfo = sprintf('You''ve finished block %i/%i. Please take a break.',idxBlock, ExpInfo.numBlocks);
+            blockInfo = sprintf('You''ve finished block %i/%i. Please take a break.',idxBlock, ExpInfo.n_block);
             Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
                 [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
             DrawFormattedText(windowPtr, blockInfo,...

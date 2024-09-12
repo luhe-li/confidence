@@ -27,10 +27,11 @@ if ExpInfo.order(j,i) == 1 %1: present the standard first
     fprintf(Arduino,input_on);
     PsychPortAudio('FillBuffer',pahandle, AudInfo.quietGaussianWhiteNoise);
     PsychPortAudio('Start',pahandle,1,0,0);
-    WaitSecs(AudInfo.stimDura+0.2);
+    WaitSecs(AudInfo.stimDura);
     input_off = ['<',num2str(0),':',num2str(ExpInfo.standard_loc),'>'];
     fprintf(Arduino,input_off);
     PsychPortAudio('Stop',pahandle);
+    WaitSecs(0.1);
     
     Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
         [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
@@ -42,10 +43,11 @@ if ExpInfo.order(j,i) == 1 %1: present the standard first
     fprintf(Arduino,input_on);
     PsychPortAudio('FillBuffer',pahandle, AudInfo.GaussianWhiteNoise);
     PsychPortAudio('Start',pahandle,1,0,0);
-    WaitSecs(AudInfo.stimDura+0.2);
+    WaitSecs(AudInfo.stimDura);
     input_off = ['<',num2str(0),':',num2str(Resp.comparison_loc(j,i)),'>'];
     fprintf(Arduino,input_off);
     PsychPortAudio('Stop',pahandle);
+    WaitSecs(0.1);
 
 else
 
@@ -54,10 +56,11 @@ else
     fprintf(Arduino,input_on);
     PsychPortAudio('FillBuffer',pahandle, AudInfo.GaussianWhiteNoise);
     PsychPortAudio('Start',pahandle,1,0,0);
-    WaitSecs(AudInfo.stimDura+0.2);
+    WaitSecs(AudInfo.stimDura);
     input_off = ['<',num2str(0),':',num2str(Resp.comparison_loc(j,i)),'>'];
     fprintf(Arduino,input_off);
     PsychPortAudio('Stop',pahandle);
+    WaitSecs(0.1);
 
     Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
         [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
@@ -69,10 +72,11 @@ else
     fprintf(Arduino,input_on);
     PsychPortAudio('FillBuffer',pahandle, AudInfo.quietGaussianWhiteNoise);
     PsychPortAudio('Start',pahandle,1,0,0);
-    WaitSecs(AudInfo.stimDura+0.2);
+    WaitSecs(AudInfo.stimDura);
     input_off = ['<',num2str(0),':',num2str(ExpInfo.standard_loc),'>'];
     fprintf(Arduino,input_off);
     PsychPortAudio('Stop',pahandle);
+    WaitSecs(0.1);
     
 end
 
@@ -81,6 +85,11 @@ Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
     [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
 Screen('Flip',windowPtr);
 WaitSecs(ExpInfo.tBlank2);
+
+Resp.standard_loc(j,i) = mean(ExpInfo.standard_loc);
+Resp.discrepancy(j,i) = Resp.comparison_loc(j,i) - Resp.standard_loc(j,i);
+Resp.staircase(j,i) = j;
+Resp.order(j,i) = ExpInfo.order(j,i);
 
 %% response
 
