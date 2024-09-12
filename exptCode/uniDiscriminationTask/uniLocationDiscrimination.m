@@ -18,9 +18,9 @@ clear; close all;  rng('Shuffle');
         
 switch ExpInfo.practice
     case 1
-        outFileName = sprintf('uniDis_sub%s_ses-%s', ExpInfo.subjInit, ExpInfo.session);
+        outFileName = sprintf('uniDis_sub-%s_ses-%s', ExpInfo.subjInit, ExpInfo.session);
     case 2
-        outFileName = sprintf('uniDis_practice_sub%s_ses-%s', ExpInfo.subjInit, ExpInfo.session);
+        outFileName = sprintf('uniDis_practice_sub-%s_ses-%s', ExpInfo.subjInit, ExpInfo.session);
 end
 
 
