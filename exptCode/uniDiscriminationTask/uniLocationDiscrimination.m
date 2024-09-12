@@ -63,7 +63,7 @@ Screen('Preference', 'VisualDebugLevel', 1);
 Screen('Preference', 'SkipSyncTests', 1);
 screens = Screen('Screens');
 screenNumber = max(screens);
-[windowPtr,rect] = Screen('OpenWindow', screenNumber, [0,0,0], [0,0,800,600]); % ,[0,0,800,600]
+[windowPtr,rect] = Screen('OpenWindow', screenNumber, [0,0,0]); % ,[0,0,800,600]
 [ScreenInfo.xaxis, ScreenInfo.yaxis] = Screen('WindowSize',windowPtr);
 ScreenInfo.screenNumber = screenNumber;
 Screen('TextSize', windowPtr, 30);
@@ -138,14 +138,19 @@ ExpInfo.dialScaler = 2;
 
 %% define staircase conditions
 
-[ExpInfo.condition,ExpInfo.order] = deal(NaN(ExpInfo.n_staircase,ExpInfo.n_trial)); 
-[Resp.comparison_loc, Resp.standard_loc,...
-    Resp.discrepancy, Resp.resp] = deal(NaN(1,ExpInfo.n_total_trial)); 
+% catch trials are evenly spread across blocks
+ExpInfo.n_easy_trial_per_s = 4; % easy trial per staircase
+n_trial_w_easy = ExpInfo.n_easy_trial_per_s + ExpInfo.n_trial;
+
+[ExpInfo.condition,ExpInfo.order,...
+    Resp.comparison_loc, Resp.standard_loc,...
+    Resp.discrepancy, Resp.resp,...
+    Resp.RT, Resp.correct] = deal(NaN(ExpInfo.n_staircase,n_trial_w_easy)); 
 
 %------------------------------Conditions----------------------------------
 %odd number: starts from leftside of the standard (1-up-2-down) 
 %even number: starts from rightside of the standard (2-up-1-down)
-for i = 1:ExpInfo.n_trial
+for i = 1:n_trial_w_easy
     ExpInfo.condition(:,i) = randperm(ExpInfo.n_staircase,ExpInfo.n_staircase);
 end 
 
@@ -155,18 +160,16 @@ Resp.comparison_loc(2,1) = max(ExpInfo.sV_cm);
 %---------------------------------ExpInfo.order------------------------------------
 %1: present the standard first
 %2: present the comparison first
-order(ExpInfo.condition==1) = reshape(Shuffle(repmat([1,2],[1, ExpInfo.n_trial/2])),[2, ExpInfo.n_trial/2]);
-order(ExpInfo.condition==2) = reshape(Shuffle(repmat([1,2],[1, ExpInfo.n_trial/2])),[2, ExpInfo.n_trial/2]);
-order = reshape(order, [2, ExpInfo.n_trial]);
+order(ExpInfo.condition==1) = reshape(Shuffle(repmat([1,2],[1, n_trial_w_easy/2])),[2, n_trial_w_easy/2]);
+order(ExpInfo.condition==2) = reshape(Shuffle(repmat([1,2],[1, n_trial_w_easy/2])),[2, n_trial_w_easy/2]);
+order = reshape(order, [2, n_trial_w_easy
+    ]); % row 1: trials of staircase1; row 2: trials of staircase2
 
 %-------------------------------Response-----------------------------------
 %-1: participants think the comparison is to the left of the standard
 %1: participants think the comparison is to the right of the standard
 
 %% Add easy trials to calculate lapse rate
-
-% catch trials are evenly spread across blocks
-ExpInfo.n_easy_trial_per_s = 4;
 
 trial_slc  = [];
 for i = 1:ExpInfo.n_staircase
@@ -177,7 +180,7 @@ for i = 1:ExpInfo.n_staircase
             ExpInfo.n_easy_trial_per_s/ExpInfo.n_block), j)];
     end
 end
-
+ExpInfo.easy_trial = trial_slc;
 % %To see whether the catch trials are evenly spread out. Do:
 % T = zeros(ExpInfo.n_staircase, ExpInfo.n_trial);
 % T(trial_slc) = 1; imagesc(T);
@@ -278,13 +281,20 @@ for i = 1:ExpInfo.n_trial
         
         %% inserted an easy trial for calculating the lapse rate later
         
-        idx_t = (i-1)*ExpInfo.n_staircase+j;
-        if ismember(idx_t,ExpInfo.easy_trial)
-%             index = find(D_easyTrials(1,:)==idx_t,1);
-%             [D_easyTrials(6,index),D_easyTrials(7,index)] = EasyTrials(...
-%                 currentAloc, D_easyTrials(4,index), D_easyTrials(3,index),...
-%                 D_easyTrials(5,index), ScreenInfo,VSinfo,AudInfo,ExpInfo,...
-%                 motorArduino,noOfSteps,pahandle,windowPtr);
+        if ismember(i, ExpInfo.easy_trial)
+            
+            flag_easy = 1;
+            [j_easy, temp_i_easy] = find(ExpInfo.easy_trial==i);
+            i_easy = ExpInfo.easy_idx(temp_i_easy);
+            
+            if strcmp(ExpInfo.session, 'A')
+                Resp = staircaseAuditoryStim(i_easy, j_easy, ExpInfo,...
+                    ScreenInfo,AudInfo,VSinfo,Arduino,pahandle,windowPtr, Resp, flag_easy);
+            else
+                Resp = staircaseVisualStim(i_easy, j_easy, ExpInfo,...
+                    ScreenInfo,VSinfo,windowPtr, Resp, flag_easy);
+            end
+            
         end
         
         %% save by trial
@@ -309,7 +319,7 @@ for i = 1:ExpInfo.n_trial
         end
         
     end
-
+    
 end
 %% Save sorted data and end the experiment
 c  = clock;
