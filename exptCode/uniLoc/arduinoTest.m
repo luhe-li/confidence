@@ -29,7 +29,8 @@ AudInfo.intensity_GWN       = 1; % too loud for debugging, originally 15
 AudInfo.GaussianWhiteNoise  = [AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn; AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn];
 pahandle                    = PsychPortAudio('Open', our_device, [], [], [], 2);%open device
 
-aa = repmat([6,11],[1,20]);
+aa = [1:16,16:-1:1];
+
 
 %% audio test
 for i = aa
@@ -38,7 +39,7 @@ for i = aa
     fprintf(Arduino,input_on);
     PsychPortAudio('FillBuffer',pahandle, AudInfo.GaussianWhiteNoise);
     PsychPortAudio('Start',pahandle,1,0,0);
-    WaitSecs(5.5);
+    WaitSecs(0.5);
     input_off = ['<',num2str(0),':',num2str(i),'>'];
     fprintf(Arduino,input_off);
     PsychPortAudio('Stop',pahandle);

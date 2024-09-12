@@ -1,5 +1,4 @@
-% Run seperately for A, V1, V2
-% Standard: center
+% Run 2 staircases seperately for A, V1, V2
 
 %% Enter experiment info
 clear; close all;  rng('Shuffle');
@@ -14,7 +13,7 @@ clear; close all;  rng('Shuffle');
 % end
 
  ExpInfo.subjInit = 'LL';
- ExpInfo.session = 'V2';
+ ExpInfo.session = 'A';
  ExpInfo.practice  = 1;
         
 switch ExpInfo.practice
@@ -45,6 +44,7 @@ addpath(genpath(fullfile(git_dir, 'Psychtoolbox-3')))
 if strcmp(ExpInfo.session, 'A')
     Arduino = serial('/dev/cu.usbmodem14301','BaudRate',115200);
     fopen(Arduino);
+    VSinfo.SD_blob = 0; % make sure this variable exists
 elseif strcmp(ExpInfo.session, 'V1')
     VSinfo.SD_blob = 4; % cm
 elseif strcmp(ExpInfo.session, 'V2')
@@ -57,7 +57,7 @@ AssertOpenGL();
 GetSecs();
 WaitSecs(0.1);
 KbCheck();
-% ListenChar(2);
+ListenChar(2);
 
 Screen('Preference', 'VisualDebugLevel', 1);
 Screen('Preference', 'SkipSyncTests', 1);
@@ -90,10 +90,8 @@ ScreenInfo.y2_ub = ScreenInfo.yaxis-ScreenInfo.liftingYaxis+7;
 %% Experiment set up
 
 % trial info
-ExpInfo.standard_loc = 0; % cm
 ExpInfo.n_trial = 36; % for each staircase
 ExpInfo.n_staircase = 2; % one from left and one from right
-ExpInfo.StepSizes = [5, 2, 0.5];
 ExpInfo.n_block = 2;
 ExpInfo.n_total_trial = ExpInfo.n_staircase * ExpInfo.n_trial;
 
@@ -103,9 +101,10 @@ ExpInfo.sitting_dist = 113; % cm
 ExpInfo.screen_cm = 170; % cm
 ExpInfo.px_per_cm = ScreenInfo.px_per_cm;
 
-% choose speaker/visual location
+% choose speaker/visual location in the main localization experiment
 ExpInfo.speaker_idx = 6:11;
-ExpInfo.speaker_level_cm = linspace(-ExpInfo.speaker_cm, ExpInfo.speaker_cm, 16);
+ExpInfo.n_speaker = 16;
+ExpInfo.speaker_level_cm = linspace(-ExpInfo.speaker_cm, ExpInfo.speaker_cm, ExpInfo.n_speaker);
 ExpInfo.sA_cm = ExpInfo.speaker_level_cm(ExpInfo.speaker_idx);
 ExpInfo.sV_cm = ExpInfo.sA_cm;
 
@@ -136,6 +135,17 @@ ExpInfo.tIFI = ScreenInfo.ifi;
 % dial
 ExpInfo.dialScaler = 2;
 
+% stimulus location for A/V separately
+if  strcmp(ExpInfo.session, 'A')
+    ExpInfo.standard_loc = [8,9]; % speaker index
+    ExpInfo.comparison_loc = 1:ExpInfo.n_speaker;
+    ExpInfo.StepSizes = [4,2,1]; % speaker index
+else
+    ExpInfo.standard_loc = 0; % cm
+    ExpInfo.comparison_loc = ExpInfo.sV_cm;
+    ExpInfo.StepSizes = [5, 2, 0.5]; % cm
+end
+
 %% define staircase conditions
 
 % catch trials are evenly spread across blocks
@@ -154,8 +164,8 @@ for i = 1:n_trial_w_easy
     ExpInfo.condition(:,i) = randperm(ExpInfo.n_staircase,ExpInfo.n_staircase);
 end 
 
-Resp.comparison_loc(1,1) = min(ExpInfo.sV_cm);
-Resp.comparison_loc(2,1) = max(ExpInfo.sV_cm);
+Resp.comparison_loc(1,1) = min(ExpInfo.comparison_loc);
+Resp.comparison_loc(2,1) = max(ExpInfo.comparison_loc);
 
 %---------------------------------ExpInfo.order------------------------------------
 %1: present the standard first
@@ -176,11 +186,11 @@ for i = 1:ExpInfo.n_staircase
     trialIdx_staircase = reshape(i:ExpInfo.n_staircase:ExpInfo.n_total_trial, ...
         [ExpInfo.n_trial/ExpInfo.n_block, ExpInfo.n_block]);
     for j = 1:ExpInfo.n_block
-        trial_slc = [trial_slc, trialIdx_staircase(randperm(ExpInfo.n_trial/ExpInfo.n_block,...
+        trial_slc = [trial_slc; trialIdx_staircase(randperm(ExpInfo.n_trial/ExpInfo.n_block,...
             ExpInfo.n_easy_trial_per_s/ExpInfo.n_block), j)];
     end
 end
-ExpInfo.easy_trial = trial_slc;
+ExpInfo.easy_trial = reshape(trial_slc,[ExpInfo.n_easy_trial_per_s, ExpInfo.n_staircase])';
 % %To see whether the catch trials are evenly spread out. Do:
 % T = zeros(ExpInfo.n_staircase, ExpInfo.n_trial);
 % T(trial_slc) = 1; imagesc(T);
@@ -208,7 +218,9 @@ sineWindow_gwn              = sin(standardFrequency_gwn/2*2*pi*timeline_gwn/AudI
 carrierSound_gwn            = randn(1, numel(timeline_gwn));
 AudInfo.intensity_GWN       = 1; % too loud for debugging, originally 15
 AudInfo.GaussianWhiteNoise  = [AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn;...
-                            AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn];
+    AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn];
+AudInfo.quietGaussianWhiteNoise  =0.5*[AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn;...
+    AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn]; % half the amplitude for two speakers of the standard stimulus
 pahandle                    = PsychPortAudio('Open', our_device, [], [], [], 2); % open device
 
 %% audio test / warm-up
@@ -245,7 +257,7 @@ VSinfo.grey_texture        = Screen('MakeTexture', windowPtr, VSinfo.greyScreen,
 VSinfo.blankScreen         = zeros(ScreenInfo.xaxis,ScreenInfo.yaxis);
 
 %% Run the experiment
-instruction = ['In the following session, you will be presented \nan auditory or visual stimulus on each trial.','\nAfter the presentation, please use the cursor \nto locate the center of the sound source \n or the center of the visual cloud of dots, not the mode of the cloud.','\nPress key A, S, D, or F to report your confidence in this localization response. ','\nA = Very Low  S = Low  D = High  F = Very High','\nThe key press is used to register localization response.','\nPlease use the whole confidence range.','\nPlease use the same strategy to report your confidence in every session.','\nPress any key to start the unimodal localization task.'];
+instruction = ['\nPress any key to start the unimodal location discrimination task.'];
 
 %start the experiment
 c                   = clock;
@@ -273,7 +285,7 @@ for i = 1:ExpInfo.n_trial
         HideCursor;
         if strcmp(ExpInfo.session, 'A')
             Resp = staircaseAuditoryStim(i, j, ExpInfo,...
-                ScreenInfo,AudInfo,VSinfo,Arduino,pahandle,windowPtr, Resp);
+                ScreenInfo,AudInfo,Arduino,pahandle,VSinfo,windowPtr,Resp);
         else
             Resp = staircaseVisualStim(i, j, ExpInfo,...
                 ScreenInfo,VSinfo,windowPtr,Resp);
@@ -289,7 +301,7 @@ for i = 1:ExpInfo.n_trial
             
             if strcmp(ExpInfo.session, 'A')
                 Resp = staircaseAuditoryStim(i_easy, j_easy, ExpInfo,...
-                    ScreenInfo,AudInfo,VSinfo,Arduino,pahandle,windowPtr, Resp, flag_easy);
+                    ScreenInfo,AudInfo,Arduino,pahandle,VSinfo,windowPtr,Resp,flag_easy);
             else
                 Resp = staircaseVisualStim(i_easy, j_easy, ExpInfo,...
                     ScreenInfo,VSinfo,windowPtr, Resp, flag_easy);
@@ -324,34 +336,35 @@ end
 %% Save sorted data and end the experiment
 c  = clock;
 ExpInfo.finish  = sprintf('%04d/%02d/%02d_%02d:%02d:%02d',c(1),c(2),c(3),c(4),c(5),ceil(c(6)));
-
-if ExpInfo.session == 'V'
-    
-    [~, temp1] = sort(VSinfo.SD_blob);
-    reliSortResp = Resp(temp1);
-    reli1resp = reliSortResp(1:ExpInfo.nRep * ExpInfo.nLevel);
-    reli2resp = reliSortResp((ExpInfo.nRep * ExpInfo.nLevel+1):end);
-    
-    [~, temp2] = sort([reli1resp.target_idx]);
-    sortedReli1Resp = reli1resp(temp2);
-    [~, temp3] = sort([reli2resp.target_idx]);
-    sortedReli2Resp = reli2resp(temp3);
-    
-    save(fullfile(outDir,outFileName),'Resp','reliSortResp','ExpInfo','ScreenInfo','VSinfo','AudInfo','sortedReli1Resp','sortedReli2Resp')
-    
-else
-    % sort trials by location level
-    [~, temp2] = sort([Resp(1:end).target_idx]);
-    sortedResp = Resp(temp2);
-    save(fullfile(outDir,outFileName),'Resp','sortedResp','ExpInfo','ScreenInfo','VSinfo','AudInfo');
-    fopen(Arduino);
-end
+% 
+% if ExpInfo.session == 'V'
+%     
+%     [~, temp1] = sort(VSinfo.SD_blob);
+%     reliSortResp = Resp(temp1);
+%     reli1resp = reliSortResp(1:ExpInfo.nRep * ExpInfo.nLevel);
+%     reli2resp = reliSortResp((ExpInfo.nRep * ExpInfo.nLevel+1):end);
+%     
+%     [~, temp2] = sort([reli1resp.target_idx]);
+%     sortedReli1Resp = reli1resp(temp2);
+%     [~, temp3] = sort([reli2resp.target_idx]);
+%     sortedReli2Resp = reli2resp(temp3);
+%     
+%     save(fullfile(outDir,outFileName),'Resp','reliSortResp','ExpInfo','ScreenInfo','VSinfo','AudInfo','sortedReli1Resp','sortedReli2Resp')
+%     
+% else
+%     % sort trials by location level
+%     [~, temp2] = sort([Resp(1:end).target_idx]);
+%     sortedResp = Resp(temp2);
+%     save(fullfile(outDir,outFileName),'Resp','sortedResp','ExpInfo','ScreenInfo','VSinfo','AudInfo');
+%     fopen(Arduino);
+% end
 
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
     [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
 DrawFormattedText(windowPtr, 'End of this session.\nPress any button to exit.',...
     'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis,[255 255 255]);
 Screen('Flip',windowPtr);
+
 KbWait(-3);
 ShowCursor;
 Screen('CloseAll');

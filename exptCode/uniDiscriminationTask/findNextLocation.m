@@ -25,13 +25,13 @@ function updated_loc = findNextLocation(i,j,current_loc, current_resp, history, 
 
             if current_resp == -1 && history(end) == -1
                 updated_loc = current_loc + stepsize;  % Make it harder
-%                 disp('Correct twice, decrease distance')
+                disp('Correct twice, decrease distance')
             elseif current_resp == 1
                 updated_loc = current_loc - stepsize;  % Make it easier
-%                 disp('Wrong once, widen distance')
+                disp('Wrong once, widen distance')
             else
                 updated_loc = current_loc;  % Keep difficulty the same
-%                 disp('Correct once, keep distance')
+                disp('Correct once, keep distance')
             end
         end
     else  % Condition 2: 1-down-2-up, target starts on the RIGHT side
@@ -56,13 +56,13 @@ function updated_loc = findNextLocation(i,j,current_loc, current_resp, history, 
 
             if current_resp == -1 && history(end) == -1
                 updated_loc = current_loc + stepsize;  % Make it easier
-%                 disp('Wrong twice, widen distance')
+                disp('Wrong twice, widen distance')
             elseif current_resp == 1
                 updated_loc = current_loc - stepsize;  % Make it harder
-%                 disp('Correct, decrease distance')
+                disp('Correct, decrease distance')
             else
                 updated_loc = current_loc;  % Keep difficulty the same
-%                 disp('Wrong once, keep distance')
+                disp('Wrong once, keep distance')
             end
 
         end
