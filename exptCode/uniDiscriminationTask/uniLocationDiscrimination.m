@@ -13,7 +13,7 @@ clear; close all;  rng('Shuffle');
 % end
 
  ExpInfo.subjInit = 'LL';
- ExpInfo.session = 'A';
+ ExpInfo.session = 'V2';
  ExpInfo.practice  = 1;
         
 switch ExpInfo.practice
@@ -117,7 +117,7 @@ ExpInfo.ITI = 0.3;
 ExpInfo.IFI = ScreenInfo.ifi; 
 
 % split all the trials into blocks
-blocks = linspace(0,ExpInfo.n_total_trial, ExpInfo.n_block+1);
+blocks = linspace(0,ExpInfo.n_trial, ExpInfo.n_block+1);
 ExpInfo.breakTrials = floor(blocks(2:(end-1)));
 ExpInfo.firstTrial = blocks(1:ExpInfo.n_block)+1;
 ExpInfo.lastTrial = blocks(2:(ExpInfo.n_block+1));
@@ -172,8 +172,7 @@ Resp.comparison_loc(2,1) = max(ExpInfo.comparison_loc);
 %2: present the comparison first
 order(ExpInfo.condition==1) = reshape(Shuffle(repmat([1,2],[1, n_trial_w_easy/2])),[2, n_trial_w_easy/2]);
 order(ExpInfo.condition==2) = reshape(Shuffle(repmat([1,2],[1, n_trial_w_easy/2])),[2, n_trial_w_easy/2]);
-order = reshape(order, [2, n_trial_w_easy
-    ]); % row 1: trials of staircase1; row 2: trials of staircase2
+order = reshape(order, [2, n_trial_w_easy]); % row 1: trials of staircase1; row 2: trials of staircase2
 
 %-------------------------------Response-----------------------------------
 %-1: participants think the comparison is to the left of the standard
@@ -293,10 +292,11 @@ for i = 1:ExpInfo.n_trial
         
         %% inserted an easy trial for calculating the lapse rate later
         
-        if ismember(i, ExpInfo.easy_trial)
+        i_total = (ss-1)*ExpInfo.n_trial + i;
+        if ismember(i_total, ExpInfo.easy_trial)
             
             flag_easy = 1;
-            [j_easy, temp_i_easy] = find(ExpInfo.easy_trial==i);
+            [j_easy, temp_i_easy] = find(ExpInfo.easy_trial==i_total);
             i_easy = ExpInfo.easy_idx(temp_i_easy);
             
             if strcmp(ExpInfo.session, 'A')
@@ -310,15 +310,14 @@ for i = 1:ExpInfo.n_trial
         end
         
         %% save by trial
+        
         save(fullfile(outDir,outFileName),'Resp','ExpInfo','ScreenInfo','VSinfo','AudInfo');
         
         %% add breaks
-        if ismember(i,ExpInfo.breakTrials)
+        if ismember(i,ExpInfo.breakTrials) && ss == 2
             
             Screen('TextSize',windowPtr,30);
             idxBlock = find(ExpInfo.breakTrials==i);
-            firstTrial = ExpInfo.firstTrial(idxBlock);
-            lastTrial = ExpInfo.lastTrial(idxBlock);
             
             blockInfo = sprintf('You''ve finished block %i/%i. Please take a break.',idxBlock, ExpInfo.n_block);
             Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
