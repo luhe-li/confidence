@@ -1,6 +1,7 @@
 function Resp = staircaseAuditoryStim(i, j, ExpInfo, ScreenInfo,AudInfo,Arduino,pahandle,VSinfo,windowPtr,Resp, flag_easy)
 
 if ~exist('flag_easy','Var'); flag_easy = 0; end
+if i == ExpInfo.n_trial; flag_easy = 1; end
 
 %% start the trial
 

@@ -1,7 +1,7 @@
 function Resp = staircaseVisualStim(i, j, ExpInfo, ScreenInfo, VSinfo, windowPtr, Resp, flag_easy)
 
 if ~exist('flag_easy','Var'); flag_easy = 0; end
-if i == ExpInfo.n_trial; flag_easy = 0; end
+if i == ExpInfo.n_trial; flag_easy = 1; end
 
 %% precompute
 
