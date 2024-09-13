@@ -149,17 +149,17 @@ end
 
 % catch trials are evenly spread across blocks
 ExpInfo.n_easy_trial_per_s = 4; % easy trial per staircase
-n_trial_w_easy = ExpInfo.n_easy_trial_per_s + ExpInfo.n_trial;
+ExpInfo.n_trial_w_easy = ExpInfo.n_easy_trial_per_s + ExpInfo.n_trial;
 
 [ExpInfo.condition,ExpInfo.order,...
     Resp.comparison_loc, Resp.standard_loc,...
     Resp.discrepancy, Resp.resp,...
-    Resp.RT, Resp.correct] = deal(NaN(ExpInfo.n_staircase,n_trial_w_easy)); 
+    Resp.RT, Resp.correct] = deal(NaN(ExpInfo.n_staircase,ExpInfo.n_trial_w_easy)); 
 
 %------------------------------Conditions----------------------------------
 %odd number: starts from leftside of the standard (1-up-2-down) 
 %even number: starts from rightside of the standard (2-up-1-down)
-for i = 1:n_trial_w_easy
+for i = 1:ExpInfo.n_trial_w_easy
     ExpInfo.condition(:,i) = randperm(ExpInfo.n_staircase,ExpInfo.n_staircase);
 end 
 
@@ -169,9 +169,16 @@ Resp.comparison_loc(2,1) = max(ExpInfo.comparison_loc);
 %---------------------------------ExpInfo.order------------------------------------
 %1: present the standard first
 %2: present the comparison first
-order(ExpInfo.condition==1) = reshape(Shuffle(repmat([1,2],[1, n_trial_w_easy/2])),[2, n_trial_w_easy/2]);
-order(ExpInfo.condition==2) = reshape(Shuffle(repmat([1,2],[1, n_trial_w_easy/2])),[2, n_trial_w_easy/2]);
-order = reshape(order, [2, n_trial_w_easy]); % row 1: trials of staircase1; row 2: trials of staircase2
+order(ExpInfo.condition==1) = reshape(Shuffle(repmat([1,2],[1, ExpInfo.n_trial_w_easy/2])),[2, ExpInfo.n_trial_w_easy/2]);
+order(ExpInfo.condition==2) = reshape(Shuffle(repmat([1,2],[1, ExpInfo.n_trial_w_easy/2])),[2, ExpInfo.n_trial_w_easy/2]);
+order = reshape(order, [2, ExpInfo.n_trial_w_easy]); % row 1: trials of staircase1; row 2: trials of staircase2
+
+% Reorder order by condition (row 1 = condition 1, row 2 = condition 2)
+row_indices = ExpInfo.condition(:);  % Vector of size [n_staircase * n_trial, 1]
+col_indices = repmat(1:ExpInfo.n_trial_w_easy, ExpInfo.n_staircase, 1);
+col_indices = col_indices(:);  % Vectorize to [n_staircase * n_trial, 1]
+indices = sub2ind(size(order), row_indices, col_indices);
+ExpInfo.order(indices) = order(:);
 
 %-------------------------------Response-----------------------------------
 %-1: participants think the comparison is to the left of the standard
@@ -276,7 +283,6 @@ for i = 1:ExpInfo.n_trial
 
         % order by condition index
         j = ExpInfo.condition(ss,i);
-        ExpInfo.order(j,i) = order(ss,i);
         
         % stimulus
         SetMouse(ScreenInfo.xaxis*2, ScreenInfo.yaxis*2, windowPtr);
