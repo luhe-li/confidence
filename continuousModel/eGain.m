@@ -97,6 +97,8 @@ for tt = 1:numel(idx_opt)
     opt_radius(tt) = optRadiusCM(tt,idx_opt(tt));
 end
 
+demo_model([],[],[],[],[],[],confRadius.*step, costFun, erCDF, gainFun)
+
 end
 
 %% check plot
@@ -111,3 +113,12 @@ end
 % plot(confRadius.*step, erCDF);
 % plot(confRadius.*step, gainFun);
 % xlabel('Confidence radius (cm)')
+
+%% demo figure
+
+% figure(f1)
+% plot(confRadius.*step, costFun);
+% plot(confRadius.*step, erCDF);
+% plot(confRadius.*step, gainFun);
+% xlabel('Confidence radius (cm)')
+

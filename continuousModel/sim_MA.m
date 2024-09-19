@@ -71,6 +71,14 @@ for rel = 1:numel(sigVs)
     end
 end
 
+check_demo = 1;
+if check_demo
+    aloc = 2;
+    vloc = 4;
+    tt = 1;
+    demo_model(aloc, vloc, tt, fixP, post, shat)
+end
+
 % optimal radius given posterior and estimate
 post_2d = reshape(post, [prod([n_sA, n_sA, 2, 2, bi_nrep]), numel(fixP.center_axis)]);
 shat_1d = reshape(shat, [prod([n_sA, n_sA, 2, 2, bi_nrep]), 1]);
@@ -86,6 +94,8 @@ bi_conf = reshape(bi_conf, [n_sA, n_sA, 2, 2, bi_nrep]);
 opt_gain = reshape(opt_gain,[n_sA, n_sA, 2, 2, bi_nrep]);
 
 check_plot=0;
+
+
 if check_plot
 
     dims = [n_sA, n_sA, 2, 2, bi_nrep];

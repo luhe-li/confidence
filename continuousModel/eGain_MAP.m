@@ -100,6 +100,8 @@ end
 % convert optimal radius from axis unit to cm
 opt_radius = idx_opt_radius.*step;
 
+demo_model([],[],[],[],[],[],confRadius.*step, costFun, erCDF, gainFun)
+
 end
 
 % % check posterior
