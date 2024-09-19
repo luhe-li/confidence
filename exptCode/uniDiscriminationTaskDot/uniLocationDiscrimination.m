@@ -27,7 +27,7 @@ end
 curDir = pwd;
 [projectDir, ~]  = fileparts(fileparts(curDir));
 [git_dir, ~] = fileparts(projectDir);
-outDir = fullfile(projectDir, 'data','uniDiscrimination_dot');
+outDir = fullfile(projectDir, 'data','uniDiscriminationDot');
 if ~exist(outDir,'dir') mkdir(outDir); end
 addpath(genpath(fullfile(git_dir, 'Psychtoolbox-3')))
 

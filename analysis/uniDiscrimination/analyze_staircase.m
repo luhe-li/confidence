@@ -5,17 +5,19 @@ clear; clc; %close all;
 sub = 'LL';
 ses = 'V2';
 save_fig = 1;
+str = '';
 
 %% manage path
 
 cur_dir                          = pwd;
 [project_dir, ~]                 = fileparts(fileparts(cur_dir));
-out_dir                          = fullfile(cur_dir, 's1Fig');
-addpath(genpath(fullfile(project_dir, 'data','uniDiscrimination_dot')));
+out_dir                          = fullfile(cur_dir, mfilename);
+addpath(genpath(fullfile(project_dir, 'data',['uniDiscrimination', str])));
 if ~exist(out_dir,'dir') mkdir(out_dir); end
 
 %% load data
-load(sprintf('uniDisDot_sub-%s_ses-%s', sub, ses));
+% load(sprintf('uniDis_sub-%s_ses-%s', sub, ses));
+load(sprintf('uniDis%s_sub-%s_ses-%s',str, sub, ses));
 n_staircase = ExpInfo.n_staircase;
 
 % replace nan trials
@@ -23,7 +25,6 @@ Resp.discrepancy(1,39:40) = min(ExpInfo.comparison_loc);
 Resp.discrepancy(2,39:40) = max(ExpInfo.comparison_loc);
 Resp.correct(1,39:40) = 1;
 Resp.correct(2,39:40) = 1;
-
 
 %% Plot the interleaved staircases
 
@@ -89,6 +90,7 @@ legend([h_line1, h_line2], '1-up-2-down', '2-up-1-down');
 grid on;
 hold off;
 
+saveas(gcf, fullfile(out_dir, sprintf('stim_check_%s_%s',  str, ses)),'png')
 
 %% plot raw data for PMF
 % Flatten the matrices into vectors and remove NaN values
@@ -101,10 +103,12 @@ Responses = Responses(validIndices);
 % Determine bin centers and edges
 if strcmp(ses, 'A')
     % Convert speaker index to cm
+    standard_loc =  mean(speaker_cm(ExpInfo.standard_loc));
     comparison_loc = speaker_cm(ExpInfo.comparison_loc);
     Discrepancies = Discrepancies * (speaker_cm(2) - speaker_cm(1));
     bin_width = 5;
 else
+    standard_loc =  ExpInfo.standard_loc;
     comparison_loc = ExpInfo.comparison_loc;
     bin_width = 5;
 end
@@ -176,3 +180,39 @@ title([ses '-2IFC discrimination']);
 grid on;
 hold off;
 
+saveas(gcf, fullfile(out_dir, sprintf('pmf_$s_%s', str, ses)),'png')
+
+%% sort out data needed for fitting
+
+%%%%%%%% to fix wrong easy trials, rmb to delete %%%%%%%
+numRightResponsesPerBin(1) = 0;
+%%%%%%%% to fix wrong easy trials, rmb to delete %%%%%%%
+
+D.standard_loc = standard_loc;
+D.comparison_loc = binCenters;
+D.n_r_response = numRightResponsesPerBin;
+D.n_trial = numTrialsPerBin;
+D.n_l_response = numTrialsPerBin - numRightResponsesPerBin;
+
+%% fit a simple PMF
+
+% lapse rate, mu, sigma
+lb              = [   0, -10, 0.01]; 
+ub              = [0.06,  10,    6]; %set boundaries
+initialization  = [   0,   0,    1];
+options         = optimoptions(@fmincon,'MaxIterations',1e5,'Display','off');
+nLogL           = @(p) nll_gauss(p(1),p(2),p(3), D);
+[est, nll] = fmincon(nLogL, initialization,[],[],[],[],...
+                    lb,ub,[],options);
+disp('Estimated values of the parameters:');
+disp(est);
+
+%% pmf functions
+function nLL = nll_gauss(lapse, mu, sigma, D)
+       
+    pc  = normcdf(D.comparison_loc, D.standard_loc + mu, sigma)*(1-lapse)+lapse/2;
+    nLL =  -sum(log(pc.^D.n_r_response .* (1-pc).^D.n_l_response));
+
+ end   
+    
+    
