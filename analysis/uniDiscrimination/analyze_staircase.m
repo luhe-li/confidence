@@ -3,7 +3,7 @@ clear; clc; %close all;
 %% set up
 
 sub = 'LL';
-ses = 'A';
+ses = 'V2';
 save_fig = 1;
 
 %% manage path
@@ -11,11 +11,11 @@ save_fig = 1;
 cur_dir                          = pwd;
 [project_dir, ~]                 = fileparts(fileparts(cur_dir));
 out_dir                          = fullfile(cur_dir, 's1Fig');
-addpath(genpath(fullfile(project_dir, 'data','uniDiscrimination')));
+addpath(genpath(fullfile(project_dir, 'data','uniDiscrimination_dot')));
 if ~exist(out_dir,'dir') mkdir(out_dir); end
 
 %% load data
-load(sprintf('uniDis_sub-%s_ses-%s', sub, ses));
+load(sprintf('uniDisDot_sub-%s_ses-%s', sub, ses));
 n_staircase = ExpInfo.n_staircase;
 
 % replace nan trials

@@ -1,22 +1,7 @@
-function Resp = staircaseVisualStim(i, j, ExpInfo, ScreenInfo, VSinfo, windowPtr, Resp, flag_easy)
+function Resp = staircaseAuditoryStim(i, j, ExpInfo, ScreenInfo,AudInfo,Arduino,pahandle,VSinfo,windowPtr,Resp, flag_easy)
 
 if ~exist('flag_easy','Var'); flag_easy = 0; end
-if i == ExpInfo.n_trial; flag_easy = 0; end % don't update for the last
-
-%% precompute
-
-% standard stimulus
-x_loc_pixel = round(ExpInfo.standard_loc * ExpInfo.px_per_cm);
-std_stimTx = generateRippleStim(VSinfo,ScreenInfo,windowPtr, x_loc_pixel, 0);
-Resp.standard_loc(j,i) = ExpInfo.standard_loc;
-
-% comparison stimulus
-x_loc_pixel = round(Resp.comparison_loc(j,i) * ExpInfo.px_per_cm);
-cmp_stimTx = generateRippleStim(VSinfo,ScreenInfo,windowPtr, x_loc_pixel, 0);
-Resp.discrepancy(j,i) = Resp.comparison_loc(j,i) - Resp.standard_loc(j,i);
-
-Resp.staircase(j,i) = j;
-Resp.order(j,i) = ExpInfo.order(j,i);
+if i == ExpInfo.n_trial; flag_easy = 1; end
 
 %% start the trial
 
@@ -36,61 +21,64 @@ Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
 Screen('Flip',windowPtr);
 WaitSecs(ExpInfo.tBlank1);
 
-%     for jj = 1:VSinfo.blank_n_frame
-%         Screen('DrawTexture', windowPtr, noise_stimTx(jj),[],...
-%             [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
-%         Screen('Flip',windowPtr);
-%     end
-
 if ExpInfo.order(j,i) == 1 %1: present the standard first
-
-    for jj = 1:VSinfo.numFrames
-        Screen('DrawTexture', windowPtr, std_stimTx(jj),[],...
-            [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
-        Screen('Flip',windowPtr);
-    end
-
+    
+    % present standard auditory stimulus
+    input_on = ['<',num2str(1),':',num2str(ExpInfo.standard_loc),'>'];
+    fprintf(Arduino,input_on);
+    PsychPortAudio('FillBuffer',pahandle, AudInfo.quietGaussianWhiteNoise);
+    PsychPortAudio('Start',pahandle,1,0,0);
+    WaitSecs(AudInfo.stimDura);
+    input_off = ['<',num2str(0),':',num2str(ExpInfo.standard_loc),'>'];
+    fprintf(Arduino,input_off);
+    PsychPortAudio('Stop',pahandle);
+    WaitSecs(0.1);
+    
     Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
         [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
     Screen('Flip',windowPtr);
     WaitSecs(ExpInfo.ISI);
-
-%     for jj = 1:VSinfo.blank_n_frame
-%         Screen('DrawTexture', windowPtr, noise_stimTx(jj),[],...
-%             [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
-%         Screen('Flip',windowPtr);
-%     end
-
-    for jj = 1:VSinfo.numFrames
-        Screen('DrawTexture', windowPtr, cmp_stimTx(jj),[],...
-            [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
-        Screen('Flip',windowPtr);
-    end
+    
+    % present comparison auditory stimulus
+    input_on = ['<',num2str(1),':',num2str(Resp.comparison_loc(j,i)),'>'];
+    fprintf(Arduino,input_on);
+    PsychPortAudio('FillBuffer',pahandle, AudInfo.GaussianWhiteNoise);
+    PsychPortAudio('Start',pahandle,1,0,0);
+    WaitSecs(AudInfo.stimDura);
+    input_off = ['<',num2str(0),':',num2str(Resp.comparison_loc(j,i)),'>'];
+    fprintf(Arduino,input_off);
+    PsychPortAudio('Stop',pahandle);
+    WaitSecs(0.1);
 
 else
 
-    for jj = 1:VSinfo.numFrames
-        Screen('DrawTexture', windowPtr, cmp_stimTx(jj),[],...
-            [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
-        Screen('Flip',windowPtr);
-    end
+    % present comparison auditory stimulus
+    input_on = ['<',num2str(1),':',num2str(Resp.comparison_loc(j,i)),'>'];
+    fprintf(Arduino,input_on);
+    PsychPortAudio('FillBuffer',pahandle, AudInfo.GaussianWhiteNoise);
+    PsychPortAudio('Start',pahandle,1,0,0);
+    WaitSecs(AudInfo.stimDura);
+    input_off = ['<',num2str(0),':',num2str(Resp.comparison_loc(j,i)),'>'];
+    fprintf(Arduino,input_off);
+    PsychPortAudio('Stop',pahandle);
+    WaitSecs(0.1);
 
     Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
         [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
     Screen('Flip',windowPtr);
     WaitSecs(ExpInfo.ISI);
-%     for jj = 1:VSinfo.blank_n_frame
-%         Screen('DrawTexture', windowPtr, noise_stimTx(jj),[],...
-%             [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
-%         Screen('Flip',windowPtr);
-%     end
-
-    for jj = 1:VSinfo.numFrames
-        Screen('DrawTexture', windowPtr, std_stimTx(jj),[],...
-            [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
-        Screen('Flip',windowPtr);
-    end
-
+    
+    % present standard auditory stimulus
+    input_on = ['<',num2str(1),':',num2str(ExpInfo.standard_loc),'>'];
+    fprintf(Arduino,input_on);
+    PsychPortAudio('FillBuffer',pahandle, AudInfo.quietGaussianWhiteNoise);
+    PsychPortAudio('Start',pahandle,1,0,0);
+    WaitSecs(AudInfo.stimDura);
+    input_off = ['<',num2str(0),':',num2str(ExpInfo.standard_loc),'>'];
+    fprintf(Arduino,input_off);
+    PsychPortAudio('Stop',pahandle);
+    WaitSecs(0.1);
+    
 end
 
 % blank screen 2
@@ -99,11 +87,11 @@ Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
 Screen('Flip',windowPtr);
 WaitSecs(ExpInfo.tBlank2);
 
-%     for jj = 1:VSinfo.blank_n_frame
-%         Screen('DrawTexture', windowPtr, noise_stimTx(jj),[],...
-%             [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
-%         Screen('Flip',windowPtr);
-%     end
+Resp.standard_loc(j,i) = mean(ExpInfo.standard_loc);
+Resp.discrepancy(j,i) = Resp.comparison_loc(j,i) - Resp.standard_loc(j,i);
+Resp.staircase(j,i) = j;
+Resp.order(j,i) = ExpInfo.order(j,i);
+
 %% response
 
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
@@ -165,5 +153,11 @@ if flag_easy == 0
     % update location of the comparison stimulus for the next trial
     Resp.comparison_loc(j,i+1) = findNextLocation(i,j,current_loc, current_resp, history, ExpInfo);
     
+    % in case of auditory stimulus, make sure that the comparison location
+    % is within the speaker range
+    Resp.comparison_loc(j,i+1) = min(Resp.comparison_loc(j,i+1),ExpInfo.n_speaker);
+    Resp.comparison_loc(j,i+1) = max(Resp.comparison_loc(j,i+1),1);
+    
 end
+
 end
