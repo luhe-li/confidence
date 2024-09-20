@@ -1,7 +1,5 @@
 function [bi_loc, bi_conf, opt_gain] = sim_optimal(aA, bA, sigA, sigV1, sigV2, muP, sigP, sigConf, pCommon, fixP)
 
-check_plot = 1;
-
 sigMotor = fixP.sigMotor;
 bi_nrep = fixP.bi_nrep;
 n_sA = fixP.n_sA;
@@ -55,14 +53,6 @@ for rel = 1:numel(sigVs)
     sHat_A_C2  = (mA./JA + muP/JP)./(1/JA + 1/JP);
     sHat_V_C2  = (mV./JV + muP/JP)./(1/JV + 1/JP);
 
-    %%%%%%%%%% comment out when in use %%%%%%%%%%%%
-
-    %compute the final location estimates 
-    shat(:,:,1,rel,:) = post_C1.* sHat_C1 + post_C2.* sHat_A_C2;
-    shat(:,:,2,rel,:) = post_C1.* sHat_C1 + post_C2.* sHat_V_C2;
-
-    %%%%%%%%%% comment out when in use %%%%%%%%%%%%
-
     % simulate posterior pdf for each trial using center coordinate
     for xx = 1:numel(fixP.center_axis)
         post(:,:,1,rel,:,xx) = post_C1.*normpdf(fixP.center_axis(xx), sHat_C1, repmat(sqrt(1/(1/JA+1/JV+1/JP)), size(sHat_C1)))...
@@ -71,13 +61,6 @@ for rel = 1:numel(sigVs)
             + post_C2.*normpdf(fixP.center_axis(xx), sHat_V_C2, repmat(sqrt(1/(1/JV+1/JP)), size(sHat_V_C2)));
     end
 
-end
-
-if check_plot
-    aloc = 2;
-    vloc = 4;
-    tt = 1;
-    demo_model(aloc, vloc, tt, fixP, post, shat)
 end
 
 % for each possible estimate, given the posterior, calculate the optimal

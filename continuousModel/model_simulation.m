@@ -3,7 +3,7 @@ clear; close all; rng('shuffle');
 
 %% set environment
 
-sim_d = 2;
+sim_d = 1;
 useCluster = false;
 
 % set cores
@@ -76,15 +76,15 @@ GT = [     1,    0.1,     1,     10,     7,     30,      1,    0.7];
 n_para = length(GT);
 
 % main models
-model_names = {'Optimal','Model average','Model selection','Heuristic'};
-folders = {'optimal','MA','MS','heuristic'};
+model_names = {'Optimal model average','Lazy model average','Model selection','Probability matching'};
+folders = {'optimal','MA','MS','PM'};
 n_model = numel(model_names);
 
 % conditions
 cue_label = {'Auditory post-cue','Visual post-cue'};
 n_cue = numel(cue_label);
 rel_label = {'High visual reliability','Low visual reliability'};
-n_rep = 30; % repitition per condition
+n_rep = 50; % repitition per condition
 
 %% simulate fake data
 

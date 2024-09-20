@@ -1,5 +1,5 @@
 function [opt_est,opt_radius,opt_gain] = eGain(myPDF, maxScore, minScore, elbow, center_axis)
-% myPDF    : two-dimensional, size equals [trial, posterior defined by center_axis]
+% myPDF    : two-dimensional, size equals [trial, posterior defined by center_axis
 % maxScore : the maximum possible score given to the participant
 % minScore : the minimum possible score given to the participant
 % elbow    : the length where the score no longer decreases and stays at
@@ -82,6 +82,7 @@ for xx = 1:n_est
             [maxGain(tt, xx), optRadius(tt, xx)] = max(gainFun);
 
         end
+
     end
 
 end
@@ -96,8 +97,6 @@ opt_radius = zeros(size(center_axis));
 for tt = 1:numel(idx_opt)
     opt_radius(tt) = optRadiusCM(tt,idx_opt(tt));
 end
-
-demo_model([],[],[],[],[],[],confRadius.*step, costFun, erCDF, gainFun)
 
 end
 

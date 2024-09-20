@@ -1,4 +1,5 @@
-function [bi_loc, bi_conf, opt_gain, func] = sim_MA(aA, bA, sigA, sigV1, sigV2, muP, sigP, sigConf, pCommon, fixP)
+function [bi_loc, bi_conf, func] = sim_PM(aA, bA, sigA, sigV1, sigV2, muP, sigP, sigConf, pCommon, fixP)
+% observer selects the intermediate posterior
 
 sigMotor = fixP.sigMotor;
 bi_nrep = fixP.bi_nrep;
@@ -39,8 +40,6 @@ for rel = 1:numel(sigVs)
     %calculate posterior of a common cause and separate causes
     %Eq. 2 in Körding et al., 2007
     post_C1    = pCommon.*L_C1./(pCommon.*L_C1 + (1-pCommon).*L_C2);
-    %posterior of separate causes
-    post_C2    = 1 - post_C1;
 
     %compute the two intermediate location estimates
     %An integrated intermediate estimate is the sum of mA, mV and muP with
@@ -54,27 +53,50 @@ for rel = 1:numel(sigVs)
     sHat_A_C2  = (mA./JA + muP/JP)./(1/JA + 1/JP);
     sHat_V_C2  = (mV./JV + muP/JP)./(1/JV + 1/JP);
 
-    %compute the final location estimates if we assume model averaging.
-    %Based on this strategy, the final location estimate is the sum of the
-    %two intermediate location estimates, weighted by the corresponding
-    %causal structure.
-    %Eq. 4 in Wozny et al., 2010
-    shat(:,:,1,rel,:) = post_C1.* sHat_C1 + post_C2.* sHat_A_C2;
-    shat(:,:,2,rel,:) = post_C1.* sHat_C1 + post_C2.* sHat_V_C2;
+    % initiate all responses from intermediate posterior of a common cause
+    [sd_A, sd_V] = deal(repmat(sqrt(1/(1/JA+1/JV+1/JP)), [size(post_C1)]));
+    [shat_A, shat_V] = deal(sHat_C1);
 
-    % simulate posterior pdf for each trial using center coordinate
+    %compute the final location estimates if we assume probability matching.
+    %Based on this strategy, the final location estimate is the integrated
+    %one with a probability of post_C1, and is the segregated one with a
+    %probability of post_C2.
+    %Eq. 6 in Wozny et al., 2010
+    random_sample = rand(size(post_C1));
+    slc_indices = (post_C1 <= random_sample);
+    sd_A(slc_indices) = sqrt(1/(1/JA+1/JP));
+    sd_V(slc_indices) = sqrt(1/(1/JV+1/JP));
+    shat_A(slc_indices) = sHat_A_C2(slc_indices);
+    shat_V(slc_indices) = sHat_V_C2(slc_indices);
+
+    % combine auditory and visual response
+    shat(:,:,1,rel,:) = shat_A;
+    shat(:,:,2,rel,:) = shat_V;
+
     for xx = 1:numel(fixP.center_axis)
-        post(:,:,1,rel,:,xx) = post_C1.*normpdf(fixP.center_axis(xx), sHat_C1, repmat(sqrt(1/(1/JA+1/JV+1/JP)), size(sHat_C1)))...
-            + post_C2.*normpdf(fixP.center_axis(xx), sHat_A_C2, repmat(sqrt(1/(1/JA+1/JP)), size(sHat_A_C2)));
-        post(:,:,2,rel,:,xx) = post_C1.*normpdf(fixP.center_axis(xx), sHat_C1, repmat(sqrt(1/(1/JA+1/JV+1/JP)), size(sHat_C1)))...
-            + post_C2.*normpdf(fixP.center_axis(xx), sHat_V_C2, repmat(sqrt(1/(1/JV+1/JP)), size(sHat_V_C2)));
+        post(:,:,1,rel,:,xx) = normpdf(fixP.center_axis(xx), shat_A, sd_A);
+        post(:,:,2,rel,:,xx) = normpdf(fixP.center_axis(xx), shat_V, sd_V);
     end
+
 end
+
+% %%%% debug
+% 
+% mu1 = 3.42;
+% mu2 = -18;
+% sd1 = 1;
+% sd2 = 9.48;
+% post1 = normpdf(fixP.center_axis, mu1, sd1);
+% post2 = normpdf(fixP.center_axis, mu2, sd2);
+% 
+% [test_radius] = eGain_MAP([post1;post2], [mu1; mu2], fixP.maxScore, fixP.minScore, fixP.elbow, fixP.center_axis);
+% 
+% %%%%
 
 % optimal radius given posterior and estimate
 post_2d = reshape(post, [prod([n_sA, n_sA, 2, 2, bi_nrep]), numel(fixP.center_axis)]);
 shat_1d = reshape(shat, [prod([n_sA, n_sA, 2, 2, bi_nrep]), 1]);
-[opt_radius, opt_gain, func]= eGain_MAP(post_2d, shat_1d, fixP.maxScore, fixP.minScore, fixP.elbow, fixP.center_axis);
+[opt_radius, ~, func]= eGain_MAP(post_2d, shat_1d, fixP.maxScore, fixP.minScore, fixP.elbow, fixP.center_axis);
 
 % motor noise to location estimation
 bi_loc = randn(size(shat)).*sigMotor + shat;
@@ -83,10 +105,7 @@ bi_loc = randn(size(shat)).*sigMotor + shat;
 bi_conf = randn(size(opt_radius)).*sigConf + opt_radius;
 bi_conf = reshape(bi_conf, [n_sA, n_sA, 2, 2, bi_nrep]);
 
-opt_gain = reshape(opt_gain,[n_sA, n_sA, 2, 2, bi_nrep]);
-
 check_plot=0;
-
 if check_plot
 
     dims = [n_sA, n_sA, 2, 2, bi_nrep];
@@ -98,6 +117,13 @@ if check_plot
             lin_index = sub2ind(dims, aa, vv, 1, 1, 1);
             plot(post_2d(lin_index, :))
         end
+    end
+
+    % check posterior of one location, across multiple trials
+    figure; hold on
+    for tt = 1:bi_nrep
+        lin_index = sub2ind(dims, 2, 3, 1, 1, tt);
+        plot(post_2d(lin_index, :))
     end
 
     % check cost function of one specific location combination

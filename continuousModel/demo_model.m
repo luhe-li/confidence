@@ -1,4 +1,4 @@
-function demo_model(aloc, vloc, tt, fixP, post, shat, conf_radius_cm, costFun, erCDF, gainFun)
+function demo_model(aloc, vloc, tt, fixP, post, shat, conf_radius, conf_radius_axis, costFun, erCDF, gainFun)
 
 lw = 1.5;
 
@@ -8,6 +8,7 @@ figHandle = findobj('Type', 'figure', 'Name', 'demo');
 if isempty(figHandle)
     % If the figure does not exist, create a new one
     figure('Name', 'demo');
+    set(gcf, 'Position',[0 00 500 800])
     hold on;
 
     %% final posterior
@@ -18,7 +19,6 @@ if isempty(figHandle)
     shat_value = shat(aloc, vloc, 1, 1, tt);
     l1 = xline(shat_value, 'r', 'LineWidth', lw);
 
-    conf_radius = 5;
     line1 = shat_value - conf_radius;
     line2 = shat_value + conf_radius;
 
@@ -56,29 +56,33 @@ else
     %% probability mass within the confidence radius
     subplot(4,1,2);
     set(gca, 'LineWidth', 1, 'FontSize', 15,'TickDir', 'out'); hold on
-    plot(conf_radius_cm, erCDF, 'k','LineWidth',lw);
+    plot(conf_radius_axis, erCDF, 'k','LineWidth',lw);
     xlabel('Confidence radius (cm)');
     ylabel('Probability mass')
-    xline(5,'b-','LineWidth',lw);
+    xline(conf_radius,'b-','LineWidth',lw);
     xlim([0, 50])
 
     %% cost function
     subplot(4,1,3);
     set(gca, 'LineWidth', 1, 'FontSize', 15,'TickDir', 'out'); hold on
-    plot(conf_radius_cm, costFun,'k', 'LineWidth',lw);
+    plot(conf_radius_axis, costFun,'k', 'LineWidth',lw);
     xlabel('Confidence radius (cm)');
     ylabel('Points')
-    xline(5,'b-','LineWidth',lw);
+    xline(conf_radius,'b-','LineWidth',lw);
     xlim([0, 50])
 
     %% expected gain
     subplot(4,1,4);
     set(gca, 'LineWidth', 1, 'FontSize', 15,'TickDir', 'out'); hold on
-    plot(conf_radius_cm, gainFun, 'k','LineWidth',lw);
+    plot(conf_radius_axis, gainFun, 'k','LineWidth',lw);
     xlabel('Confidence radius (cm)');
     ylabel('Expected gain')
-    xline(5,'b-','LineWidth',lw);
+    xline(conf_radius,'b-','LineWidth',lw);
     xlim([0, 50])
+    ylim([0,1])
+
+    set(gcf, 'DefaultFigureRenderer', 'painters');
+    saveas(gcf, 'demo2', 'epsc')
 
 end
 

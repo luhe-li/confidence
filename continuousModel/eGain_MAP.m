@@ -100,7 +100,10 @@ end
 % convert optimal radius from axis unit to cm
 opt_radius = idx_opt_radius.*step;
 
-demo_model([],[],[],[],[],[],confRadius.*step, costFun, erCDF, gainFun)
+% ii=18;
+% temp = 0:vec_idx_maxconf(ii);
+% demo_model2(myPDF(ii,:), center_axis, estX(ii), opt_radius(ii), temp.*step,...
+%     func(ii).costFun, func(ii).erCDF, func(ii).gainFun)
 
 end
 
