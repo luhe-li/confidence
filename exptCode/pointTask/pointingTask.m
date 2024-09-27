@@ -12,11 +12,11 @@ end
 
  switch ExpInfo.practice
      case 1
-         outFileName = sprintf('point_sub%s', ExpInfo.subjInit);
+         outFileName = sprintf('point_sub-%s', ExpInfo.subjInit);
          ExpInfo.nRep = 20; % number of trial per condition level
          ExpInfo.numBlocks = 4;
      case 2
-         outFileName = sprintf('point_practice_sub%s', ExpInfo.subjInit);
+         outFileName = sprintf('point_practice_sub-%s', ExpInfo.subjInit);
          ExpInfo.nRep = 4; % number of trial per condition level
          ExpInfo.numBlocks = 2;
  end
