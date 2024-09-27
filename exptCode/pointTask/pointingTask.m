@@ -119,12 +119,12 @@ ExpInfo.elbow = ScreenInfo.halfScreenSize*2/4; % in cm
 ExpInfo.dropRate = (ExpInfo.maxPoint - ExpInfo.minPoint)/ExpInfo.elbow;
 
 % define durations
-ExpInfo.tFixation = 0.3;
+ExpInfo.tFixation = 0.5;
 ExpInfo.tBlank1 = 0.2;
 ExpInfo.tStimFrame = 2;
 ExpInfo.tStim = ExpInfo.tStimFrame * ScreenInfo.ifi;
 ExpInfo.tIFI = ScreenInfo.ifi;
-ExpInfo.tITI = 0.3;
+ExpInfo.tITI = 0.5;
 
 % dial setup
 ExpInfo.dialScaler = 2;
@@ -222,7 +222,7 @@ end
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
     [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
 DrawFormattedText(windowPtr, leaderboardText,...
-    'center',ScreenInfo.yaxis-500,[255 255 255]);
+    'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis,[255 255 255]);
 Screen('Flip',windowPtr);
 KbWait(-3);
 ShowCursor;
