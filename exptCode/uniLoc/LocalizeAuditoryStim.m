@@ -77,10 +77,13 @@ HideCursor;
 WaitSecs(0.2);
 tic;
 pm = PsychPowerMate('Open');
-[buttonPM, dialPos] = PsychPowerMate('Get',pm); %initalize powermate
+[~, dialPos] = PsychPowerMate('Get',pm); %initalize powermate
 initDialPos = dialPos;
-while ~buttonPM
-    [buttonPM, dialPos] = PsychPowerMate('Get',pm); %update dial postion
+buttons = 0;
+while sum(buttons)==0
+    
+    [~,~,buttons] = GetMouse(windowPtr);
+    [~, dialPos] = PsychPowerMate('Get',pm); %update dial postion
     
     conf_radius = ExpInfo.dialScaler * abs(dialPos - initDialPos);
     potentialconfRcm = conf_radius/ScreenInfo.numPixels_perCM;
@@ -109,6 +112,7 @@ while ~buttonPM
         fclose(Arduino);
     end
 end
+
 Resp.RT2             = toc;
 Resp.conf_radius_pixel = conf_radius;
 Resp.conf_radius_cm  = Resp.conf_radius_pixel/ScreenInfo.numPixels_perCM;

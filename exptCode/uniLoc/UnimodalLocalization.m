@@ -1,25 +1,21 @@
 
 %% Enter experiment info
 clear; close all;  rng('Shuffle');
-% 
-% ExpInfo.subjInit = [];
-% while isempty(ExpInfo.subjInit) == 1
-%     try ExpInfo.subjInit = input('Participant Initial#: ','s') ;
-%         ExpInfo.session = input('Session: A/V#: ','s');
-%         ExpInfo.practice  = input('Main expt: 1; Practice: 2#: ');
-%     catch
-%     end
-% end
 
- ExpInfo.subjInit = 'LL';
- ExpInfo.session = 'A';
- ExpInfo.practice  = 2; 
+ExpInfo.subjInit = [];
+while isempty(ExpInfo.subjInit) == 1
+    try ExpInfo.subjInit = input('Participant Initial#: ','s') ;
+        ExpInfo.session = input('Session: A/V#: ','s');
+        ExpInfo.practice  = input('Main expt: 1; Practice: 2#: ');
+    catch
+    end
+end
 
  switch ExpInfo.practice
      case 1
          outFileName = sprintf('uniLoc_sub%s_ses-%s', ExpInfo.subjInit, ExpInfo.session);
          ExpInfo.nRep = 20; % number of trial per condition level
-         ExpInfo.numBlocks = 8;
+         ExpInfo.numBlocks = 4;
      case 2
          outFileName = sprintf('uniLoc_practice_sub%s_ses-%s', ExpInfo.subjInit, ExpInfo.session);
          ExpInfo.nRep = 4; % number of trial per condition level
@@ -89,7 +85,7 @@ ScreenInfo.y2_ub = ScreenInfo.yaxis-ScreenInfo.liftingYaxis+7;
 
 % choose auditory locations out of 16 speakers, level/index is speaker
 % order (left to right: 1-16)
-ExpInfo.audLevel = [3,5,7,10,12,14];
+ExpInfo.audLevel = [5,7,10,12];
 ExpInfo.nLevel = numel(ExpInfo.audLevel);
 for tt = 1:ExpInfo.nRep
     ExpInfo.randA(:,tt) = randperm(ExpInfo.nLevel)';
