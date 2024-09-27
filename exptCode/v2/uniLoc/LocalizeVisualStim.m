@@ -1,5 +1,12 @@
-function Resp = LocalizeAuditoryStim(i, ExpInfo,...
-    ScreenInfo,AudInfo,VSinfo,Arduino,pahandle,windowPtr)
+function Resp = LocalizeVisualStim(i, ExpInfo, ScreenInfo,VSinfo,windowPtr)
+
+%% precompute visual stimuli
+height = 200;
+noise_sd = 15;%20;
+stim_sd = VSinfo.SD_blob(i) .* 8;
+wBack = 0.55;
+stimTx = generateRippleStim(VSinfo,ExpInfo,ScreenInfo,windowPtr,i, height, noise_sd, stim_sd, wBack);
+dialScaler = 2;
 
 %% start the trial
 
@@ -19,16 +26,16 @@ Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
 Screen('Flip',windowPtr);
 WaitSecs(ExpInfo.tBlank1);
 
-% present auditory stimulus
-input_on = ['<',num2str(1),':',num2str(ExpInfo.randAudIdx(i)),'>']; %arduino takes input in this format
-fprintf(Arduino,input_on);
-PsychPortAudio('FillBuffer',pahandle, AudInfo.GaussianWhiteNoise);
-PsychPortAudio('Start',pahandle,1,0,0);
-WaitSecs(ExpInfo.tStim);
-input_off = ['<',num2str(0),':',num2str(ExpInfo.randAudIdx(i)),'>'];
-fprintf(Arduino,input_off);
-PsychPortAudio('Stop',pahandle);
-WaitSecs(0.1);
+% display visual stimulus
+for jj = 1:VSinfo.numFrames
+Screen('DrawTexture', windowPtr, stimTx(jj),[],...
+         [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
+Screen('Flip',windowPtr);
+end
+
+Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
+    [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
+Screen('Flip',windowPtr);
 
 %% response
 
@@ -101,7 +108,7 @@ while ~buttonPM
     end
 end
 Resp.RT2             = toc;
-Resp.conf_radius_pixel = conf_radius;
+Resp.conf_radius_pixel= conf_radius;
 Resp.conf_radius_cm  = Resp.conf_radius_pixel/ScreenInfo.numPixels_perCM;
 
 % ITI
@@ -114,18 +121,17 @@ if ~rem(i,3) || ExpInfo.practice == 2 % every three trials give feedback, if not
     WaitSecs(0.1);
 end
 Screen('Flip',windowPtr);
-WaitSecs(ExpInfo.ITI);
 
 % calculate points
-Resp.target_idx = ExpInfo.randAudIdx(i);
-Resp.target_pixel = ExpInfo.randAudPixel(i);
-Resp.target_cm = ExpInfo.randAudCM(i);
-Resp.target_deg = ExpInfo.randAudVA(i);
+Resp.target_idx = ExpInfo.randVisIdx(i); % visual location that corresponds to speaker index
+Resp.target_pixel = ExpInfo.randVisPixel(i);
+Resp.target_cm = ExpInfo.randVisCM(i);
+Resp.target_deg = ExpInfo.randVisVA(i);
 Resp.enclosed = abs(Resp.target_pixel - Resp.response_pixel) <= Resp.conf_radius_cm;
 bestRadius_pixel = abs(Resp.target_pixel - Resp.response_pixel);
-Resp.maxPtPossible = max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * bestRadius_pixel, ExpInfo.minPoint);
+Resp.maxPtPossible = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * bestRadius_pixel, ExpInfo.minPoint);
 if Resp.enclosed
-    Resp.point = max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * Resp.bestRadius_pixel, ExpInfo.minPoint);
+    Resp.point = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * Resp.bestRadius_pixel, ExpInfo.minPoint);
 else
     Resp.point = 0;
 end

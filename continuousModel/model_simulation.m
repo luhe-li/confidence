@@ -3,7 +3,7 @@ clear; close all; rng('shuffle');
 
 %% set environment
 
-sim_d = 1;
+sim_d = 2;
 useCluster = false;
 
 % set cores
@@ -60,7 +60,7 @@ pixel_per_cm = screen_px/screen_cm;
 screen_dva = rad2deg(atan(screen_cm / 2 / sitting_dist)) .* 2;
 
 % stimulus location in pixel, dva
-aud_level = 6:11;%[5 8 9 12];
+aud_level = [5 7 10 12];
 speaker_level = linspace(-speaker_cm, speaker_cm, 16);
 sA = speaker_level(aud_level);
 sA_dva = rad2deg(atan(sA / 2 / sitting_dist)) .* 2;
@@ -84,7 +84,7 @@ n_model = numel(model_names);
 cue_label = {'Auditory post-cue','Visual post-cue'};
 n_cue = numel(cue_label);
 rel_label = {'High visual reliability','Low visual reliability'};
-n_rep = 50; % repitition per condition
+n_rep = 30; % repitition per condition
 
 %% simulate fake data
 

@@ -24,7 +24,12 @@ input_on = ['<',num2str(1),':',num2str(ExpInfo.randAudIdx(i)),'>']; %arduino tak
 fprintf(Arduino,input_on);
 PsychPortAudio('FillBuffer',pahandle, AudInfo.GaussianWhiteNoise);
 PsychPortAudio('Start',pahandle,1,0,0);
-WaitSecs(ExpInfo.tStim);
+switch ExpInfo.mode
+    case 1 % experiment mode
+        WaitSecs(0.1);
+    case 2 % debug mode
+        WaitSecs(3.5);
+end
 input_off = ['<',num2str(0),':',num2str(ExpInfo.randAudIdx(i)),'>'];
 fprintf(Arduino,input_off);
 PsychPortAudio('Stop',pahandle);
@@ -82,10 +87,10 @@ while ~buttonPM
     Screen('DrawTexture',windowPtr, VSinfo.grey_texture,[],...
         [0,0,ScreenInfo.xaxis, ScreenInfo.yaxis]);
     Screen('DrawLine', windowPtr, [255 255 255],x, yLoc+3, x, yLoc-3, 1);
-    Screen('FillRect', windowPtr, [255 255 255]./7, [x-conf_radius, yLoc-height/2 + 3, x+conf_radius, yLoc+height/2 - 3]);
     Screen('DrawLine', windowPtr, [255 255 255],x-conf_radius, yLoc, x+conf_radius, yLoc, 1);
     Screen('DrawLine', windowPtr, [255 255 255],x-conf_radius, yLoc+height/2, x-conf_radius, yLoc-height/2, 1);
     Screen('DrawLine', windowPtr, [255 255 255],x+conf_radius, yLoc+height/2, x+conf_radius, yLoc-height/2, 1);
+    Screen('FillRect', windowPtr, [255 255 255 0.1],x+conf_radius, yLoc+height/2 - 3, x+conf_radius, yLoc-height/2 + 3);
     
     DrawFormattedText(windowPtr, ['Potential score: ' num2str(round(potentialPoint,2))], 'center', 'center', ...
         [255 255 255],[], [], [], [], [], ...
@@ -101,7 +106,7 @@ while ~buttonPM
     end
 end
 Resp.RT2             = toc;
-Resp.conf_radius_pixel = conf_radius;
+Resp.conf_radius_pixel= conf_radius;
 Resp.conf_radius_cm  = Resp.conf_radius_pixel/ScreenInfo.numPixels_perCM;
 
 % ITI
@@ -123,9 +128,9 @@ Resp.target_cm = ExpInfo.randAudCM(i);
 Resp.target_deg = ExpInfo.randAudVA(i);
 Resp.enclosed = abs(Resp.target_pixel - Resp.response_pixel) <= Resp.conf_radius_cm;
 bestRadius_pixel = abs(Resp.target_pixel - Resp.response_pixel);
-Resp.maxPtPossible = max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * bestRadius_pixel, ExpInfo.minPoint);
+Resp.maxPtPossible = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * bestRadius_pixel, ExpInfo.minPoint);
 if Resp.enclosed
-    Resp.point = max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * Resp.bestRadius_pixel, ExpInfo.minPoint);
+    Resp.point = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * Resp.bestRadius_pixel, ExpInfo.minPoint);
 else
     Resp.point = 0;
 end

@@ -1,12 +1,9 @@
 function Resp = LocalizeVisualStim(i, ExpInfo, ScreenInfo,VSinfo,windowPtr)
 
-%% precompute visual stimuli
-height = 200;
-noise_sd = 15;%20;
-stim_sd = VSinfo.SD_blob(i) .* 8;
-wBack = 0.55;
-stimTx = generateRippleStim(VSinfo,ExpInfo,ScreenInfo,windowPtr,i, height, noise_sd, stim_sd, wBack);
-dialScaler = 2;
+%% make visual stimuli
+
+blob_coordinates = [ExpInfo.randVisPixel(i)+ScreenInfo.xmid, ScreenInfo.liftingYaxis];
+dotCloud = generateOneBlob(windowPtr,blob_coordinates,VSinfo,ScreenInfo);
 
 %% start the trial
 
@@ -27,8 +24,8 @@ Screen('Flip',windowPtr);
 WaitSecs(ExpInfo.tBlank1);
 
 % display visual stimulus
-for jj = 1:VSinfo.numFrames
-Screen('DrawTexture', windowPtr, stimTx(jj),[],...
+for jj = 1:ExpInfo.tStimFrame
+Screen('DrawTexture', windowPtr, dotCloud, [],...
          [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
 Screen('Flip',windowPtr);
 end
@@ -37,7 +34,7 @@ Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
     [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
 Screen('Flip',windowPtr);
 
-%% response
+%% collect response
 
 % perceptual response
 yLoc = ScreenInfo.yaxis-ScreenInfo.liftingYaxis;
@@ -92,7 +89,7 @@ while ~buttonPM
     Screen('FillRect', windowPtr, [255 255 255]./7, [x-conf_radius, yLoc-height/2 + 3, x+conf_radius, yLoc+height/2 - 3]);
     Screen('DrawLine', windowPtr, [255 255 255],x-conf_radius, yLoc, x+conf_radius, yLoc, 1);
     Screen('DrawLine', windowPtr, [255 255 255],x-conf_radius, yLoc+height/2, x-conf_radius, yLoc-height/2, 1);
-    Screen('DrawLine', windowPtr, [255 255 255],x+conf_radius, yLoc+height/2, x+conf_radius, yLoc-height/2, 1);
+    Screen('DrawLine', windowPtr, [255 255 255],x+conf_radius, yLoc+height/2, x+conf_radius, yLoc-height/2, 1);   
     
     DrawFormattedText(windowPtr, ['Potential score: ' num2str(round(potentialPoint,2))], 'center', 'center', ...
         [255 255 255],[], [], [], [], [], ...

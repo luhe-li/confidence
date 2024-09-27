@@ -13,7 +13,7 @@ cd(script_dir)
 # Load the .mat file
 model_names = ["Optimal model average", "Lazy model average","Model selection","Probability matching"];
 folders = ["optimal","MA","MS","PM"];
-sim_d = 2;
+sim_d = 1;
 curr_model = folders[sim_d];
 filename = "sim_$curr_model.mat"
 data = matread(filename)
@@ -109,7 +109,6 @@ for cue in 1:n_cue
 end
 display(plt)
 
-a = RGBA(0.75, 0.75, 0.75, 0.5)
 # save figure
 # Step 1: Get the name of the current script
 script_name = basename(@__FILE__)  # Get the script name with extension

@@ -1,53 +1,47 @@
+
 %% Enter experiment info
 clear; close all;  rng('Shuffle');
+% 
+% ExpInfo.subjInit = [];
+% while isempty(ExpInfo.subjInit) == 1
+%     try ExpInfo.subjInit = input('Participant Initial#: ','s') ;
+%         ExpInfo.session = input('Session: A/V#: ','s');
+%         ExpInfo.practice  = input('Main expt: 1; Practice: 2#: ');
+%     catch
+%     end
+% end
 
-ExpInfo.subjInit = [];
-while isempty(ExpInfo.subjInit) == 1
-    try ExpInfo.subjInit = input('Participant Initial: ') ;
-        ExpInfo.practice  = input('Main expt: 1; Practice: 2#: ');
-    catch
-    end
-end
-ExpInfo.session =  'Pointing';
+ ExpInfo.subjInit = 'LL';
+ ExpInfo.session = 'V';
+ ExpInfo.practice  = 1;
 
-switch ExpInfo.practice
-    case 1
-        outFileName = sprintf('point_sub%s_ses-%s', ExpInfo.subjInit, ExpInfo.session);
-        ExpInfo.nRep = 20; % number of trial per condition level
-        ExpInfo.numBlocks = 8;
-    case 2
-        ExpInfo.nRep = 4;
-        outFileName = sprintf('point_practice_sub%i_ses-%s', ExpInfo.subjInit, ExpInfo.session);
-        ExpInfo.numBlocks = 2;
-end
+ switch ExpInfo.practice
+     case 1
+         outFileName = sprintf('pointing_sub%s_ses-%s', ExpInfo.subjInit, ExpInfo.session);
+         ExpInfo.nRep = 20; % number of trial per condition level
+         ExpInfo.numBlocks = 8;
+     case 2
+         outFileName = sprintf('pointing_practice_sub%s_ses-%s', ExpInfo.subjInit, ExpInfo.session);
+         ExpInfo.nRep = 4; % number of trial per condition level
+         ExpInfo.numBlocks = 2;
+ end
 
-% path control
-curDir = pwd;
+ % path control
+ curDir = pwd;
 [projectDir, ~]  = fileparts(fileparts(curDir));
-outDir = fullfile(projectDir, 'data','pointTask');
-
+[git_dir, ~] = fileparts(projectDir);
+addpath(genpath(fullfile(projectDir, 'exptCode','exptUtility')));
+addpath(genpath(fullfile(git_dir, 'Psychtoolbox-3')))
+outDir = fullfile(projectDir, 'data','pointingTask');
 if ~exist(outDir,'dir') mkdir(outDir); end
-addpath(genpath(PsychtoolboxRoot))
 
-% avoid rewriting data
-if exist(fullfile(outDir, [outFileName '.mat']), 'file')
-    resp = input('Replace the existing file? Y/N', 's');
-    if ~strcmp(resp,'Y')
-        disp('Experiment terminated.')
-        return
-    end
-end
-
-% % switch between debug mode
-% ExpInfo.mode  = 1; %input('Experiment mode: 1; Debug mode: 2#: ');
-% switch ExpInfo.mode
-%     case 1 % experiment mode
-%         windowSize = [];
-%         opacity = 1;
-%         HideCursor();
-%     case 2 % debug mode
-%         windowSize = [100 100 1000 600]; % open a smaller window
-%         opacity = 0.4;
+% % avoid rewriting data
+% if exist(fullfile(outDir, [outFileName '.mat']), 'file')
+%     resp = input('Replace the existing file? Y/N', 's');
+%     if ~strcmp(resp,'Y')
+%         disp('Experiment terminated.')
+%         return
+%     end
 % end
 
 %% Screen Setup
@@ -56,14 +50,13 @@ AssertOpenGL();
 GetSecs();
 WaitSecs(0.1);
 KbCheck();
-ListenChar(2); % silence the keyboard
+% ListenChar(2);
 
 Screen('Preference', 'VisualDebugLevel', 1);
 Screen('Preference', 'SkipSyncTests', 1);
-PsychDebugWindowConfiguration([], opacity)
 screens = Screen('Screens');
 screenNumber = max(screens);
-[windowPtr,rect] = Screen('OpenWindow', screenNumber, [0,0,0], windowSize);
+[windowPtr,rect] = Screen('OpenWindow', screenNumber, [0,0,0]);
 [ScreenInfo.xaxis, ScreenInfo.yaxis] = Screen('WindowSize',windowPtr);
 ScreenInfo.screenNumber = screenNumber;
 Screen('TextSize', windowPtr, 30);
@@ -82,55 +75,27 @@ ScreenInfo.numPixels_perCM = ScreenInfo.xaxis/(ScreenInfo.halfScreenSize*2);
 %fixation locations
 ScreenInfo.x1_lb = ScreenInfo.xmid-7; ScreenInfo.x2_lb = ScreenInfo.xmid-1;
 ScreenInfo.x1_ub = ScreenInfo.xmid+7; ScreenInfo.x2_ub = ScreenInfo.xmid+1;
-ScreenInfo.y1_lb = ScreenInfo.yaxis-ScreenInfo.liftingYaxis-1;
+ScreenInfo.y1_lb = ScreenInfo.yaxis-ScreenInfo.liftingYaxis-1; 
 ScreenInfo.y1_ub = ScreenInfo.yaxis-ScreenInfo.liftingYaxis+1;
 ScreenInfo.y2_lb = ScreenInfo.yaxis-ScreenInfo.liftingYaxis-7;
 ScreenInfo.y2_ub = ScreenInfo.yaxis-ScreenInfo.liftingYaxis+7;
 
-%% make visual stimuli
-
-VSinfo.SD_yaxis            = 5; %SD of the blob in cm (vertical)
-VSinfo.num_randomDots      = 1; %number of blobs
-VSinfo.numFrames           = 3; %for visual stimuli
-VSinfo.numFramesMasker     = 30; %for mask
-VSinfo.jitter_lb           = -10; % for jittering the visual target location, in pixel
-VSinfo.jitter_ub           = 10;
-
-% create background
-VSinfo.pblack              = 1/8; % set contrast to 1*1/8 for the "black" background, so it's not too dark and the projector doesn't complain
-VSinfo.greyScreen          = VSinfo.pblack * ones(ScreenInfo.xaxis,ScreenInfo.yaxis)*255;
-VSinfo.grey_texture        = Screen('MakeTexture', windowPtr, VSinfo.greyScreen,[],[],[],2);
-VSinfo.blankScreen         = zeros(ScreenInfo.xaxis,ScreenInfo.yaxis);
-
-% white noise background
-VSinfo.GWNnumPixel         = 4; % 4 pixels will have the same color
-VSinfo.GWNnumFrames        = 10;
-VSinfo.gwn_texture         = generateNoisyBackground(VSinfo,ScreenInfo,windowPtr);
-
-% draw one blob
-VSinfo.width                         = 8; %(pixel) Increasing this value will make the cloud more blurry (arbituary value)
-VSinfo.boxSize                       = 15; %This is the box size for each cloud (arbituary value)
-VSinfo.maxBrightness                 = 128; %indirectly control contrast
-x = 1:1:VSinfo.boxSize; y = x;
-[X,Y]                                = meshgrid(x,y);
-cloud_temp                           = mvnpdf([X(:) Y(:)],[median(x) median(y)],...
-    [VSinfo.width 0; 0 VSinfo.width]);
-VSinfo.Cloud                         = reshape(cloud_temp,length(x),length(y)) .* (VSinfo.maxBrightness/max(cloud_temp));
-
 %% Experiment set up
-ExpInfo.nReliability = 1;
 
-% choose auditory locations out of 16 speakers, in level
-ExpInfo.audLevel = 5:12;
+% choose auditory locations out of 16 speakers, level/index is speaker
+% order (left to right: 1-16)
+ExpInfo.audLevel = [5,7,10,12];
 ExpInfo.nLevel = numel(ExpInfo.audLevel);
 for tt = 1:ExpInfo.nRep
-    ExpInfo.randIdx(:,tt) = randperm(ExpInfo.nLevel)';
-    ExpInfo.randVisReliabIdx(:,tt) = randperm(ExpInfo.nLevel * ExpInfo.nReliability)';
+    ExpInfo.randA(:,tt) = randperm(ExpInfo.nLevel)';
+    ExpInfo.randV(:,tt) = randperm(ExpInfo.nLevel)';
 end
-ExpInfo.randIdx = reshape(ExpInfo.randIdx, [], 1)';
-ExpInfo.randVisReliabIdx = reshape(ExpInfo.randVisReliabIdx, [], 1)';
-VSinfo.SD_blob(:) = 2; % the unit is already in centimeters
-ExpInfo.randVisIdx = ExpInfo.audLevel(ExpInfo.randIdx);
+ExpInfo.randA = reshape(ExpInfo.randA, [], 1)';
+ExpInfo.randV = reshape(ExpInfo.randV, [], 1)';
+
+% randomized auditory and visual stimulus location in speaker index
+ExpInfo.randAudIdx = ExpInfo.audLevel(ExpInfo.randA);
+ExpInfo.randVisIdx = ExpInfo.audLevel(ceil(ExpInfo.randV./2));
 
 % location of speakers in CM, visual angle, and pixel
 ExpInfo.sittingDistance              = 113.0; %cm
@@ -139,79 +104,135 @@ ExpInfo.LRmostSpeakers2center        = 65.5; %cm
 ExpInfo.LRmostVisualAngle            = (180/pi) * atan(ExpInfo.LRmostSpeakers2center / ...
     ExpInfo.sittingDistance);
 ExpInfo.speakerLocCM = linspace(-ExpInfo.LRmostSpeakers2center, ExpInfo.LRmostSpeakers2center, ExpInfo.numSpeaker);
-ExpInfo.speakerLocVA = linspace(-ExpInfo.LRmostVisualAngle, ExpInfo.LRmostVisualAngle, ExpInfo.numSpeaker);
-ExpInfo.speakerLocPixel = round(ExpInfo.speakerLocCM * ScreenInfo.numPixels_perCM);
 
-% visual locations in pixel
-ExpInfo.v_loc_cm     = ExpInfo.speakerLocCM(ExpInfo.randVisIdx);
-ExpInfo.v_loc_deg    = rad2deg(atan(ExpInfo.v_loc_cm/ExpInfo.sittingDistance));
-ExpInfo.randVisPixel = ExpInfo.v_loc_cm .* ScreenInfo.numPixels_perCM;
+% visual locations in different units
+ExpInfo.randVisCM     = ExpInfo.speakerLocCM(ExpInfo.randVisIdx);
+ExpInfo.randVisVA     = rad2deg(atan(ExpInfo.randVisCM/ExpInfo.sittingDistance));
+ExpInfo.randVisPixel  = ExpInfo.randVisCM .* ScreenInfo.numPixels_perCM;
 
 % split all the trials into blocks
-ExpInfo.nTrials = ExpInfo.nLevel * ExpInfo.nRep * ExpInfo.nReliability;
-blocks = linspace(0,ExpInfo.nTrials,...
-    ExpInfo.numBlocks+1);
-ExpInfo.breakTrials       = floor(blocks(2:(end-1)));
-ExpInfo.firstTrial     = blocks(1:ExpInfo.numBlocks)+1;
-ExpInfo.lastTrial    = blocks(2:(ExpInfo.numBlocks+1));
+ExpInfo.nTrials = ExpInfo.nLevel * ExpInfo.nRep;
+blocks = linspace(0,ExpInfo.nTrials, ExpInfo.numBlocks+1);
+ExpInfo.breakTrials = floor(blocks(2:(end-1)));
+ExpInfo.firstTrial = blocks(1:ExpInfo.numBlocks)+1;
+ExpInfo.lastTrial = blocks(2:(ExpInfo.numBlocks+1));
 ExpInfo.numTrialsPerBlock = ExpInfo.breakTrials(1);
 
-% points set up
-ExpInfo.maxPoint = 100; 
-ExpInfo.minPoint = 1;
-% if enclosed, maxPoint - droprate * 2 * confidence_radius = minPoint
-% % we define max 2 * confidence_radius as half of the screen size in pixel
-ExpInfo.dropRate = (ExpInfo.maxPoint - ExpInfo.minPoint)/(ScreenInfo.xaxis/2);
+% cost function setup
+ExpInfo.maxPoint = 1;
+ExpInfo.minPoint = 0.01;
+ExpInfo.elbow = 170/3;
+ExpInfo.dropRate = (fixP.maxScore - fixP.minScore)/fixP.elbow;
 
 % define durations
-ExpInfo.tFixation = 0.5;
-ExpInfo.tBlank1 = 0.3;
-ExpInfo.tBlank2 = 0.2;
-ExpInfo.tStim = VSinfo.numFrames * (1/60);
-ExpInfo.ITI = 0.3;
+ExpInfo.tFixation = 0.3;
+ExpInfo.tBlank1 = 0.2;
+ExpInfo.tStimFrame = 2;
+ExpInfo.tStim = ExpInfo.tStimFrame * ScreenInfo.ifi;
+ExpInfo.tIFI = ScreenInfo.ifi;
+
+%% make visual stimuli
+
+% create the blob visual stimulus
+VSinfo.stimFrame                     = ExpInfo.tStimFrame;
+VSinfo.width                         = 51; %(pixel) Increasing this value will make the cloud more blurry
+VSinfo.boxSize                       = 51; %This is the box size for each cloud.
+x                                    = 1:1:VSinfo.boxSize; y = x;
+VSinfo.x                             = x; VSinfo.y = y;
+[X,Y]                                = meshgrid(x,y);
+VSinfo.cloud                         = mvnpdf([X(:) Y(:)],[median(x) median(y)],[VSinfo.width 0; 0 VSinfo.width]);
+VSinfo.pblack              = 1/8; % set contrast to 1*1/8 for the "black" background, so it's not too dark and the projector doesn't complain
+pscale                               = (1-VSinfo.pblack)/max(VSinfo.cloud); % the max contrast of the blob adds the background contrast should <= 1
+temp_cloud                            = VSinfo.cloud .* pscale;
+VSinfo.Cloud                         = 255.*reshape(temp_cloud,length(x),length(y));
+VSinfo.jitter_lb           = -10; % for jittering the visual target location, in pixel
+VSinfo.jitter_ub           = 10;
+
+% create background
+VSinfo.greyScreen          = VSinfo.pblack * ones(ScreenInfo.xaxis,ScreenInfo.yaxis)*255;
+VSinfo.grey_texture        = Screen('MakeTexture', windowPtr, VSinfo.greyScreen,[],[],[],2);
+VSinfo.blankScreen         = zeros(ScreenInfo.xaxis,ScreenInfo.yaxis);
 
 %% Run the experiment
 
+% initialize response struct
+fields = {
+    'RT1', 'double';
+    'response_pixel', 'double';
+    'response_cm', 'double';
+    'response_deg', 'double';
+    'RT2', 'double';
+    'conf_radius_pixel', 'double';
+    'conf_radius_cm', 'double';
+    'target_idx', 'double';
+    'target_pixel', 'double';
+    'target_cm', 'double';
+    'target_deg', 'double';
+    'enclosed', 'logical';
+    'maxPtPossible', 'double';
+    'point', 'double'
+};
+Resp = struct();
+
+% Preallocate each field in Resp
+for f = 1:size(fields, 1)
+    fieldName = fields{f, 1};
+    fieldType = fields{f, 2};
+    
+    switch fieldType
+        case 'double'
+            Resp.(fieldName) = zeros(1, ExpInfo.nTrials);
+        case 'logical'
+            Resp.(fieldName) = false(1, ExpInfo.nTrials);
+        otherwise
+            error('Unsupported field type: %s', fieldType);
+    end
+end
+
+instruction = ['In the following session, you will be presented a visual stimulus on each trial.','\nAfter the presentation, please use the cursor \nto locate the center of the blob.','\nUse the dial to adjust the net length, and press down the dial to confirm.','\nPress any key to start the pointing task.'];
+
 %start the experiment
 c                   = clock;
-ExpInfo.start       = sprintf('%04d/%02d/%02d_%02d:%02d:%02d',c(1),c(2),c(3),c(4),c(5),ceil(c(6)));
+ExpInfo.start       = sprintf('%04d/%02d/%02d_%02d:%02d:%02d',c(1),c(2),c(3),c(4),c(5) ,ceil(c(6)));
 
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
     [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
-DrawFormattedText(windowPtr, 'Press any button to start the pointing task.',...
-    'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis,[255 255 255]);
+DrawFormattedText(windowPtr, instruction ,...
+    'center',ScreenInfo.yaxis-500,[255 255 255]);
 Screen('Flip',windowPtr);
 KbWait(-3);
 WaitSecs(1);
 
 for i = 1:ExpInfo.nTrials
-
+    
     %% present stimuli
-
-    SetMouse(ScreenInfo.xaxis*2, ScreenInfo.yaxis*2, windowPtr);
-    HideCursor;
-    Resp(i)= LocalizePointStim(i, ExpInfo,...
-        ScreenInfo,VSinfo,windowPtr);
-
+    
+        SetMouse(ScreenInfo.xaxis*2, ScreenInfo.yaxis*2, windowPtr);
+        HideCursor;
+          Resp(i)= LocalizePointStim(i, ExpInfo,...
+            ScreenInfo,VSinfo,windowPtr);    
     %% save by trial
-    save(fullfile(outDir,outFileName),'Resp','ExpInfo','ScreenInfo','VSinfo');
-
+    save(fullfile(outDir,outFileName),'Resp','ExpInfo','ScreenInfo','VSinfo','AudInfo');
+    
     %% add breaks
     if ismember(i,ExpInfo.breakTrials)
-
+        
         Screen('TextSize',windowPtr,30);
         idxBlock = find(ExpInfo.breakTrials==i);
         firstTrial = ExpInfo.firstTrial(idxBlock);
         lastTrial = ExpInfo.lastTrial(idxBlock);
 
-        blockInfo = sprintf('You''ve finished block %i/%i. Please take a break.',idxBlock,ExpInfo.numBlocks);
-
+        blockInfo = sprintf('You''ve finished block %i/%i.',idxBlock,ExpInfo.numBlocks);
+        scoreInfo1 = sprintf('\nYour cumulative point is %.2f across %i trials.', sum(Resp.point(1:i)), i);
+        scoreInfo2 = sprintf('\nYour maximum possible point is %.2f across %i trials.', sum(Resp.maxPtPossible(1:i)), i);
+        buttonInfo = '\nPress any butto to resume the task.';
         Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
             [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
-        DrawFormattedText(windowPtr, blockInfo,...
-            'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis-30,...
+        DrawFormattedText(windowPtr, [blockInfo, scoreInfo1, scoreInfo2, buttonInfo],...
+            'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis,...
             [255 255 255]);
         Screen('Flip',windowPtr); KbWait(-3); WaitSecs(1);
+        
     end
 end
 
@@ -220,9 +241,19 @@ c  = clock;
 ExpInfo.finish  = sprintf('%04d/%02d/%02d_%02d:%02d:%02d',c(1),c(2),c(3),c(4),c(5),ceil(c(6)));
 
 % sort trials by location level
-[~, temp2] = sort([Resp(1:end).target_idx]);
-sortedResp = Resp(temp2);
-save(fullfile(outDir,outFileName),'Resp','sortedResp','ExpInfo','ScreenInfo','VSinfo');
+[~, temp_idx] = sort([Resp(1:end).target_idx]);
+sortedResp = Resp(temp_idx);
+save(fullfile(outDir,outFileName),'Resp','sortedResp','ExpInfo','ScreenInfo','VSinfo','AudInfo');
+fopen(Arduino);
 
+%% display leaderoard
+
+leaderboardText = updateLeaderboard(outDir, ExpInfo, Resp);
+Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
+    [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
+DrawFormattedText(windowPtr, leaderboardText,...
+    'center',ScreenInfo.yaxis-500,[255 255 255]);
+Screen('Flip',windowPtr);
+KbWait(-3);
 ShowCursor;
-% Screen('CloseAll');
+Screen('CloseAll');
