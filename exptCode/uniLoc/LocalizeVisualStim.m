@@ -2,8 +2,55 @@ function Resp = LocalizeVisualStim(i, ExpInfo, ScreenInfo,VSinfo,windowPtr)
 
 %% make visual stimuli
 
-blob_coordinates = [ExpInfo.randVisPixel(i)+ScreenInfo.xmid, ScreenInfo.liftingYaxis];
-dotCloud = generateOneBlob(windowPtr,blob_coordinates,VSinfo,ScreenInfo);
+%first compute the location of the visual stimulus in pixels
+loc_pixel = round(ExpInfo.randVisPixel(i));
+targetLoc = ScreenInfo.xmid + loc_pixel;
+RNcoordinates = randn(2,1);
+dots_targetLoc_coordinates = [targetLoc+(...
+    ScreenInfo.numPixels_perCM.*VSinfo.SD_blob.*RNcoordinates(1,:));...
+    ScreenInfo.liftingYaxis+(ScreenInfo.numPixels_perCM.*...
+    VSinfo.SD_yaxis.*RNcoordinates(2,:))];
+while 1
+    %randomly draw 10 (x,y) coordinates based on the centroid
+    RNcoordinates = randn(2,1);
+    new_dot_targetLoc_coordinates = [targetLoc+(...
+        ScreenInfo.numPixels_perCM.*VSinfo.SD_blob.*RNcoordinates(1,:));...
+        ScreenInfo.liftingYaxis+(ScreenInfo.numPixels_perCM.*...
+        VSinfo.SD_yaxis.*RNcoordinates(2,:))];
+    dots_targetLoc_coordinates = [dots_targetLoc_coordinates,new_dot_targetLoc_coordinates];
+    %make sure the center of the 10 blobs are aligned with the
+    %predetermined location of the test stimulus
+    dots_targetLoc_coordinates_shifted = shiftDotClouds(...
+        dots_targetLoc_coordinates,loc_pixel,ScreenInfo);
+    
+    %check if they are within the boundaries
+    check_withinTheLimit = CheckWithinTheBoundaries(...
+        dots_targetLoc_coordinates_shifted,VSinfo.boxSize,ScreenInfo);
+    
+    %if the generated dots are within boundaries, then pass the
+    %coordinates to the function generateDotClouds that gives out the
+    %image texture.
+    if check_withinTheLimit == 1
+        if size(dots_targetLoc_coordinates,2) == VSinfo.num_randomDots
+            dotClouds_targetLoc = generateDotClouds(windowPtr,...
+                dots_targetLoc_coordinates_shifted,VSinfo,ScreenInfo);
+            break;
+        end
+    else
+        dots_targetLoc_coordinates = dots_targetLoc_coordinates(:,1:end-1);
+    end
+end
+Resp.coordinates = {dots_targetLoc_coordinates};
+Resp.dot_x_mu_pixel =  mean(dots_targetLoc_coordinates(1,:));
+Resp.dot_y_mu_pixel =  mean(dots_targetLoc_coordinates(2,:));
+Resp.dot_x_sd_pixel = sqrt(sum((dots_targetLoc_coordinates(1,:) - Resp.dot_x_mu_pixel).^2)/size(dots_targetLoc_coordinates,2));
+Resp.dot_y_sd_pixel = sqrt(sum((dots_targetLoc_coordinates(2,:) - Resp.dot_y_mu_pixel).^2)/size(dots_targetLoc_coordinates,2));
+
+%% trial location info
+Resp.target_idx = ExpInfo.randVisIdx(i); % visual location that corresponds to speaker index
+Resp.target_pixel = ExpInfo.randVisPixel(i);
+Resp.target_cm = ExpInfo.randVisCM(i);
+Resp.target_deg = ExpInfo.randVisVA(i);
 
 %% start the trial
 
@@ -25,7 +72,7 @@ WaitSecs(ExpInfo.tBlank1);
 
 % display visual stimulus
 for jj = 1:ExpInfo.tStimFrame
-Screen('DrawTexture', windowPtr, dotCloud, [],...
+Screen('DrawTexture', windowPtr, dotClouds_targetLoc, [],...
          [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
 Screen('Flip',windowPtr);
 end
@@ -60,8 +107,8 @@ while sum(buttons)==0
     end
 end
 Resp.RT1  = toc;
-Resp.response_pixel = x;
-Resp.response_cm    = (Resp.response_pixel -  ScreenInfo.xmid)/ScreenInfo.numPixels_perCM;
+Resp.response_pixel = x - ScreenInfo.xmid;
+Resp.response_cm    = Resp.response_pixel/ScreenInfo.numPixels_perCM;
 Resp.response_deg   = rad2deg(atan(Resp.response_cm/ExpInfo.sittingDistance));
 HideCursor;
 
@@ -77,19 +124,18 @@ initDialPos = dialPos;
 while ~buttonPM
     [buttonPM, dialPos] = PsychPowerMate('Get',pm); %update dial postion
     
-    conf_radius = dialScaler * abs(dialPos - initDialPos);
+    conf_radius = ExpInfo.dialScaler * abs(dialPos - initDialPos);
     potentialconfRcm = conf_radius/ScreenInfo.numPixels_perCM;
-    potentialPoint = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * potentialconfRcm, ExpInfo.minPoint);
-    
-    potentialEnclosed = abs(ExpInfo.speakerLocCM(ExpInfo.randVisIdx(i)) - Resp.response_cm) <= potentialconfRcm;
-    
+    potentialPoint = max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * potentialconfRcm, ExpInfo.minPoint);
+    potentialEnclosed = abs(Resp.target_cm - Resp.response_cm) <= potentialconfRcm;
+   
     Screen('DrawTexture',windowPtr, VSinfo.grey_texture,[],...
         [0,0,ScreenInfo.xaxis, ScreenInfo.yaxis]);
     Screen('DrawLine', windowPtr, [255 255 255],x, yLoc+3, x, yLoc-3, 1);
-    Screen('FillRect', windowPtr, [255 255 255]./7, [x-conf_radius, yLoc-height/2 + 3, x+conf_radius, yLoc+height/2 - 3]);
+    Screen('FillRect', windowPtr, [255 255 255]./7, [x-conf_radius, yLoc-ExpInfo.conf_bar_height/2 + 3, x+conf_radius, yLoc+ExpInfo.conf_bar_height/2 - 3]);
     Screen('DrawLine', windowPtr, [255 255 255],x-conf_radius, yLoc, x+conf_radius, yLoc, 1);
-    Screen('DrawLine', windowPtr, [255 255 255],x-conf_radius, yLoc+height/2, x-conf_radius, yLoc-height/2, 1);
-    Screen('DrawLine', windowPtr, [255 255 255],x+conf_radius, yLoc+height/2, x+conf_radius, yLoc-height/2, 1);   
+    Screen('DrawLine', windowPtr, [255 255 255],x-conf_radius, yLoc+ExpInfo.conf_bar_height/2, x-conf_radius, yLoc-ExpInfo.conf_bar_height/2, 1);
+    Screen('DrawLine', windowPtr, [255 255 255],x+conf_radius, yLoc+ExpInfo.conf_bar_height/2, x+conf_radius, yLoc-ExpInfo.conf_bar_height/2, 1);   
     
     DrawFormattedText(windowPtr, ['Potential score: ' num2str(round(potentialPoint,2))], 'center', 'center', ...
         [255 255 255],[], [], [], [], [], ...
@@ -112,23 +158,20 @@ Resp.conf_radius_cm  = Resp.conf_radius_pixel/ScreenInfo.numPixels_perCM;
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
     [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
 if ~rem(i,3) || ExpInfo.practice == 2 % every three trials give feedback, if not practice
+    Screen('TextSize',windowPtr,25);
     DrawFormattedText(windowPtr, ['Score of the last trial: ' num2str(round(potentialPoint * potentialEnclosed,2))], 'center', 'center', ...
         [255 255 255],[], [], [], [], [], ...
         [ScreenInfo.xmid-20,yLoc-3,ScreenInfo.xmid+20,yLoc+3]);
-    WaitSecs(0.1);
 end
 Screen('Flip',windowPtr);
+WaitSecs(ExpInfo.tITI);
 
 % calculate points
-Resp.target_idx = ExpInfo.randVisIdx(i); % visual location that corresponds to speaker index
-Resp.target_pixel = ExpInfo.randVisPixel(i);
-Resp.target_cm = ExpInfo.randVisCM(i);
-Resp.target_deg = ExpInfo.randVisVA(i);
-Resp.enclosed = abs(Resp.target_pixel - Resp.response_pixel) <= Resp.conf_radius_cm;
-bestRadius_pixel = abs(Resp.target_pixel - Resp.response_pixel);
-Resp.maxPtPossible = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * bestRadius_pixel, ExpInfo.minPoint);
+Resp.enclosed = abs(Resp.target_pixel - Resp.response_pixel) <= Resp.conf_radius_pixel;
+bestRadius_cm = abs(Resp.target_cm - Resp.response_cm);
+Resp.maxPtPossible = max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * bestRadius_cm, ExpInfo.minPoint);
 if Resp.enclosed
-    Resp.point = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * Resp.bestRadius_pixel, ExpInfo.minPoint);
+    Resp.point = Resp.maxPtPossible;
 else
     Resp.point = 0;
 end

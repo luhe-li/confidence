@@ -1,4 +1,4 @@
-function leaderboardText = updateLeaderboard(outDir, ExpInfo, Resp)
+function leaderboardText = updateLeaderboardUnimodal(outDir, ExpInfo, Resp)
     % updateLeaderboard Updates or creates the leaderboard for a psychology task.
     %
     % Syntax:
@@ -42,17 +42,20 @@ function leaderboardText = updateLeaderboard(outDir, ExpInfo, Resp)
         end
         
         % Calculate total points earned in the session
-        total_pt = sum(Resp.point);
+        total_pt = sum([Resp.point]);
         
         % Assign points based on the session type
-        if strcmp(ExpInfo.session, 'A')
-            new_ses_a_pt = total_pt;
-            new_ses_v_pt = 0;
-        elseif strcmp(ExpInfo.session, 'V')
-            new_ses_a_pt = 0;
-            new_ses_v_pt = total_pt;
-        else
-            error('Unknown session type: %s. Must be ''A'' or ''V''.', ExpInfo.session);
+        if exist(ExpInfo.session,'var')
+            
+            if strcmp(ExpInfo.session, 'A')
+                new_ses_a_pt = total_pt;
+                new_ses_v_pt = 0;
+            elseif strcmp(ExpInfo.session, 'V')
+                new_ses_a_pt = 0;
+                new_ses_v_pt = total_pt;
+            else
+                error('Unknown session type: %s. Must be ''A'' or ''V''.', ExpInfo.session);
+            end
         end
         
         % Create a new row for the subject
@@ -75,7 +78,7 @@ function leaderboardText = updateLeaderboard(outDir, ExpInfo, Resp)
     % Initialize the output text
     leaderboardText = '';
     
-    % Generate leaderboard text only for session 'A'
+    % Generate leaderboard text for 'A'
     if strcmp(ExpInfo.session, 'A')
         % Read the updated sub_info table
         sub_info = readtable(csvPath);
@@ -100,8 +103,37 @@ function leaderboardText = updateLeaderboard(outDir, ExpInfo, Resp)
             name = sorted_table.sub_name{i};
             rank = sorted_table.rank(i);
             points = sorted_table.ses_a_pt(i);
-            rowText = sprintf('%-20s %-5d %-10d', name, rank, points);
+            rowText = sprintf('%-20s %-5d %.2f', name, rank, points);
             leaderboardText = [leaderboardText, rowText, '\n'];
         end
+        
+    elseif strcmp(ExpInfo.session, 'V')
+         % Read the updated sub_info table
+        sub_info = readtable(csvPath);
+        
+        % Sort the table based on auditory points in descending order
+        sorted_table = sortrows(sub_info, 'ses_v_pt', 'descend');
+        
+        % Assign ranks based on sorted order
+        sorted_table.rank = (1:height(sorted_table))';
+        
+        % Initialize the leaderboard string with an explanation
+        explanation = 'Leaderboard for Unimodal Visual Localization Task:\n\n';
+        
+        % Create a header for the table
+        header = sprintf('%-20s %-5s %-10s', 'Name', 'Rank', 'Points');
+        
+        % Start building the leaderboard text
+        leaderboardText = [explanation, header, '\n'];
+        
+        % Iterate through each row to append subject details
+        for i = 1:height(sorted_table)
+            name = sorted_table.sub_name{i};
+            rank = sorted_table.rank(i);
+            points = sorted_table.ses_a_pt(i);
+            rowText = sprintf('%-20s %-5d %.2f', name, rank, points);
+            leaderboardText = [leaderboardText, rowText, '\n'];
+        end
+        
     end
 end

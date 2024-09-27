@@ -7,6 +7,12 @@ loc_pixel = round(ExpInfo.randVisPixel(i) + jitter);
 blob_coordinates = [ScreenInfo.xmid + loc_pixel, ScreenInfo.liftingYaxis];
 dotCloud = generateOneBlob(windowPtr,blob_coordinates,VSinfo,ScreenInfo);
 
+%% trial location info
+Resp.target_idx = ExpInfo.randVisIdx(i); % visual location that corresponds to speaker index
+Resp.target_pixel = loc_pixel;
+Resp.target_cm = loc_pixel./ScreenInfo.numPixels_perCM;
+Resp.target_deg = rad2deg(atan(Resp.target_cm/ExpInfo.sittingDistance));
+
 %% start the trial
 
 % fixation
@@ -62,8 +68,8 @@ while sum(buttons)==0
     end
 end
 Resp.RT1  = toc;
-Resp.response_pixel = x;
-Resp.response_cm    = (Resp.response_pixel -  ScreenInfo.xmid)/ScreenInfo.numPixels_perCM;
+Resp.response_pixel = x - ScreenInfo.xmid;
+Resp.response_cm    = Resp.response_pixel/ScreenInfo.numPixels_perCM;
 Resp.response_deg   = rad2deg(atan(Resp.response_cm/ExpInfo.sittingDistance));
 HideCursor;
 
@@ -79,19 +85,18 @@ initDialPos = dialPos;
 while ~buttonPM
     [buttonPM, dialPos] = PsychPowerMate('Get',pm); %update dial postion
     
-    conf_radius = dialScaler * abs(dialPos - initDialPos);
+    conf_radius = ExpInfo.dialScaler * abs(dialPos - initDialPos);
     potentialconfRcm = conf_radius/ScreenInfo.numPixels_perCM;
-    potentialPoint = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * potentialconfRcm, ExpInfo.minPoint);
-    
-    potentialEnclosed = abs(ExpInfo.speakerLocCM(ExpInfo.randVisIdx(i)) - Resp.response_cm) <= potentialconfRcm;
+    potentialPoint = max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * potentialconfRcm, ExpInfo.minPoint);
+    potentialEnclosed = abs(Resp.target_cm - Resp.response_cm) <= potentialconfRcm;
     
     Screen('DrawTexture',windowPtr, VSinfo.grey_texture,[],...
         [0,0,ScreenInfo.xaxis, ScreenInfo.yaxis]);
     Screen('DrawLine', windowPtr, [255 255 255],x, yLoc+3, x, yLoc-3, 1);
-    Screen('FillRect', windowPtr, [255 255 255]./7, [x-conf_radius, yLoc-height/2 + 3, x+conf_radius, yLoc+height/2 - 3]);
+    Screen('FillRect', windowPtr, [255 255 255]./7, [x-conf_radius, yLoc-ExpInfo.conf_bar_height/2 + 3, x+conf_radius, yLoc+ExpInfo.conf_bar_height/2 - 3]);
     Screen('DrawLine', windowPtr, [255 255 255],x-conf_radius, yLoc, x+conf_radius, yLoc, 1);
-    Screen('DrawLine', windowPtr, [255 255 255],x-conf_radius, yLoc+height/2, x-conf_radius, yLoc-height/2, 1);
-    Screen('DrawLine', windowPtr, [255 255 255],x+conf_radius, yLoc+height/2, x+conf_radius, yLoc-height/2, 1);   
+    Screen('DrawLine', windowPtr, [255 255 255],x-conf_radius, yLoc+ExpInfo.conf_bar_height/2, x-conf_radius, yLoc-ExpInfo.conf_bar_height/2, 1);
+    Screen('DrawLine', windowPtr, [255 255 255],x+conf_radius, yLoc+ExpInfo.conf_bar_height/2, x+conf_radius, yLoc-ExpInfo.conf_bar_height/2, 1);   
     
     DrawFormattedText(windowPtr, ['Potential score: ' num2str(round(potentialPoint,2))], 'center', 'center', ...
         [255 255 255],[], [], [], [], [], ...
@@ -113,23 +118,21 @@ Resp.conf_radius_cm  = Resp.conf_radius_pixel/ScreenInfo.numPixels_perCM;
 % ITI
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
     [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
+
 % give feedback everytrial
+Screen('TextSize',windowPtr,25);
 DrawFormattedText(windowPtr, ['Score of the last trial: ' num2str(round(potentialPoint * potentialEnclosed,2))], 'center', 'center', ...
     [255 255 255],[], [], [], [], [], ...
     [ScreenInfo.xmid-20,yLoc-3,ScreenInfo.xmid+20,yLoc+3]);
-WaitSecs(0.1);
 Screen('Flip',windowPtr);
+WaitSecs(ExpInfo.tITI);
 
 % calculate points
-Resp.target_idx = ExpInfo.randVisIdx(i); % visual location that corresponds to speaker index
-Resp.target_pixel = loc_pixel;
-Resp.target_cm = loc_pixel./ScreenInfo.numPixels_perCM;
-Resp.target_deg = rad2deg(atan(ExpInfo.target_cm/ExpInfo.sittingDistance));
-Resp.enclosed = abs(Resp.target_pixel - Resp.response_pixel) <= Resp.conf_radius_cm;
-bestRadius_pixel = abs(Resp.target_pixel - Resp.response_pixel);
-Resp.maxPtPossible = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * bestRadius_pixel, ExpInfo.minPoint);
+Resp.enclosed = abs(Resp.target_pixel - Resp.response_pixel) <= Resp.conf_radius_pixel;
+bestRadius_cm = abs(Resp.target_cm - Resp.response_cm);
+Resp.maxPtPossible = max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * bestRadius_cm, ExpInfo.minPoint);
 if Resp.enclosed
-    Resp.point = 0.01 * max(ExpInfo.maxPoint - ExpInfo.dropRate * 2 * Resp.bestRadius_pixel, ExpInfo.minPoint);
+    Resp.point = Resp.maxPtPossible;
 else
     Resp.point = 0;
 end
