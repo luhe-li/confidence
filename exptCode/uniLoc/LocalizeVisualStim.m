@@ -47,6 +47,7 @@ Resp.dot_x_sd_pixel = sqrt(sum((dots_targetLoc_coordinates(1,:) - Resp.dot_x_mu_
 Resp.dot_y_sd_pixel = sqrt(sum((dots_targetLoc_coordinates(2,:) - Resp.dot_y_mu_pixel).^2)/size(dots_targetLoc_coordinates,2));
 
 %% trial location info
+
 Resp.target_idx = ExpInfo.randVisIdx(i); % visual location that corresponds to speaker index
 Resp.target_pixel = ExpInfo.randVisPixel(i);
 Resp.target_cm = ExpInfo.randVisCM(i);
