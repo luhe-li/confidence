@@ -96,7 +96,7 @@ ExpInfo.randV = reshape(ExpInfo.randV, [], 1)';
 
 % randomized auditory and visual stimulus location in speaker index
 ExpInfo.randAudIdx = ExpInfo.audLevel(ExpInfo.randA);
-ExpInfo.randVisIdx = ExpInfo.audLevel(ceil(ExpInfo.randV./2));
+ExpInfo.randVisIdx = ExpInfo.audLevel(ExpInfo.randV);
 
 % location of speakers in CM, visual angle, and pixel
 ExpInfo.sittingDistance              = 113.0; %cm

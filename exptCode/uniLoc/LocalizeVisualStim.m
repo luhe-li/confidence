@@ -18,6 +18,7 @@ while 1
         ScreenInfo.liftingYaxis+(ScreenInfo.numPixels_perCM.*...
         VSinfo.SD_yaxis.*RNcoordinates(2,:))];
     dots_targetLoc_coordinates = [dots_targetLoc_coordinates,new_dot_targetLoc_coordinates];
+    
     %make sure the center of the 10 blobs are aligned with the
     %predetermined location of the test stimulus
     dots_targetLoc_coordinates_shifted = shiftDotClouds(...
