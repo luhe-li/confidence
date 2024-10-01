@@ -76,9 +76,6 @@ for s = 1:numel(all_ses)
 end
 
 
-
-
-
 plot(loc, loc,'k--','LineWidth',lw)
 e = errorbar(loc, estMu, sdMu,'LineWidth',lw);
 e.CapSize = 0; e.Color = clt(2,:);

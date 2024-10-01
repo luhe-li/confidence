@@ -40,6 +40,9 @@ if exist(fullfile(outDir, [outFileName '.mat']), 'file')
 end
 
 if strcmp(ExpInfo.session, 'A')
+    if exist('Arduino','var') == 1
+        fclose(Arduino);
+    end
     Arduino = serial('/dev/cu.usbmodem14301','BaudRate',115200); % make sure this value matches with the baudrate in the arduino code
     fopen(Arduino);
     sprintf('Check if system volume is fixed at level 6')
