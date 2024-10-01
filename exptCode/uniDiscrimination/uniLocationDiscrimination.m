@@ -8,15 +8,15 @@
 
 %% Enter experiment info
 clear; close all;  rng('Shuffle');
-% 
-% ExpInfo.subjInit = [];
-% while isempty(ExpInfo.subjInit) == 1
-%     try ExpInfo.subjInit = input('Participant Initial#: ','s') ;
-%         ExpInfo.session = input('Session: A/V1#: ','s');
-%         ExpInfo.practice  = input('Main expt: 1; Practice: 2#: ');
-%     catch
-%     end
-% end
+
+ExpInfo.subjInit = [];
+while isempty(ExpInfo.subjInit) == 1
+    try ExpInfo.subjInit = input('Participant Initial#: ','s') ;
+        ExpInfo.session = input('Session: A/V1#: ','s');
+        ExpInfo.practice  = input('Main expt: 1; Practice: 2#: ');
+    catch
+    end
+end
 
  ExpInfo.subjInit = 'LL';
  ExpInfo.session = 'V';
@@ -112,11 +112,11 @@ ExpInfo.sV_cm = ExpInfo.sA_cm;
 % stimulus location for A/V separately
 if  strcmp(ExpInfo.session, 'A')
     ExpInfo.standard_loc = ExpInfo.audLevel; % speaker index
-    ExpInfo.comparison_loc = 1:ExpInfo.n_speaker; % same for each standard location
+    ExpInfo.comparison_loc = repmat([1, ExpInfo.n_speaker], ExpInfo.nLevel, 1); % min/max comparison location in speaker index
     ExpInfo.StepSizes = [4,2,1]; % speaker index
 else
     ExpInfo.standard_loc = ExpInfo.sV_cm; % cm
-    ExpInfo.comparison_loc = [ExpInfo.standard_loc - 10, ExpInfo.standard_loc + 10]; % cm, depend on each standard location
+    ExpInfo.comparison_loc = [ExpInfo.sV_cm'-10, ExpInfo.sV_cm'+10]; % min/max comparison location in speaker cm
     ExpInfo.StepSizes = [5, 2, 0.5]; % cm
 end
 
@@ -126,7 +126,6 @@ ExpInfo.n_trial = 36; % for each staircase
 ExpInfo.n_staircase = 2; % one from left and one from right
 ExpInfo.n_block = 4;
 ExpInfo.n_total_trial = ExpInfo.n_staircase * ExpInfo.n_trial * ExpInfo.nLevel;
-
 
 % split all the trials into blocks
 blocks = linspace(0,ExpInfo.n_trial, ExpInfo.n_block+1);
@@ -167,8 +166,8 @@ for k = 1:ExpInfo.nLevel
     end
 end
 
-Resp.comparison_loc(:, 1, 1) = min(ExpInfo.comparison_loc);
-Resp.comparison_loc(:, 2, 1) = max(ExpInfo.comparison_loc);
+Resp.comparison_loc(:, 1, 1) = ExpInfo.comparison_loc(:, 1); % staircase 1 starts from min location
+Resp.comparison_loc(:, 2, 1) = ExpInfo.comparison_loc(:, 2); % staricase 2 starts from max location
 
 %---------------------------------ExpInfo.order----------------------------
 % 1: present the standard first
