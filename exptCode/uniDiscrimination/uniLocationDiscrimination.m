@@ -9,17 +9,17 @@
 %% Enter experiment info
 clear; close all;  rng('Shuffle');
 
-ExpInfo.subjInit = [];
-while isempty(ExpInfo.subjInit) == 1
-    try ExpInfo.subjInit = input('Participant Initial#: ','s') ;
-        ExpInfo.session = input('Session: A/V#: ','s');
-        ExpInfo.practice  = input('Main expt: 0; Practice: 1#: ');
-    catch
-    end
-end
+% ExpInfo.subjInit = [];
+% while isempty(ExpInfo.subjInit) == 1
+%     try ExpInfo.subjInit = input('Participant Initial#: ','s') ;
+%         ExpInfo.session = input('Session: A/V#: ','s');
+%         ExpInfo.practice  = input('Main expt: 0; Practice: 1#: ');
+%     catch
+%     end
+% end
 
  ExpInfo.subjInit = 'LL';
- ExpInfo.session = 'V';
+ ExpInfo.session = 'A';
  ExpInfo.practice  = 1;
         
 switch ExpInfo.practice
@@ -47,8 +47,9 @@ if exist(fullfile(outDir, [outFileName '.mat']), 'file')
 end
 
 if strcmp(ExpInfo.session, 'A')
-    if exist('Arduino','var') == 1
+    if exist('Arduino','var')
         fclose(Arduino);
+        clear Arduino
     end
     Arduino = serial('/dev/cu.usbmodem14301','BaudRate',115200);
     fopen(Arduino);
@@ -97,6 +98,7 @@ ScreenInfo.y2_ub = ScreenInfo.yaxis-ScreenInfo.liftingYaxis+7;
 % order (left to right: 1-16)
 ExpInfo.audLevel = [5,7,10,12]; % standard location
 if ExpInfo.practice == 1; ExpInfo.audLevel = 8; end
+ExpInfo.nLevel = numel(ExpInfo.audLevel);
 
 % width/distance info
 ExpInfo.speaker_cm = 65.5; % cm, left to center
@@ -159,6 +161,13 @@ ExpInfo.n_trial_w_easy = ExpInfo.n_easy_trial_per_s + ExpInfo.n_trial;
     Resp.discrepancy, Resp.resp, ...
     Resp.RT, Resp.correct] = deal(NaN(ExpInfo.nLevel, ExpInfo.n_staircase, ExpInfo.n_trial_w_easy));
 
+%------------------------------Standard location----------------------------------
+for j = 1:2 % for two staircase conditions
+    for i = 1:ExpInfo.n_trial_w_easy
+        ExpInfo.standard_order(:, j, i) = randperm(ExpInfo.nLevel, ExpInfo.nLevel);
+    end
+end
+
 %------------------------------Conditions----------------------------------
 % odd number: starts from leftside of the standard (1-up-2-down)
 % even number: starts from rightside of the standard (2-up-1-down)
@@ -186,8 +195,8 @@ end
 % 1: participants think the comparison is to the right of the standard
 
 %% Add easy trials to calculate lapse rate
-trial_slc = [];
 for k = 1:ExpInfo.nLevel
+    trial_slc = [];
     for i = 1:ExpInfo.n_staircase
         trialIdx_staircase = reshape(i:ExpInfo.n_staircase:ExpInfo.n_staircase * ExpInfo.n_trial, ...
             [ExpInfo.n_trial / ExpInfo.n_block, ExpInfo.n_block]);
@@ -196,8 +205,8 @@ for k = 1:ExpInfo.nLevel
                 ExpInfo.n_easy_trial_per_s / ExpInfo.n_block), j)];
         end
     end
+    ExpInfo.easy_trial(k,:,:) = reshape(trial_slc, [ExpInfo.n_easy_trial_per_s, ExpInfo.n_staircase])';
 end
-ExpInfo.easy_trial = reshape(trial_slc, [ExpInfo.n_easy_trial_per_s, ExpInfo.n_staircase, ExpInfo.nLevel]);
 % %To see whether the catch trials are evenly spread out. Do:
 % T = zeros(ExpInfo.n_staircase, ExpInfo.n_trial);
 % T(trial_slc) = 1; imagesc(T);
@@ -205,8 +214,8 @@ ExpInfo.easy_trial = reshape(trial_slc, [ExpInfo.n_easy_trial_per_s, ExpInfo.n_s
 % set parameters for easy trials as the last few trials
 ExpInfo.easy_idx = ExpInfo.n_trial + 1:ExpInfo.n_trial + ExpInfo.n_easy_trial_per_s;
 for k = 1:ExpInfo.nLevel
-    Resp.comparison_loc(k, 1, ExpInfo.easy_idx) = min(ExpInfo.comparison_loc);
-    Resp.comparison_loc(k, 2, ExpInfo.easy_idx) = max(ExpInfo.comparison_loc);
+    Resp.comparison_loc(k, 1, ExpInfo.easy_idx) = min(ExpInfo.comparison_loc(k,:));
+    Resp.comparison_loc(k, 2, ExpInfo.easy_idx) = max(ExpInfo.comparison_loc(k,:));
 end
 
 %% Auditory set up
@@ -219,8 +228,8 @@ our_device=devices(end).DeviceIndex;
 % Gaussian white noise
 AudInfo.fs                  = 44100;
 audioSamples                = linspace(1,AudInfo.fs,AudInfo.fs);
-AudInfo.stimDura            = ExpInfo.tStimFrame * ExpInfo.IFI; % in sec
-standardFrequency_gwn       = 1/(ExpInfo.tStimFrame * ExpInfo.IFI);%100;
+AudInfo.stimDura            = ExpInfo.tStimFrame * ExpInfo.tIFI; % in sec
+standardFrequency_gwn       = 1/(ExpInfo.tStimFrame * ExpInfo.tIFI);
 duration_gwn                = length(audioSamples)*AudInfo.stimDura;
 timeline_gwn                = linspace(1,duration_gwn,duration_gwn);
 sineWindow_gwn              = sin(standardFrequency_gwn/2*2*pi*timeline_gwn/AudInfo.fs);
@@ -249,33 +258,29 @@ if strcmp(ExpInfo.session, 'A')
     end
 end
 
-%% make visual stimuli
+%% make visual stimuli sca
 
-VSinfo.SD_yaxis                      = 5; %SD of the blob in cm (vertical)
-VSinfo.num_randomDots                = 10; %number of blobs
-VSinfo.numFrames                     = 3; %for visual stimuli
-VSinfo.numFramesMasker               = 30; %for mask
+% create the bubble visual stimulus
+VSinfo.SD_yaxis            = 3; %SD of the blob in cm (vertical)
+VSinfo.num_randomDots      = 10; %number of blobs
+VSinfo.SD_blob             = 3; %SD of the blob in cm (horizontal)
 
-% create background
-VSinfo.pblack                        = 1/8; % set contrast to 1*1/8 for the "black" background, so it's not too dark and the projector doesn't complain
-VSinfo.greyScreen                    = VSinfo.pblack * ones(ScreenInfo.xaxis,ScreenInfo.yaxis)*255;
-VSinfo.grey_texture                  = Screen('MakeTexture', windowPtr, VSinfo.greyScreen,[],[],[],2);
-VSinfo.blankScreen                   = zeros(ScreenInfo.xaxis,ScreenInfo.yaxis);
-
-% white noise background
-VSinfo.GWNnumPixel                   = 4; % 4 pixels will have the same color
-VSinfo.GWNnumFrames                  = 10; 
-VSinfo.gwn_texture                   = generateNoisyBackground(VSinfo,ScreenInfo,windowPtr);
-
-% draw one blob
+% draw one blob within the bubbles
 VSinfo.width                         = 8; %(pixel) Increasing this value will make the cloud more blurry (arbituary value)
 VSinfo.boxSize                       = 15; %This is the box size for each cloud (arbituary value)
-VSinfo.maxBrightness                 = 128; %indirectly control contrast
-x                                    = 1:1:VSinfo.boxSize; y = x;
+VSinfo.maxBrightness                 = 255; %indirectly control contrast
+x = 1:1:VSinfo.boxSize; y = x;
 [X,Y]                                = meshgrid(x,y);
 cloud_temp                           = mvnpdf([X(:) Y(:)],[median(x) median(y)],...
     [VSinfo.width 0; 0 VSinfo.width]);
 VSinfo.Cloud                         = reshape(cloud_temp,length(x),length(y)) .* (VSinfo.maxBrightness/max(cloud_temp));
+
+% create background
+VSinfo.pblack              = 1/8; % set contrast to 1*1/8 for the "black" background, so it's not too dark and the projector doesn't complain
+VSinfo.greyScreen          = VSinfo.pblack * ones(ScreenInfo.xaxis,ScreenInfo.yaxis)*255;
+VSinfo.grey_texture        = Screen('MakeTexture', windowPtr, VSinfo.greyScreen,[],[],[],2);
+VSinfo.blankScreen         = zeros(ScreenInfo.xaxis,ScreenInfo.yaxis);
+VSinfo.blackScreen         = VSinfo.grey_texture;
 
 %% Run the experiment
 instruction = ['\nPress any key to start the unimodal location discrimination task.'];
@@ -287,20 +292,22 @@ ExpInfo.start       = sprintf('%04d/%02d/%02d_%02d:%02d:%02d',c(1),c(2),c(3),c(4
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
     [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
 DrawFormattedText(windowPtr, instruction ,...
-    'center',ScreenInfo.yaxis-500,[255 255 255]);
+    'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis,[255 255 255]);
 Screen('Flip',windowPtr);
 KbWait(-3);
 WaitSecs(1);
 
-for k = 1:ExpInfo.nLevel
-
-    for i = 1:ExpInfo.n_trial
-
-        for ss = 1:ExpInfo.n_staircase
-
+i_total = 0;
+for i = 1:ExpInfo.n_trial
+    
+    for ss = 1:ExpInfo.n_staircase
+        
+        for nn = 1:ExpInfo.nLevel
+            
             %% present stimulus
             % order by staircase condition
-            j = ExpInfo.condition(k,ss,i);
+            j = ExpInfo.condition(nn,ss,i);
+            k = ExpInfo.standard_order(nn,j,i);
 
             % stimulus
             SetMouse(ScreenInfo.xaxis*2, ScreenInfo.yaxis*2, windowPtr);
@@ -315,11 +322,11 @@ for k = 1:ExpInfo.nLevel
 
             %% inserted an easy trial for calculating the lapse rate later
 
-            i_total = (ss-1)*ExpInfo.n_trial + i;
-            if ismember(i_total, ExpInfo.easy_trial)
+            i_total = i_total + 1;
+            if ismember(i_total, squeeze(ExpInfo.easy_trial(k,:,:)))
 
                 flag_easy = 1;
-                [j_easy, temp_i_easy] = find(ExpInfo.easy_trial==i_total);
+                [j_easy, temp_i_easy] = find(squeeze(ExpInfo.easy_trial(k,:,:))==i_total);
                 i_easy = ExpInfo.easy_idx(temp_i_easy);
 
                 if strcmp(ExpInfo.session, 'A')

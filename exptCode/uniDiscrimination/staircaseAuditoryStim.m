@@ -26,12 +26,12 @@ WaitSecs(ExpInfo.tBlank1);
 if ExpInfo.order(k,j,i) == 1 %1: present the standard first
     
     % present standard auditory stimulus
-    input_on = ['<',num2str(1),':',num2str(ExpInfo.standard_loc),'>'];
+    input_on = ['<',num2str(1),':',num2str(ExpInfo.standard_loc(k)),'>'];
     fprintf(Arduino,input_on);
     PsychPortAudio('FillBuffer',pahandle, AudInfo.quietGaussianWhiteNoise);
     PsychPortAudio('Start',pahandle,1,0,0);
     WaitSecs(AudInfo.stimDura);
-    input_off = ['<',num2str(0),':',num2str(ExpInfo.standard_loc),'>'];
+    input_off = ['<',num2str(0),':',num2str(ExpInfo.standard_loc(k)),'>'];
     fprintf(Arduino,input_off);
     PsychPortAudio('Stop',pahandle);
     WaitSecs(0.1);
@@ -71,12 +71,12 @@ else
     WaitSecs(ExpInfo.ISI);
     
     % present standard auditory stimulus
-    input_on = ['<',num2str(1),':',num2str(ExpInfo.standard_loc),'>'];
+    input_on = ['<',num2str(1),':',num2str(ExpInfo.standard_loc(k)),'>'];
     fprintf(Arduino,input_on);
     PsychPortAudio('FillBuffer',pahandle, AudInfo.quietGaussianWhiteNoise);
     PsychPortAudio('Start',pahandle,1,0,0);
     WaitSecs(AudInfo.stimDura);
-    input_off = ['<',num2str(0),':',num2str(ExpInfo.standard_loc),'>'];
+    input_off = ['<',num2str(0),':',num2str(ExpInfo.standard_loc(k)),'>'];
     fprintf(Arduino,input_off);
     PsychPortAudio('Stop',pahandle);
     WaitSecs(0.1);
@@ -99,9 +99,9 @@ Resp.order(k,j,i) = ExpInfo.order(k,j,i);
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
     [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
 DrawFormattedText(windowPtr, 'The first one is more to the right: press 1',...
-    'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis-60,[255 255 255]);
-DrawFormattedText(windowPtr, 'The second one is more to the right: press 2',...
     'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis-30,[255 255 255]);
+DrawFormattedText(windowPtr, 'The second one is more to the right: press 2',...
+    'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis-10,[255 255 255]);
 Screen('Flip',windowPtr); 
 
 tic
@@ -113,6 +113,8 @@ while 1
         ShowCursor;
         Screen('CloseAll');
         error('Escape');
+        fclose(Arduino);
+        clearvars Arduino;
     elseif keyCode(KbName('1'))
         if ExpInfo.order(k,j,i) == 1 % standard presented first
             Resp.resp(k,j,i) = -1; % participants think the comparison is to the left of the standard
@@ -150,7 +152,7 @@ WaitSecs(ExpInfo.ITI);
 % only update for normal trials
 if flag_easy == 0
     
-    if i == 1; history = []; else; history = Resp.resp(k, j,1:(i-1)); end
+    if i == 1; history = []; else; history = squeeze(Resp.resp(k, j,1:(i-1)))'; end
     
     % update location of the comparison stimulus for the next trial
     Resp.comparison_loc(k,j,i+1) = findNextLocation(i,j,current_loc, current_resp, history, ExpInfo);

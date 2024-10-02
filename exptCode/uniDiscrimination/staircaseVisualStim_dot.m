@@ -6,7 +6,7 @@ if i == ExpInfo.n_trial; flag_easy = 1; end
 %% precompute
 
 % standard stimulus
-x_loc_pixel = round(ExpInfo.standard_loc * ExpInfo.px_per_cm);
+x_loc_pixel = round(ExpInfo.standard_loc(k) * ExpInfo.px_per_cm);
 targetLoc = ScreenInfo.xmid + x_loc_pixel;
 RNcoordinates = randn(2,1);
 dots_targetLoc_coordinates = [targetLoc+(...
@@ -43,7 +43,7 @@ while 1
         dots_targetLoc_coordinates = dots_targetLoc_coordinates(:,1:end-1);
     end
 end
-Resp.standard_loc(k,j,i) = ExpInfo.standard_loc;
+Resp.standard_loc(k,j,i) = ExpInfo.standard_loc(k);
 
 % comparison stimulus
 x_loc_pixel = round(Resp.comparison_loc(k,j,i) * ExpInfo.px_per_cm);
@@ -116,7 +116,7 @@ if ExpInfo.order(k,j,i) == 1 %1: present the standard first
     vbl = Screen('Flip',windowPtr);
     Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
         [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
-    Screen('Flip',windowPtr, vbl + (ExpInfo.tStimFrame - 0.5)*ExpInfo.IFI);
+    Screen('Flip',windowPtr, vbl + (ExpInfo.tStimFrame - 0.5)*ExpInfo.tIFI);
     
     if ExpInfo.practice && i == 1; KbWait(-3); end
     
@@ -130,7 +130,7 @@ if ExpInfo.order(k,j,i) == 1 %1: present the standard first
     vbl = Screen('Flip',windowPtr);
     Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
         [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
-    Screen('Flip',windowPtr, vbl + (ExpInfo.tStimFrame - 0.5)*ExpInfo.IFI);
+    Screen('Flip',windowPtr, vbl + (ExpInfo.tStimFrame - 0.5)*ExpInfo.tIFI);
     
 else
     
@@ -139,7 +139,7 @@ else
     vbl = Screen('Flip',windowPtr);
     Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
         [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
-    Screen('Flip',windowPtr, vbl + (ExpInfo.tStimFrame - 0.5)*ExpInfo.IFI);
+    Screen('Flip',windowPtr, vbl + (ExpInfo.tStimFrame - 0.5)*ExpInfo.tIFI);
     
     if ExpInfo.practice && i == 1; KbWait(-3); end
     
@@ -153,7 +153,7 @@ else
     vbl = Screen('Flip',windowPtr);
     Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
         [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
-    Screen('Flip',windowPtr, vbl + (ExpInfo.tStimFrame - 0.5)*ExpInfo.IFI);
+    Screen('Flip',windowPtr, vbl + (ExpInfo.tStimFrame - 0.5)*ExpInfo.tIFI);
     
 end
 
@@ -219,7 +219,7 @@ WaitSecs(ExpInfo.ITI);
 % only update for normal trials
 if flag_easy == 0
     
-    if i == 1; history = []; else; history = Resp.resp(k,j,1:(i-1)); end
+    if i == 1; history = []; else; history = squeeze(Resp.resp(k,j,1:(i-1)))'; end
     
     % update location of the comparison stimulus for the next trial
     Resp.comparison_loc(k,j,i+1) = findNextLocation(i,j,current_loc, current_resp, history, ExpInfo);
