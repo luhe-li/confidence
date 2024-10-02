@@ -119,12 +119,15 @@ Screen('TextSize',windowPtr,15);
 SetMouse(x*2, yLoc*2, windowPtr);
 HideCursor;
 WaitSecs(0.2);
+buttons = 0;
 tic;
 pm = PsychPowerMate('Open');
-[buttonPM, dialPos] = PsychPowerMate('Get',pm); %initalize powermate
+[~, dialPos] = PsychPowerMate('Get',pm); %initalize powermate
 initDialPos = dialPos;
-while ~buttonPM
-    [buttonPM, dialPos] = PsychPowerMate('Get',pm); %update dial postion
+while sum(buttons)==0
+
+    [~,~,buttons] = GetMouse(windowPtr);
+    [~, dialPos] = PsychPowerMate('Get',pm); %update dial postion
     
     conf_radius = ExpInfo.dialScaler * abs(dialPos - initDialPos);
     potentialconfRcm = conf_radius/ScreenInfo.numPixels_perCM;

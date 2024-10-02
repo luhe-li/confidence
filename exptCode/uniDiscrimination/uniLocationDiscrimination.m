@@ -12,8 +12,8 @@ clear; close all;  rng('Shuffle');
 ExpInfo.subjInit = [];
 while isempty(ExpInfo.subjInit) == 1
     try ExpInfo.subjInit = input('Participant Initial#: ','s') ;
-        ExpInfo.session = input('Session: A/V1#: ','s');
-        ExpInfo.practice  = input('Main expt: 1; Practice: 2#: ');
+        ExpInfo.session = input('Session: A/V#: ','s');
+        ExpInfo.practice  = input('Main expt: 0; Practice: 1#: ');
     catch
     end
 end
@@ -23,9 +23,9 @@ end
  ExpInfo.practice  = 1;
         
 switch ExpInfo.practice
-    case 1
+    case 0
         outFileName = sprintf('uniDis_sub-%s_ses-%s', ExpInfo.subjInit, ExpInfo.session);
-    case 2
+    case 1
         outFileName = sprintf('uniDis_practice_sub-%s_ses-%s', ExpInfo.subjInit, ExpInfo.session);
 end
 
@@ -61,13 +61,13 @@ AssertOpenGL();
 GetSecs();
 WaitSecs(0.1);
 KbCheck();
-ListenChar(2);
+% ListenChar(2);
 
 Screen('Preference', 'VisualDebugLevel', 1);
 Screen('Preference', 'SkipSyncTests', 1);
 screens = Screen('Screens');
 screenNumber = max(screens);
-[windowPtr,rect] = Screen('OpenWindow', screenNumber, [0,0,0]); % ,[0,0,800,600]
+[windowPtr,rect] = Screen('OpenWindow', screenNumber, [0,0,0]); 
 [ScreenInfo.xaxis, ScreenInfo.yaxis] = Screen('WindowSize',windowPtr);
 ScreenInfo.screenNumber = screenNumber;
 Screen('TextSize', windowPtr, 30);
@@ -96,6 +96,7 @@ ScreenInfo.y2_ub = ScreenInfo.yaxis-ScreenInfo.liftingYaxis+7;
 % choose auditory locations out of 16 speakers, level/index is speaker
 % order (left to right: 1-16)
 ExpInfo.audLevel = [5,7,10,12]; % standard location
+if ExpInfo.practice == 1; ExpInfo.audLevel = 8; end
 
 % width/distance info
 ExpInfo.speaker_cm = 65.5; % cm, left to center
@@ -126,6 +127,7 @@ ExpInfo.n_trial = 36; % for each staircase
 ExpInfo.n_staircase = 2; % one from left and one from right
 ExpInfo.n_block = 4;
 ExpInfo.n_total_trial = ExpInfo.n_staircase * ExpInfo.n_trial * ExpInfo.nLevel;
+if ExpInfo.practice == 1; ExpInfo.n_trial = 4; end
 
 % split all the trials into blocks
 blocks = linspace(0,ExpInfo.n_trial, ExpInfo.n_block+1);
@@ -292,67 +294,67 @@ WaitSecs(1);
 
 for k = 1:ExpInfo.nLevel
 
-for i = 1:ExpInfo.n_trial
+    for i = 1:ExpInfo.n_trial
 
-    for ss = 1:ExpInfo.n_staircase
+        for ss = 1:ExpInfo.n_staircase
 
-        %% present stimulus
-        % order by staircase condition
-        j = ExpInfo.condition(k,ss,i);
-        
-        % stimulus
-        SetMouse(ScreenInfo.xaxis*2, ScreenInfo.yaxis*2, windowPtr);
-        HideCursor;
-        if strcmp(ExpInfo.session, 'A')
-            Resp = staircaseAuditoryStim(i, j, k, ExpInfo,...
-                ScreenInfo,AudInfo,Arduino,pahandle,VSinfo,windowPtr,Resp);
-        else
-            Resp = staircaseVisualStim_dot(i, j, k, ExpInfo,...
-                ScreenInfo,VSinfo,windowPtr,Resp);
-        end
-        
-        %% inserted an easy trial for calculating the lapse rate later
-        
-        i_total = (ss-1)*ExpInfo.n_trial + i;
-        if ismember(i_total, ExpInfo.easy_trial)
-            
-            flag_easy = 1;
-            [j_easy, temp_i_easy] = find(ExpInfo.easy_trial==i_total);
-            i_easy = ExpInfo.easy_idx(temp_i_easy);
-            
+            %% present stimulus
+            % order by staircase condition
+            j = ExpInfo.condition(k,ss,i);
+
+            % stimulus
+            SetMouse(ScreenInfo.xaxis*2, ScreenInfo.yaxis*2, windowPtr);
+            HideCursor;
             if strcmp(ExpInfo.session, 'A')
-                Resp = staircaseAuditoryStim(i_easy, j_easy, k, ExpInfo,...
-                    ScreenInfo,AudInfo,Arduino,pahandle,VSinfo,windowPtr,Resp,flag_easy);
+                Resp = staircaseAuditoryStim(i, j, k, ExpInfo,...
+                    ScreenInfo,AudInfo,Arduino,pahandle,VSinfo,windowPtr,Resp);
             else
-                Resp = staircaseVisualStim_dot(i_easy, j_easy, k, ExpInfo,...
-                    ScreenInfo,VSinfo,windowPtr, Resp, flag_easy);
+                Resp = staircaseVisualStim_dot(i, j, k, ExpInfo,...
+                    ScreenInfo,VSinfo,windowPtr,Resp);
             end
-            
+
+            %% inserted an easy trial for calculating the lapse rate later
+
+            i_total = (ss-1)*ExpInfo.n_trial + i;
+            if ismember(i_total, ExpInfo.easy_trial)
+
+                flag_easy = 1;
+                [j_easy, temp_i_easy] = find(ExpInfo.easy_trial==i_total);
+                i_easy = ExpInfo.easy_idx(temp_i_easy);
+
+                if strcmp(ExpInfo.session, 'A')
+                    Resp = staircaseAuditoryStim(i_easy, j_easy, k, ExpInfo,...
+                        ScreenInfo,AudInfo,Arduino,pahandle,VSinfo,windowPtr,Resp,flag_easy);
+                else
+                    Resp = staircaseVisualStim_dot(i_easy, j_easy, k, ExpInfo,...
+                        ScreenInfo,VSinfo,windowPtr, Resp, flag_easy);
+                end
+
+            end
+
+            %% save by trial
+
+            save(fullfile(outDir,outFileName),'Resp','ExpInfo','ScreenInfo','VSinfo','AudInfo');
+
+            %% add breaks
+            if ismember(i,ExpInfo.breakTrials) && ss == 2
+
+                Screen('TextSize',windowPtr,30);
+                idxBlock = find(ExpInfo.breakTrials==i);
+
+                blockInfo = sprintf('You''ve finished block %i/%i. Please take a break.',idxBlock, ExpInfo.n_block);
+                Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
+                    [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
+                DrawFormattedText(windowPtr, blockInfo,...
+                    'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis,...
+                    [255 255 255]);
+                Screen('Flip',windowPtr); KbWait(-3); WaitSecs(1);
+
+            end
+
         end
-        
-        %% save by trial
-        
-        save(fullfile(outDir,outFileName),'Resp','ExpInfo','ScreenInfo','VSinfo','AudInfo');
-        
-        %% add breaks
-        if ismember(i,ExpInfo.breakTrials) && ss == 2
-            
-            Screen('TextSize',windowPtr,30);
-            idxBlock = find(ExpInfo.breakTrials==i);
-            
-            blockInfo = sprintf('You''ve finished block %i/%i. Please take a break.',idxBlock, ExpInfo.n_block);
-            Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
-                [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
-            DrawFormattedText(windowPtr, blockInfo,...
-                'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis,...
-                [255 255 255]);
-            Screen('Flip',windowPtr); KbWait(-3); WaitSecs(1);
-            
-        end
-        
+
     end
-    
-end
 
 end
 %% Save sorted data and end the experiment

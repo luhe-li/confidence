@@ -6,17 +6,17 @@ ExpInfo.subjInit = [];
 while isempty(ExpInfo.subjInit) == 1
     try ExpInfo.subjInit = input('Participant Initial#: ','s') ;
         ExpInfo.session = input('Session: A/V#: ','s');
-        ExpInfo.practice  = input('Main expt: 1; Practice: 2#: ');
+        ExpInfo.practice  = input('Main expt: 0; Practice: 1#: ');
     catch
     end
 end
 
  switch ExpInfo.practice
-     case 1
+     case 0
          outFileName = sprintf('uniLoc_sub-%s_ses-%s', ExpInfo.subjInit, ExpInfo.session);
          ExpInfo.nRep = 20; % number of trial per condition level
          ExpInfo.numBlocks = 4;
-     case 2
+     case 1
          outFileName = sprintf('uniLoc_practice_sub-%s_ses-%s', ExpInfo.subjInit, ExpInfo.session);
          ExpInfo.nRep = 4; % number of trial per condition level
          ExpInfo.numBlocks = 2;

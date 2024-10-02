@@ -101,6 +101,8 @@ Screen('FillRect', windowPtr,[255 255 255], [ScreenInfo.x2_lb,...
 Screen('Flip',windowPtr);
 WaitSecs(ExpInfo.tFixation);
 
+if ExpInfo.practice && i == 1; KbWait(-3); end
+
 % blank screen 1
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
     [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
@@ -116,12 +118,7 @@ if ExpInfo.order(k,j,i) == 1 %1: present the standard first
         [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
     Screen('Flip',windowPtr, vbl + (ExpInfo.tStimFrame - 0.5)*ExpInfo.IFI);
     
-    % mask
-    for jj = 1:VSinfo.numFramesMasker
-        Screen('DrawTexture', windowPtr, VSinfo.gwn_texture(rem(jj,VSinfo.GWNnumFrames)+1),[],...
-            [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
-        Screen('Flip',windowPtr);
-    end
+    if ExpInfo.practice && i == 1; KbWait(-3); end
     
     Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
     [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
@@ -143,6 +140,8 @@ else
     Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
         [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
     Screen('Flip',windowPtr, vbl + (ExpInfo.tStimFrame - 0.5)*ExpInfo.IFI);
+    
+    if ExpInfo.practice && i == 1; KbWait(-3); end
     
     Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
         [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
