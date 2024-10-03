@@ -4,21 +4,21 @@ switch model.mode
 
     case 'initiate'
 
-        out.paraID                   = {'aA','bA','\sigma_{V}','\sigma_{A}','\sigma_{P}','\sigma_{C}','p_{common}'};
-        out.num_para                 = length(out.paraID);
+        out.param_id                  = {'aA','bA','\sigma_{V}','\sigma_{A}','\sigma_{P}','\sigma_{C}','p_{common}'};
+        out.num_param                 = length(out.param_id);
 
         % hard bounds, the range for LB, UB, larger than soft bounds
-        paraH.aA     = [0.1, 3];       % scale
+        paraH.aA     = [-3, 3];       % scale
         paraH.bA     = [-10, 10];      % intercept
         paraH.sigV   = [1e-2, 5];      % cm
         paraH.sigA   = [1, 20];        % cm
         paraH.sigP   = [3, 20];
-        paraH.sigC   = [0.01, 1];      % measurement noise of confidence
+        paraH.sigC   = [0.01, 10];      % measurement noise of confidence
         paraH.pC1    = [1e-3, 1-1e-3]; % weight
 
         % soft bounds, the range for PLB, PUB
-        paraS.aA     = [-0.5, 1];      % scale
-        paraS.bA     = [-10, 10];      % intercept
+        paraS.aA     = [-0.5, 1.5];      % scale
+        paraS.bA     = [-5, 5];      % intercept
         paraS.sigV   = [1, 3];         % cm
         paraS.sigA   = [5, 10];        % cm
         paraS.sigP   = [5, 10];
@@ -36,14 +36,10 @@ switch model.mode
         out.paraS                    = paraS; out.paraH = paraH;
 
         % get grid initializations
-        out.init                     = getInit(out.lb, out.ub, model.num_sec, model.num_run);
+        model.num_sec = model.n_run*2;
+        out.init                     = getInit(out.lb, out.ub, model.num_sec, model.n_run);
 
     case {'optimize','predict'}
-
-        % fixed parameter values for reducing model
-        muP = 0;
-        aV = 1;
-        bV = 0;
 
         % free parameters
         aA                           = freeParam(1);
@@ -54,7 +50,8 @@ switch model.mode
         sigC                         = freeParam(6);
         pCommon                      = freeParam(7);
 
-        sigMotor = data.sigMotor;
+        sigMotor = model.sigMotor;
+        muP = model.muP;
 
         if strcmp(model.mode, 'optimize')
 
@@ -93,11 +90,11 @@ function [nLL_bimodal, R] = calculateNLL_bimodal(...
     CI, mu_P, sigMotor, data_resp, data_conf, model)
 
 nLL_bimodal = 0;
-sA_prime   = model.bi_sA.*aA + bA; %the mean of biased auditory measurements
-sV_prime  = model.bi_sV;
+sA_prime   = model.sA.*aA + bA; %the mean of biased auditory measurements
+sV_prime  = model.sV;
 
 n_sA = length(sA_prime);
-n_sV = length(model.bi_sV);
+n_sV = length(sV_prime);
 
 for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
 
@@ -141,19 +138,19 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
         %--------------------- Confidence radius --------------------------
 
         % simulate posterior pdf for each trial using center coordinate
-        post = zeros([2, n_sA, n_sV, numel(fixP.center_axis)]);
-        for xx = 1:numel(fixP.center_axis)
-            post(1,:,:,xx) = post_C1.*norm_dst(fixP.center_axis(xx), sHat_C1, sqrt(1/CI.constC1_shat), 0)...
-                + post_C2.*norm_dst(fixP.center_axis(xx), sHat_A_C2, sqrt(1/CI.constC2_1_shat), 0);
-            post(2,:,:,xx) = post_C1.*norm_dst(fixP.center_axis(xx), sHat_C1, sqrt(1/CI.constC1_shat), 0)...
-                + post_C2.*norm_dst(fixP.center_axis(xx), sHat_V_C2, sqrt(1/CI.constC2_2_shat), 0);
+        post = zeros([2, model.numBins_A, model.numBins_V, numel(model.center_axis)]);
+        for xx = 1:numel(model.center_axis)
+            post(1,:,:,xx) = Post_C1.*norm_dst(model.center_axis(xx), shat_C1, sqrt(1/CI.constC1_shat), 0)...
+                + Post_C2.*norm_dst(model.center_axis(xx), squeeze(shat_C2(1,:,:)), sqrt(1/CI.constC2_1_shat), 0);
+            post(2,:,:,xx) = Post_C1.*norm_dst(model.center_axis(xx), shat_C1, sqrt(1/CI.constC1_shat), 0)...
+                + Post_C2.*norm_dst(model.center_axis(xx), squeeze(shat_C2(2,:,:)), sqrt(1/CI.constC2_2_shat), 0);
         end
 
         % optimal radius given posterior and estimate
-        post_2d = reshape(post, [prod([2, n_sA, n_sV, numel(fixP.center_axis)])]);
-        shat_1d = reshape(MAP_MA, [prod([2, n_sA, n_sV]), 1]);
-        [opt_radius, ~, ~]= eGain_MAP(post_2d, shat_1d, fixP.maxScore, fixP.minScore, fixP.elbow, fixP.center_axis);
-        opt_radius = reshape(opt_radius, [2, n_sA, n_sV]);
+        post_2d = reshape(post, [prod([2, model.numBins_A, model.numBins_V]), numel(model.center_axis)]);
+        shat_1d = reshape(MAP_MA, [prod([2, model.numBins_A, model.numBins_V]), 1]);
+        [opt_radius, ~, ~]= eGain_MAP(post_2d, shat_1d, model.maxScore, model.minScore, model.elbow, model.center_axis);
+        opt_radius = reshape(opt_radius, [2, model.numBins_A, model.numBins_V]);
 
         %----------------------- Compute likelihood -----------------------
         % For each same sA, sV combination, the data are organized by
@@ -169,7 +166,7 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
                 % localization probability
                 p_r_given_MAP = norm_dst(locResp_A_V(mm, kk), squeeze(MAP_MA(mm,:,:)),...
                     sigMotor,realmin);
-                p_conf_given_m = norm_dst(confResp_A_V(mm, kk), squeeze(opt_radius(m,:,:)),...
+                p_conf_given_m = norm_dst(confResp_A_V(mm, kk), squeeze(opt_radius(mm,:,:)),...
                     sigC, realmin);
                 nLL_bimodal = nLL_bimodal - log(sum(sum(p_r_given_MAP.*...
                     p_conf_given_m.*p_mAmV_given_sAsV)));

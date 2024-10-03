@@ -1,0 +1,144 @@
+clear; close all; rng('shuffle');
+
+%% knobs
+
+check_fake_data = false; % check the simulated data before fitting
+n_sample = 10; % number of ground-truth samples to generate
+reps = [20, 30, 50, 70, 1000]; % number of trials per codnition
+model_slc = 2;
+
+%% model info
+
+rng('Shuffle');
+specifications = {'MA, full posterior, global','MA, full posterior, local','MA, gaussian posterior','MS','PM'};
+folders = {'MA_optimal', 'MA_local', 'MA_gauss', 'MS','PM'};
+numbers = (1:numel(specifications))';
+model_info = table(numbers, specifications', folders', 'VariableNames', {'Number', 'Specification', 'FolderName'});
+
+%% manege path
+
+restoredefaultpath;
+[project_dir, ~]= fileparts(pwd);
+[git_dir, ~] = fileparts(project_dir);
+% addpath(genpath(fullfile(project_dir, 'data')));
+addpath(genpath(fullfile(pwd, 'util')));
+addpath(genpath(fullfile(git_dir, 'bads')));
+out_dir = fullfile(pwd, mfilename);
+if ~exist(out_dir, 'dir'); mkdir(out_dir); end
+
+%% experiment info
+
+% cm
+speaker_cm = 65.5; % cm, left to center
+sitting_dist = 113; % cm
+screen_cm = 170; % cm
+
+% pixel
+screen_px = 1024; % pixel
+px_axis = 1:screen_px; % add fence
+pixel_per_cm = screen_px/screen_cm;
+
+% dva
+screen_dva = rad2deg(atan(screen_cm / 2 / sitting_dist)) .* 2;
+
+% stimulus location in pixel, dva
+aud_level = [5 7 10 12];
+speaker_level = linspace(-speaker_cm, speaker_cm, 16);
+sA = speaker_level(aud_level);
+sA_dva = rad2deg(atan(sA / 2 / sitting_dist)) .* 2;
+sV = sA; % assume audiovisual bias corrected
+sAV = combvec(sA, sV);
+delta_cm = unique(round(abs(sA - sV'),2));
+delta_dva = rad2deg(atan(delta_cm / 2 / sitting_dist)) .* 2;
+
+%% model setup
+
+model.screen_cm = screen_cm;
+model.center_axis = linspace(-screen_cm/2, screen_cm/2, 1e3);
+model.maxScore = 1;
+model.minScore = 0.01;
+model.elbow = screen_cm/4; % point goes to 0.01 when confidence range is 1/4 of screen
+model.dropRate = (model.maxScore - model.minScore)/model.elbow;
+model.center_axis = linspace(-screen_cm/2, screen_cm/2, 1e3);
+model.n_run = 5; % number of initiation
+model.num_SD          = 5;
+model.numBins_A       = 15;
+model.numBins_V       = 15;
+model.modality = 2;
+
+% fixed params
+model.sigMotor = 3; % localization noise, in cm
+model.muP = 0;
+
+% conditions
+cue_label = {'Auditory post-cue','Visual post-cue'};
+n_cue = numel(cue_label);
+
+%% set simulation parameterss
+
+%         aA,     bA,  sigV1,   sigA,    sigP, sigConf,     pCC
+GT = [     1,    0.1,     1,      10,      30,       1,     0.7];
+
+for mm = model_slc%1:numel(folders)
+
+    for rr = 1:numel(reps)
+
+        n_rep = reps(rr);
+
+        for i_sample = 1:n_sample
+
+
+            curr_model_str = folders{mm};
+
+            %% simulate fake data
+
+            model.bi_sA = sAV(1,:); % 1x16
+            model.bi_sV = sAV(2,:);
+            model.sA = sA; %1x4
+            model.sV = sA;
+            model.n_sA = numel(sA);
+            model.bi_nrep = n_rep;
+
+            addpath(genpath(fullfile(pwd, curr_model_str)));
+            curr_func = str2func(['NLL_' curr_model_str]);
+
+            model.mode = 'predict';
+            temp_data = curr_func(GT, model);
+            sim_data(mm, rr, i_sample).data = temp_data;
+            sim_data(mm, rr, i_sample).gt = GT;
+
+            %% fit fake data
+
+            model.saveR = 0;
+            model.mode = 'initiate';
+            val = curr_func([], model, []);
+            model.initVal = val;
+
+            model.mode = 'optimize';
+            llfun = @(x) curr_func(x, model, temp_data);
+            sprintf('[%s] Start parameter recover for model-%s, no. sample-%i \n', mfilename, curr_model_str , i_sample);
+
+            test = llfun([0.818359375 -6.3623046875 3.185546875 2.72705078125 13.818359375 3.642578125 0.45458984375]);
+         
+            % fit the model multiple times with different initial values
+            est_p = nan(model.n_run, val.num_param);
+            nll = nan(1, val.num_param);
+            for i  = 1:model.n_run
+                [est_p(i,:), nll(i)] = bads(llfun,...
+                    val.init(i,:), val.lb, val.ub, val.plb, val.pub);
+            end
+
+            % find the best fits across runs
+            [min_nll, best_idx] = min(nll);
+            best_p = est_p(best_idx, :);
+            fits(mm, rr, i_sample).best_p = best_p;
+            fits(mm, rr, i_sample).min_nll = min_nll;
+
+        end
+    end
+end
+
+%% save full results
+fprintf('[%s] Parameter recovery done! Saving full results.\n', mfilename);
+flnm = sprintf('param_recovery_rep%i-%i', min(reps), max(reps));
+save(fullfile(out_dir, flnm), 'sim_data','fits','pred');

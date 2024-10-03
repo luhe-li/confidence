@@ -3,7 +3,7 @@ clear; close all; rng('shuffle');
 
 %% set environment
 
-sim_d = 2;
+sim_d = 1;
 useCluster = false;
 
 % set cores

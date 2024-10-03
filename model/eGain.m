@@ -13,7 +13,7 @@ step = center_axis(2) - center_axis(1);
 idx_elbow = round(elbow/step);
 [maxGain,optRadius] = deal(NaN(n_trial, n_est));
 
-% loop by possible estimate on the axis
+% loop by possible location estimate
 for xx = 1:n_est
 
     % estimate and max confidence for each possible loctaion, same across trials

@@ -12,7 +12,7 @@ restoredefaultpath;
 [project_dir, ~]= fileparts(pwd);
 [git_dir, ~] = fileparts(project_dir);
 % addpath(genpath(fullfile(project_dir, 'data')));
-addpath(genpath(fullfile(pwd, 'bads')));
+addpath(genpath(fullfile(project_dir, 'func')));
 addpath(genpath(fullfile(git_dir, 'bads')));
 out_dir = fullfile(pwd, mfilename);
 if ~exist(outDir, 'dir'); mkdir(out_dir); end
@@ -44,7 +44,7 @@ delta_dva = rad2deg(atan(delta_cm / 2 / sitting_dist)) .* 2;
 
 %% set simulation parameters
 
-%         aA,     bA,  sigV1,   sigA,    sigP, sigConf,     pCC
+%         aA,     bA,  sigV,    sigA,    sigP, sigConf,     pCC
 GT = [     1,    0.1,     1,      10,      30,       1,     0.7];
 n_para = length(GT);
 
@@ -81,24 +81,20 @@ for fit_m = 1:numel(folders)
         muP = 0;
         fixP.sigMotor = 3; % localization noise, in cm
 
-        addpath(genpath(fullfile(project_dir, folders{fit_m})));
-        curr_func = str2func(['sim_' folders{fit_m}]);
+        curr_func = str2func(['sim_' folders{sim_d}]);
 
         [org_loc, org_conf] = curr_func(GT, fixP);
         fake_data(sim_m, i_sample).org_loc = org_loc;
         fake_data(sim_m, i_sample).org_conf = org_conf;
 
         %% fit fake data
-
-        model.saveR = 0;
         model.mode = 'initialize';
         Val = curr_func([], model, []);
         model.initVal = Val;
 
         model.mode = 'optimize';
 
-        printf('[%s] Start recover model-%s, recovery sample-%i \n', mfilename, folders{fit_m}, i_sample);
-
+        printf('[%s] Start recover model-%s, recovery sample-%i \n', mfilename, folders{sim_m}, i_sample);
 
         % model prediction
     
