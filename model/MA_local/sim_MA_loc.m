@@ -64,7 +64,6 @@ for xx = 1:numel(model.center_axis)
         + post_C2.*normpdf(model.center_axis(xx), sHat_V_C2, sqrt(1/(1/JV+1/JP)));
 end
 
-
 % optimal radius given posterior and estimate
 post_2d = reshape(post, [prod([n_sA, n_sA, 2, bi_nrep]), numel(model.center_axis)]);
 shat_1d = reshape(shat, [prod([n_sA, n_sA, 2, bi_nrep]), 1]);

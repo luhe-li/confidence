@@ -3,7 +3,7 @@ clear; close all; rng('shuffle');
 %% knobs
 
 check_fake_data = false; % check the simulated data before fitting
-n_sample = 10; % number of ground-truth samples to generate
+n_sample = 5; % number of ground-truth samples to generate
 reps = [20, 30, 50, 70, 1000]; % number of trials per codnition
 model_slc = 2;
 
@@ -48,8 +48,8 @@ sA = speaker_level(aud_level);
 sA_dva = rad2deg(atan(sA / 2 / sitting_dist)) .* 2;
 sV = sA; % assume audiovisual bias corrected
 sAV = combvec(sA, sV);
-delta_cm = unique(round(abs(sA - sV'),2));
-delta_dva = rad2deg(atan(delta_cm / 2 / sitting_dist)) .* 2;
+model.delta_cm = unique(round(abs(sA - sV'),2));
+model.delta_dva = rad2deg(atan(model.delta_cm / 2 / sitting_dist)) .* 2;
 
 %% model setup
 
@@ -81,12 +81,11 @@ GT = [     1,    0.1,     1,      10,      30,       1,     0.7];
 
 for mm = model_slc%1:numel(folders)
 
-    for rr = 1:numel(reps)
+    for rr = 1%:numel(reps)
 
         n_rep = reps(rr);
 
-        for i_sample = 1:n_sample
-
+        for i_sample = 1%:n_sample
 
             curr_model_str = folders{mm};
 
@@ -118,14 +117,15 @@ for mm = model_slc%1:numel(folders)
             llfun = @(x) curr_func(x, model, temp_data);
             sprintf('[%s] Start parameter recover for model-%s, no. sample-%i \n', mfilename, curr_model_str , i_sample);
 
-            test = llfun([0.818359375 -6.3623046875 3.185546875 2.72705078125 13.818359375 3.642578125 0.45458984375]);
+            test = llfun(GT);
          
             % fit the model multiple times with different initial values
             est_p = nan(model.n_run, val.num_param);
             nll = nan(1, val.num_param);
-            for i  = 1:model.n_run
+            parfor i  = 1:model.n_run
+                t_val = val;
                 [est_p(i,:), nll(i)] = bads(llfun,...
-                    val.init(i,:), val.lb, val.ub, val.plb, val.pub);
+                    t_val.init(i,:), t_val.lb, t_val.ub, t_val.plb, t_val.pub);
             end
 
             % find the best fits across runs
