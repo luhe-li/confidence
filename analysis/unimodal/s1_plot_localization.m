@@ -2,37 +2,37 @@ clear; clc; close all;
 
 %% set up
 
-sub = 'OY';
-save_fig = 1;
+sub = 'LL';
+save_fig = 0;
 
 %% manage path
 
 cur_dir                          = pwd;
 [project_dir, ~]                 = fileparts(fileparts(cur_dir));
-out_dir                          = fullfile(cur_dir, 's1Fig');
+out_dir                          = fullfile(cur_dir, mfilename);
 addpath(genpath(fullfile(project_dir, 'data','uniLoc')));
 if ~exist(out_dir,'dir') mkdir(out_dir); end
 
 %% clean
 
-all_ses = ['A','V'];
+all_ses = {'A','V'};
 
 for s = 1:numel(all_ses)
 
-    load(sprintf('uniLoc_sub-%s_ses-%s', sub, all_ses(s)));
+    load(sprintf('uniLoc_sub-%s_ses-%s', sub, all_ses{s}));
 
     % basic info
     nRep = ExpInfo.nRep;
     nLevel = ExpInfo.nLevel;
 
     % modality x location level x repetiton
-    loc_rep =  reshape([sortedResp(1:end).target_cm],[nLevel, nRep]); 
-    loc(s,:) = loc_rep(:,1); 
-    est(s,:,:) = reshape([sortedResp(1:end).response_cm],[nLevel, nRep]);
+    loc_rep =  reshape([sortedResp(1:end).target_cm],[nRep, nLevel]); 
+    loc(s,:) = loc_rep(1,:); 
+    est(s,:,:) = reshape([sortedResp(1:end).response_cm],[nRep, nLevel]);
 
     % estimate bias and variance
-    estMu(s,:) = mean(squeeze(est(s,:,:)), 2);
-    sdMu(s,:) = std(squeeze(est(s,:,:)), [], 2);
+    estMu(s,:) = mean(squeeze(est(s,:,:)), 1);
+    sdMu(s,:) = std(squeeze(est(s,:,:)), [], 1);
 
 end
 
@@ -55,7 +55,7 @@ end
 lw = 2;
 fontSZ = 15;
 titleSZ = 20;
-clt = [202,0,32; 5,113,176]./255; % red and blue
+clt = [5,113,176; 202,0,32]./255; % red and blue
 
 figure; hold on
 set(gca, 'LineWidth', 2, 'FontSize', 15,'TickDir', 'out')
@@ -66,21 +66,17 @@ axis equal
 
 for s = 1:numel(all_ses)
 
-
     plot(loc(s,:), loc(s,:), 'k--','LineWidth',lw)
     e = errorbar(loc(s,:), estMu(s,:), sdMu(s,:),'Color',clt(s,:),'LineWidth',lw);
-    e.CapSize = 0; e.Color = clt(2,:);
+    e.CapSize = 0; e.Color = clt(s,:);
     xlim([min(loc(s,:))-5, max(loc(s,:))+5])
     ylim([min(loc(s,:))-5, max(loc(s,:))+5])
 
 end
 
-
-plot(loc, loc,'k--','LineWidth',lw)
-e = errorbar(loc, estMu, sdMu,'LineWidth',lw);
-e.CapSize = 0; e.Color = clt(2,:);
-xlim([min(loc)-5, max(loc)+5])
-ylim([min(loc)-5, max(loc)+5])
+maxlim = 50;
+xlim([-maxlim, maxlim])
+ylim([-maxlim, maxlim])
 title(sprintf('S%i', sub))
 
 switch ses
