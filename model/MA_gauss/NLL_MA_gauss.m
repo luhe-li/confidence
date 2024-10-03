@@ -1,4 +1,4 @@
-function out = NLL_MA_local(freeParam, model, data)
+function out = NLL_MA_gauss(freeParam, model, data)
 
 switch model.mode
 
@@ -76,7 +76,7 @@ switch model.mode
 
         elseif strcmp(model.mode, 'predict')
 
-            out = sim_MA(aA, bA,  sigV, sigA, sigP, sigC, pCommon, model);
+            out = sim_MA_gauss(aA, bA,  sigV, sigA, sigP, sigC, pCommon, model);
 
         end
 
@@ -140,10 +140,10 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
         % simulate posterior pdf for each trial using center coordinate
         post = zeros([2, model.numBins_V, model.numBins_A, numel(model.center_axis)]);
         for xx = 1:numel(model.center_axis)
-            post(1,:,:,xx) = Post_C1.*norm_dst(model.center_axis(xx), shat_C1, sqrt(1/CI.constC1_shat), 0)...
-                + Post_C2.*norm_dst(model.center_axis(xx), squeeze(shat_C2(1,:,:)), sqrt(1/CI.constC2_1_shat), 0);
-            post(2,:,:,xx) = Post_C1.*norm_dst(model.center_axis(xx), shat_C1, sqrt(1/CI.constC1_shat), 0)...
-                + Post_C2.*norm_dst(model.center_axis(xx), squeeze(shat_C2(2,:,:)), sqrt(1/CI.constC2_2_shat), 0);
+            post(1,:,:,xx) = normpdf(model.center_axis(xx), squeeze(MAP_MA(1,:,:)), ...
+                Post_C1/CI.constC1_shat + Post_C2/CI.constC2_1_shat + Post_C1*Post_C2*(shat_C1 - squeeze(shat_C2(1,:,:))).^2);
+            post(2,:,:,xx) = normpdf(model.center_axis(xx), squeeze(MAP_MA(2,:,:)), ...
+                Post_C1/CI.constC1_shat + Post_C2/CI.constC2_2_shat + Post_C1*Post_C2*(shat_C1 - squeeze(shat_C2(2,:,:))).^2);
         end
 
         % optimal radius given posterior and estimate

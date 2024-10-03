@@ -1,8 +1,10 @@
-function out = sim_MA_loc(aA, bA,  sigV, sigA, sigP, sigC, pCommon, model)
+function out = sim_MA_optimal(aA, bA,  sigV, sigA, sigP, sigC, pCommon, model)
 
 bi_nrep = model.bi_nrep;
 n_sA = model.n_sA;
 muP = model.muP;
+sigMotor = model.sigMotor;
+
 % simulate measurements, which are drawn from Gaussian distributions
 % stimulus location combination x num of trial
 mA2d    = randn(size(model.bi_sA',1), bi_nrep).*sigA + repmat((model.bi_sA' * aA + bA),1, bi_nrep);
@@ -51,30 +53,28 @@ sHat_V_C2  = (mV./JV + muP/JP)./(1/JV + 1/JP);
 %two intermediate location estimates, weighted by the corresponding
 %causal structure.
 %Eq. 4 in Wozny et al., 2010
-shat(:,:,1,rel,:) = post_C1.* sHat_C1 + post_C2.* sHat_A_C2;
-shat(:,:,2,rel,:) = post_C1.* sHat_C1 + post_C2.* sHat_V_C2;
+shat(:,:,1,:) = post_C1.* sHat_C1 + post_C2.* sHat_A_C2;
+shat(:,:,2,:) = post_C1.* sHat_C1 + post_C2.* sHat_V_C2;
 
 % simulate posterior pdf for each trial using center coordinate
 for xx = 1:numel(model.center_axis)
-    post(:,:,1,rel,:,xx) = post_C1.*normpdf(model.center_axis(xx), sHat_C1, repmat(sqrt(1/(1/JA+1/JV+1/JP)), size(sHat_C1)))...
-        + post_C2.*normpdf(model.center_axis(xx), sHat_A_C2, repmat(sqrt(1/(1/JA+1/JP)), size(sHat_A_C2)));
-    post(:,:,2,rel,:,xx) = post_C1.*normpdf(model.center_axis(xx), sHat_C1, repmat(sqrt(1/(1/JA+1/JV+1/JP)), size(sHat_C1)))...
-        + post_C2.*normpdf(model.center_axis(xx), sHat_V_C2, repmat(sqrt(1/(1/JV+1/JP)), size(sHat_V_C2)));
+    post(:,:,1,:,xx) = post_C1.*normpdf(model.center_axis(xx), sHat_C1, sqrt(1/(1/JA+1/JV+1/JP)))...
+        + post_C2.*normpdf(model.center_axis(xx), sHat_A_C2, sqrt(1/(1/JA+1/JP)));
+    post(:,:,2,:,xx) = post_C1.*normpdf(model.center_axis(xx), sHat_C1, sqrt(1/(1/JA+1/JV+1/JP)))...
+        + post_C2.*normpdf(model.center_axis(xx), sHat_V_C2, sqrt(1/(1/JV+1/JP)));
 end
 
-
 % optimal radius given posterior and estimate
-post_2d = reshape(post, [prod([n_sA, n_sA, 2, 2, bi_nrep]), numel(model.center_axis)]);
-shat_1d = reshape(shat, [prod([n_sA, n_sA, 2, 2, bi_nrep]), 1]);
-[opt_radius, opt_gain, ~]= eGain_MAP(post_2d, shat_1d, model.maxScore, model.minScore, model.elbow, model.center_axis);
+post_2d = reshape(post, [prod([n_sA, n_sA, 2, bi_nrep]), numel(model.center_axis)]);
+[opt_radius, opt_gain, ~]= eGain_optimized(post_2d, model.maxScore, model.minScore, model.elbow, model.center_axis);
 
 % motor noise to location estimation
 out.bi_loc = randn(size(shat)).*sigMotor + shat;
 
 % adjustment noise to confidence radius
 bi_conf = randn(size(opt_radius)).*sigC + opt_radius;
-out.bi_conf = reshape(bi_conf, [n_sA, n_sA, 2, 2, bi_nrep]);
+out.bi_conf = reshape(bi_conf, [n_sA, n_sA, 2, bi_nrep]);
 
-out.opt_gain = reshape(opt_gain,[n_sA, n_sA, 2, 2, bi_nrep]);
+out.opt_gain = reshape(opt_gain,[n_sA, n_sA, 2, bi_nrep]);
 
 end

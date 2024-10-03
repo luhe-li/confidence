@@ -1,4 +1,4 @@
-function out = NLL_MA_local(freeParam, model, data)
+function out = NLL_MA_optimal(freeParam, model, data)
 
 switch model.mode
 
@@ -76,7 +76,7 @@ switch model.mode
 
         elseif strcmp(model.mode, 'predict')
 
-            out = sim_MA(aA, bA,  sigV, sigA, sigP, sigC, pCommon, model);
+            out = sim_MA_optimal(aA, bA,  sigV, sigA, sigP, sigC, pCommon, model);
 
         end
 
@@ -148,8 +148,7 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
 
         % optimal radius given posterior and estimate
         post_2d = reshape(post, [prod([2, model.numBins_V, model.numBins_A]), numel(model.center_axis)]);
-        shat_1d = reshape(MAP_MA, [prod([2, model.numBins_V, model.numBins_A]), 1]);
-        [opt_radius, ~, ~]= eGain_MAP(post_2d, shat_1d, model.maxScore, model.minScore, model.elbow, model.center_axis);
+        [opt_radius, ~, ~]= eGain_optimized(post_2d, model.maxScore, model.minScore, model.elbow, model.center_axis);
         opt_radius = reshape(opt_radius, [2, model.numBins_V, model.numBins_A]);
 
         %----------------------- Compute likelihood -----------------------
@@ -173,30 +172,6 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
             end
         end
 
-        % %         elseif strcmp(model.strategy_loc,'MS') %Model selection
-        %             for mm = 1:num_modality
-        %                 for kk = 1:num_rep
-        %                     % localization probability
-        %                     if Post_C1(mm,kk) > 0.5
-        %                         p_r_given_MAP = norm_dst(locResp_A_V(mm, kk),shat_C1,sigMotor,1e-20);
-        %                     else
-        %                         p_r_given_MAP = norm_dst(locResp_A_V(mm, kk),squeeze(shat_C2(mm,:,:)),sigMotor,1e-20);
-        %                     end
-        %                     % confidence probability
-        %                     if confResp_A_V(mm, kk) == 1
-        %                         p_conf_given_m = squeeze(p1_conf(mm,:,:));
-        %                     elseif confResp_A_V(mm, kk) == 2
-        %                         p_conf_given_m = squeeze(p2_conf(mm,:,:));
-        %                     elseif confResp_A_V(mm, kk) == 3
-        %                         p_conf_given_m = squeeze(p3_conf(mm,:,:));
-        %                     elseif confResp_A_V(mm, kk) == 4
-        %                         p_conf_given_m = squeeze(p4_conf(mm,:,:));
-        %                     end
-        %                     nLL_bimodal = nLL_bimodal - log(sum(sum(p_r_given_MAP.*...
-        %                         p_conf_given_m.*p_mAmV_given_sAsV)));
-        %                 end
-        %             end
-
         %----------------------- Save if requested -----------------------
         R = [];
         if model.saveR
@@ -206,13 +181,6 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
 
             %save predictions on location estimates
             R.loc(p,q,:,:,:) = MAP_MA;
-
-            %             elseif strcmp(model.strategy_loc,'MS')
-            %                 for mm = 1:length(model.modality)
-            %                     R.loc(p,q,mm,:,:) = shat_C1;
-            %                     R.loc(p,q,mm,Post_C1 < 0.5) = squeeze(shat_C2(mm,Post_C1 < 0.5));
-            %                 end
-            %             end
 
             %save predictions on confidence radius
             R.conf(p,q,:,:,:) = opt_radius;

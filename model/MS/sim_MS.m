@@ -1,4 +1,4 @@
-function out = sim_MA_loc(aA, bA,  sigV, sigA, sigP, sigC, pCommon, model)
+function out = sim_MS(aA, bA,  sigV, sigA, sigP, sigC, pCommon, model)
 
 bi_nrep = model.bi_nrep;
 n_sA = model.n_sA;
@@ -33,8 +33,6 @@ L_C2  = 1/(2*pi*sqrt(constA*constV)).*exp(-0.5.*(mA - muP).^2./constA +...
 %calculate posterior of a common cause and separate causes
 %Eq. 2 in Körding et al., 2007
 post_C1    = pCommon.*L_C1./(pCommon.*L_C1 + (1-pCommon).*L_C2);
-%posterior of separate causes
-post_C2    = 1 - post_C1;
 
 %compute the two intermediate location estimates
 %An integrated intermediate estimate is the sum of mA, mV and muP with
@@ -48,20 +46,25 @@ sHat_C1    = (mA./JA + mV./JV + muP/JP)./(1/JV + 1/JA + 1/JP);
 sHat_A_C2  = (mA./JA + muP/JP)./(1/JA + 1/JP);
 sHat_V_C2  = (mV./JV + muP/JP)./(1/JV + 1/JP);
 
-%compute the final location estimates if we assume model averaging.
-%Based on this strategy, the final location estimate is the sum of the
-%two intermediate location estimates, weighted by the corresponding
-%causal structure.
-%Eq. 4 in Wozny et al., 2010
-shat(:,:,1,:) = post_C1.* sHat_C1 + post_C2.* sHat_A_C2;
-shat(:,:,2,:) = post_C1.* sHat_C1 + post_C2.* sHat_V_C2;
+% initiate all responses from intermediate posterior of a common cause
+[sd_A, sd_V] = deal(repmat(sqrt(1/(1/JA+1/JV+1/JP)), [size(post_C1)]));
+[shat_A, shat_V] = deal(sHat_C1);
+
+% select the intermediate posterior of separate causes only if post_c1<=0.5
+slc_indices = (post_C1 <= 0.5);
+sd_A(slc_indices) = sqrt(1/(1/JA+1/JP));
+sd_V(slc_indices) = sqrt(1/(1/JV+1/JP));
+shat_A(slc_indices) = sHat_A_C2(slc_indices);
+shat_V(slc_indices) = sHat_V_C2(slc_indices);
+
+% combine auditory and visual response
+shat(:,:,1,:) = shat_A;
+shat(:,:,2,:) = shat_V;
 
 % simulate posterior pdf for each trial using center coordinate
-for xx = 1:numel(model.center_axis)
-    post(:,:,1,:,xx) = post_C1.*normpdf(model.center_axis(xx), sHat_C1, sqrt(1/(1/JA+1/JV+1/JP)))...
-        + post_C2.*normpdf(model.center_axis(xx), sHat_A_C2, sqrt(1/(1/JA+1/JP)));
-    post(:,:,2,:,xx) = post_C1.*normpdf(model.center_axis(xx), sHat_C1, sqrt(1/(1/JA+1/JV+1/JP)))...
-        + post_C2.*normpdf(model.center_axis(xx), sHat_V_C2, sqrt(1/(1/JV+1/JP)));
+for xx = 1:numel(fixP.center_axis)
+    post(:,:,1,:,xx) = normpdf(fixP.center_axis(xx), shat_A, sd_A);
+    post(:,:,2,:,xx) = normpdf(fixP.center_axis(xx), shat_V, sd_V);
 end
 
 % optimal radius given posterior and estimate
@@ -75,7 +78,6 @@ out.bi_loc = randn(size(shat)).*sigMotor + shat;
 % adjustment noise to confidence radius
 bi_conf = randn(size(opt_radius)).*sigC + opt_radius;
 out.bi_conf = reshape(bi_conf, [n_sA, n_sA, 2, bi_nrep]);
-
 out.opt_gain = reshape(opt_gain,[n_sA, n_sA, 2, bi_nrep]);
 
 end

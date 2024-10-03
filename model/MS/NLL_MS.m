@@ -1,4 +1,4 @@
-function out = NLL_MA_local(freeParam, model, data)
+function out = NLL_MS(freeParam, model, data)
 
 switch model.mode
 
@@ -76,14 +76,11 @@ switch model.mode
 
         elseif strcmp(model.mode, 'predict')
 
-            out = sim_MA(aA, bA,  sigV, sigA, sigP, sigC, pCommon, model);
+            out = sim_MS(aA, bA,  sigV, sigA, sigP, sigC, pCommon, model);
 
         end
-
 end
-
 end
-
 
 function [nLL_bimodal, R] = calculateNLL_bimodal(...
     aA, bA, sigA, sigV, sigC, pCommon, ...
@@ -122,28 +119,34 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
         %calculate the likelihood and the posterior of a common cause and
         %separate causes L(C=1|x1=mA, x2=mV) and L(C=2|x1=mA, x2=mV)
         %size of Post_C1 (#rows x #cols): length(x2_grid) x length(x1_grid)
-        [Post_C1, Post_C2, ~, ~]= calculatePostC1C2(GRID_X1, GRID_X2, CI, mu_P, pCommon);
+        %(V x A)
+        [Post_C1, ~, ~, ~]= calculatePostC1C2(GRID_X1, GRID_X2, CI, mu_P, pCommon);
 
         %calculate the shat_{C=1}, shat_{C=2} and MAP estimates assuming
         %model averaging
-        shat_C1           = (GRID_X1./CI.J_A + GRID_X2./CI.J_V + ...
+        shat_C1   = (GRID_X1./CI.J_A + GRID_X2./CI.J_V + ...
             mu_P./CI.J_P)./CI.constC1_shat;
-        [shat_C2, MAP_MA] = deal(NaN(length(model.modality), model.numBins_V,...
-            model.numBins_A));
-        shat_C2(1,:,:) = (GRID_X1./CI.J_A + mu_P/CI.J_P)./CI.constC2_1_shat;
-        shat_C2(2,:,:) = (GRID_X2./CI.J_V + mu_P/CI.J_P)./CI.constC2_2_shat;
-        MAP_MA(1,:,:)  = shat_C1.*Post_C1 + squeeze(shat_C2(1,:,:)).*Post_C2;
-        MAP_MA(2,:,:)  = shat_C1.*Post_C1 + squeeze(shat_C2(2,:,:)).*Post_C2;
+        shat_A_C2 = (GRID_X1./CI.J_A + mu_P/CI.J_P)./CI.constC2_1_shat;
+        shat_V_C2 = (GRID_X2./CI.J_V + mu_P/CI.J_P)./CI.constC2_2_shat;
+
+        % initiate all responses from intermediate posterior of a common cause
+        [sd_A, sd_V] = deal(repmat(sqrt(1/(1/JA+1/JV+1/JP)), [size(Post_C1)]));
+        [shat_A, shat_V] = deal(shat_C1);
+
+        % select the intermediate posterior of separate causes only if post_c1<=0.5
+        slc_indices = (post_C1 <= 0.5);
+        sd_A(slc_indices) = sqrt(1/CI.constC2_1_shat);
+        sd_V(slc_indices) = sqrt(1/CI.constC2_2_shat);
+        shat_A(slc_indices) = shat_A_C2(slc_indices);
+        shat_V(slc_indices) = shat_V_C2(slc_indices);
 
         %--------------------- Confidence radius --------------------------
 
         % simulate posterior pdf for each trial using center coordinate
         post = zeros([2, model.numBins_V, model.numBins_A, numel(model.center_axis)]);
-        for xx = 1:numel(model.center_axis)
-            post(1,:,:,xx) = Post_C1.*norm_dst(model.center_axis(xx), shat_C1, sqrt(1/CI.constC1_shat), 0)...
-                + Post_C2.*norm_dst(model.center_axis(xx), squeeze(shat_C2(1,:,:)), sqrt(1/CI.constC2_1_shat), 0);
-            post(2,:,:,xx) = Post_C1.*norm_dst(model.center_axis(xx), shat_C1, sqrt(1/CI.constC1_shat), 0)...
-                + Post_C2.*norm_dst(model.center_axis(xx), squeeze(shat_C2(2,:,:)), sqrt(1/CI.constC2_2_shat), 0);
+        for xx = 1:numel(fixP.center_axis)
+            post(1,:,:,xx) = normpdf(fixP.center_axis(xx), shat_A, sd_A);
+            post(2,:,:,xx) = normpdf(fixP.center_axis(xx), shat_V, sd_V);
         end
 
         % optimal radius given posterior and estimate
@@ -164,8 +167,12 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
         for mm = 1:num_modality
             for kk = 1:num_rep
                 % localization probability
-                p_r_given_MAP = norm_dst(locResp_A_V(mm, kk), squeeze(MAP_MA(mm,:,:)),...
-                    sigMotor,realmin);
+                if mm == 1
+                    p_r_given_MAP = norm_dst(locResp_A_V(mm, kk),shat_A, sigMotor, realmin);
+                else
+                    p_r_given_MAP = norm_dst(locResp_A_V(mm, kk),shat_V, sigMotor, realmin);
+                end
+                % confidence radius probability
                 p_conf_given_m = norm_dst(confResp_A_V(mm, kk), squeeze(opt_radius(mm,:,:)),...
                     sigC, realmin);
                 nLL_bimodal = nLL_bimodal - log(sum(sum(p_r_given_MAP.*...
@@ -173,52 +180,20 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
             end
         end
 
-        % %         elseif strcmp(model.strategy_loc,'MS') %Model selection
-        %             for mm = 1:num_modality
-        %                 for kk = 1:num_rep
-        %                     % localization probability
-        %                     if Post_C1(mm,kk) > 0.5
-        %                         p_r_given_MAP = norm_dst(locResp_A_V(mm, kk),shat_C1,sigMotor,1e-20);
-        %                     else
-        %                         p_r_given_MAP = norm_dst(locResp_A_V(mm, kk),squeeze(shat_C2(mm,:,:)),sigMotor,1e-20);
-        %                     end
-        %                     % confidence probability
-        %                     if confResp_A_V(mm, kk) == 1
-        %                         p_conf_given_m = squeeze(p1_conf(mm,:,:));
-        %                     elseif confResp_A_V(mm, kk) == 2
-        %                         p_conf_given_m = squeeze(p2_conf(mm,:,:));
-        %                     elseif confResp_A_V(mm, kk) == 3
-        %                         p_conf_given_m = squeeze(p3_conf(mm,:,:));
-        %                     elseif confResp_A_V(mm, kk) == 4
-        %                         p_conf_given_m = squeeze(p4_conf(mm,:,:));
-        %                     end
-        %                     nLL_bimodal = nLL_bimodal - log(sum(sum(p_r_given_MAP.*...
-        %                         p_conf_given_m.*p_mAmV_given_sAsV)));
-        %                 end
-        %             end
-
         %----------------------- Save if requested -----------------------
         R = [];
         if model.saveR
-
             %save the joint likelihood
             R.p_mAmV_given_sAsV(p,q,:,:) = p_mAmV_given_sAsV;
 
             %save predictions on location estimates
-            R.loc(p,q,:,:,:) = MAP_MA;
-
-            %             elseif strcmp(model.strategy_loc,'MS')
-            %                 for mm = 1:length(model.modality)
-            %                     R.loc(p,q,mm,:,:) = shat_C1;
-            %                     R.loc(p,q,mm,Post_C1 < 0.5) = squeeze(shat_C2(mm,Post_C1 < 0.5));
-            %                 end
-            %             end
+            R.loc(p,q,1,:,:) = shat_A;
+            R.loc(p,q,2,:,:) = shat_V;
 
             %save predictions on confidence radius
             R.conf(p,q,:,:,:) = opt_radius;
 
         end
-
     end
 end
 end

@@ -4,8 +4,7 @@ clear; close all; rng('shuffle');
 
 check_fake_data = false; % check the simulated data before fitting
 n_sample = 5; % number of ground-truth samples to generate
-reps = [20, 30, 50, 70, 1000]; % number of trials per codnition
-model_slc = 2;
+reps = [20, 30, 50, 70, 500]; % number of trials per codnition
 
 %% model info
 
@@ -14,6 +13,35 @@ specifications = {'MA, full posterior, global','MA, full posterior, local','MA, 
 folders = {'MA_optimal', 'MA_local', 'MA_gauss', 'MS','PM'};
 numbers = (1:numel(specifications))';
 model_info = table(numbers, specifications', folders', 'VariableNames', {'Number', 'Specification', 'FolderName'});
+
+%% set environment
+
+if ~exist('useCluster', 'var') || isempty(useCluster)
+    useCluster= false;
+end
+
+% job = model
+switch useCluster
+    case true
+        if ~exist('numCores', 'var') || isempty(numCores)
+            numCores  = maxNumCompThreads;
+        end
+        hpc_job_number = str2double(getenv('SLURM_ARRAY_TASK_ID'));
+        if isnan(hpc_job_number), error('Problem with array assigment'); end
+        fprintf('Job number: %i \n', hpc_job_number);
+        model_slc  = sub_slc(hpc_job_number);
+
+        % make sure Matlab does not exceed this
+        fprintf('Number of cores: %i  \n', numCores);
+        maxNumCompThreads(numCores);
+        if isempty(gcp('nocreate'))
+            parpool(numCores-1);
+        end
+
+    case false
+        % for local debug
+        numCores = feature('numcores');
+end
 
 %% manege path
 
@@ -60,8 +88,8 @@ model.minScore = 0.01;
 model.elbow = screen_cm/4; % point goes to 0.01 when confidence range is 1/4 of screen
 model.dropRate = (model.maxScore - model.minScore)/model.elbow;
 model.center_axis = linspace(-screen_cm/2, screen_cm/2, 1e3);
-model.n_run = 3; % number of initiation
-model.num_SD          = 5;
+model.n_run = 1;%3; % number of initiation
+model.num_SD = 5;
 model.numBins_A       = 15;
 model.numBins_V       = 15;
 model.modality = 2;
@@ -77,15 +105,17 @@ n_cue = numel(cue_label);
 %% set simulation parameterss
 
 %         aA,     bA,  sigV1,   sigA,    sigP, sigConf,     pCC
-GT = [     1,    0.1,     1,      10,      30,       1,     0.7];
+GT = [     1,    0.1,     1,      10,      10,       1,     0.7];
+OPTIONS.TolMesh = 1e-5;
+flnm = sprintf('%s-rep%i-%i', curr_model_str, min(reps), max(reps));
 
 for mm = model_slc%1:numel(folders)
 
-    for rr = 1%:numel(reps)
+    for rr = 1:numel(reps)
 
         n_rep = reps(rr);
 
-        for i_sample = 1%:n_sample
+        for i_sample = 1:n_sample
 
             curr_model_str = folders{mm};
 
@@ -125,7 +155,7 @@ for mm = model_slc%1:numel(folders)
             parfor i  = 1:model.n_run
                 t_val = val;
                 [est_p(i,:), nll(i)] = bads(llfun,...
-                    t_val.init(i,:), t_val.lb, t_val.ub, t_val.plb, t_val.pub);
+                    t_val.init(i,:), t_val.lb, t_val.ub, t_val.plb, t_val.pub,[],OPTIONS);
             end
 
             % find the best fits across runs
@@ -134,11 +164,13 @@ for mm = model_slc%1:numel(folders)
             fits(mm, rr, i_sample).best_p = best_p;
             fits(mm, rr, i_sample).min_nll = min_nll;
 
+            % save partial results
+            save(fullfile(out_dir, flnm), 'sim_data','fits');
+
         end
     end
 end
 
 %% save full results
 fprintf('[%s] Parameter recovery done! Saving full results.\n', mfilename);
-flnm = sprintf('param_recovery_rep%i-%i', min(reps), max(reps));
-save(fullfile(out_dir, flnm), 'sim_data','fits','pred');
+save(fullfile(out_dir, flnm), 'sim_data','fits');
