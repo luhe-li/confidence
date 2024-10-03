@@ -120,12 +120,16 @@ Resp.conf_radius_cm  = Resp.conf_radius_pixel/ScreenInfo.numPixels_perCM;
 % ITI
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
     [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
-if ~rem(i,3) || ExpInfo.practice == 2 % every three trials give feedback, if not practice
+if ~rem(i,3) && ~ismember(i-1, ExpInfo.breakTrials) && ~ismember(i-2, ExpInfo.breakTrials) % every 3 trials give feedback
     Screen('TextSize',windowPtr,25);
     DrawFormattedText(windowPtr, ['Score of the last trial: ' num2str(round(potentialPoint * potentialEnclosed,2))], 'center', 'center', ...
         [255 255 255],[], [], [], [], [], ...
         [ScreenInfo.xmid-20,yLoc-3,ScreenInfo.xmid+20,yLoc+3]);
+    Screen('Flip',windowPtr);
+    WaitSecs(ExpInfo.tFeedback);
 end
+Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
+    [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
 Screen('Flip',windowPtr);
 WaitSecs(ExpInfo.tITI);
 

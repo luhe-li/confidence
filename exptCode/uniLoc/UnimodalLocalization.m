@@ -14,7 +14,7 @@ end
  switch ExpInfo.practice
      case 0
          outFileName = sprintf('uniLoc_sub-%s_ses-%s', ExpInfo.subjInit, ExpInfo.session);
-         ExpInfo.nRep = 20; % number of trial per condition level
+         ExpInfo.nRep = 10; % number of trial per condition level
          ExpInfo.numBlocks = 4;
      case 1
          outFileName = sprintf('uniLoc_practice_sub-%s_ses-%s', ExpInfo.subjInit, ExpInfo.session);
@@ -40,7 +40,7 @@ if exist(fullfile(outDir, [outFileName '.mat']), 'file')
 end
 
 if strcmp(ExpInfo.session, 'A')
-    if exist('Arduino','var') == 1
+    if exist('Arduino','var')
         fclose(Arduino);
     end
     Arduino = serial('/dev/cu.usbmodem14301','BaudRate',115200); % make sure this value matches with the baudrate in the arduino code
@@ -141,6 +141,7 @@ ExpInfo.tBlank1 = 0.2;
 ExpInfo.tStimFrame = 2;
 ExpInfo.tStim = ExpInfo.tStimFrame * ScreenInfo.ifi;
 ExpInfo.tIFI = ScreenInfo.ifi;
+ExpInfo.tFeedback = 0.8;
 ExpInfo.tITI = 0.3;
 
 % dial setup
@@ -211,7 +212,7 @@ VSinfo.blackScreen         = VSinfo.grey_texture;
 
 %% Run the experiment
 
-instruction = ['In the following session, you will be presented \nan auditory or visual stimulus on each trial.','\nAfter the presentation, please use the cursor \nto locate the center of the sound source \n or the center of the bubbles.','\nUse the dial to adjust the net length, and press down the dial to confirm.','\nPress any key to start the unimodal localization task.'];
+instruction = ['In the following session, you will be presented \nan auditory or visual stimulus on each trial.','\nAfter the presentation, please use the cursor \nto locate the center of the sound source \n or the center of the bubbles.','\nUse the dial to gain points, and click left to confirm.','\nPress any key to start the unimodal localization task.'];
 
 %start the experiment
 c                   = clock;
@@ -269,7 +270,9 @@ end
 %% Save sorted data and end the experiment
 c  = clock;
 ExpInfo.finish  = sprintf('%04d/%02d/%02d_%02d:%02d:%02d',c(1),c(2),c(3),c(4),c(5),ceil(c(6)));
-fclose(Arduino);
+if exist('Arduino','var')
+    fclose(Arduino);
+end
 
 % sort trials by location level
 [~, temp_idx] = sort([Resp(1:end).target_idx]);
@@ -278,11 +281,12 @@ save(fullfile(outDir,outFileName),'Resp','sortedResp','ExpInfo','ScreenInfo','VS
 
 %% display leaderoard
 
-if  ExpInfo.practice == 1
+if  ExpInfo.practice == 0
     leaderboardText = updateLeaderboardUnimodal(outDir, ExpInfo, Resp);
 else
     leaderboardText = 'This is the end of this session. Thank you!';
 end
+Screen('TextSize',windowPtr,25);
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
     [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
 DrawFormattedText(windowPtr, leaderboardText,...
