@@ -156,12 +156,11 @@ for mm = model_slc%1:numel(folders)
             test = llfun(GT);
 
             % fit the model multiple times with different initial values
-            est_p = nan(model.n_run, val.num_param);
+            est_p = nan(t_model.n_run, val.num_param);
             nll = nan(1, val.num_param);
-            for i  = 1:model.n_run
-                t_val = val;
+            for i  = 1:t_model.n_run
                 [est_p(i,:), nll(i)] = bads(llfun,...
-                    t_val.init(i,:), t_val.lb, t_val.ub, t_val.plb, t_val.pub,[],OPTIONS);
+                    val.init(i,:), val.lb, val.ub, val.plb, val.pub,[],OPTIONS);
             end
 
             % find the best fits across runs

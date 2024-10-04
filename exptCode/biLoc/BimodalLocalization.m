@@ -1,6 +1,4 @@
 
-%%
-
 %% Enter experiment info
 clear; close all;  rng('Shuffle');
 
@@ -16,8 +14,8 @@ end
  switch ExpInfo.practice
      case 0
          outFileName = sprintf('biLoc_sub-%s_ses-%s', ExpInfo.subjInit, ExpInfo.session);
-         ExpInfo.nRep = 30; % number of trial per condition level
-         ExpInfo.numBlocks = 4;
+         ExpInfo.nRep = 20; % number of trial per condition level
+         ExpInfo.numBlocks = 10;
      case 1
          outFileName = sprintf('biLoc_practice_sub-%s_ses-%s', ExpInfo.subjInit, ExpInfo.session);
          ExpInfo.nRep = 2; % number of trial per condition level
@@ -218,7 +216,7 @@ VSinfo.blackScreen         = VSinfo.grey_texture;
 
 %% Run the experiment
 
-instruction = ['In the following session, you will be presented \nan an audiovisual stimulus pair on each trial.','\nAfter the presentation, please use the cursor \nto locate the center of the sound source \n or the center of the bubbles.','\nUse the dial to gain points, and click left to confirm.','\nPress any key to start the unimodal localization task.'];
+instruction = ['In the following session, you will be presented \nan an audiovisual stimulus pair on each trial.','\nAfter the presentation, please use the cursor \nto locate the center of the sound source \n or the center of the bubbles.','\nUse the dial to gain points, and click left to confirm.','\nPress any key to start the bimodal localization task.'];
 
 %start the experiment
 c                   = clock;
@@ -274,8 +272,16 @@ if exist('Arduino','var')
 end
 
 % sort trials by location level
-[~, temp_idx] = sort([Resp(1:end).target_idx]);
-sortedResp = Resp(temp_idx);
+sortMatrix = [Resp.post_cue(:), Resp.target_idx(:)];
+
+% Get the sorting indices
+[~, order] = sortrows(sortMatrix, [1, 2]);
+
+% Reorder all fields in Resp according to the sorting order
+fields = fieldnames(Resp);
+for i = 1:numel(fields)
+    sortedResp.(fields{i}) = Resp.(fields{i})(order);
+end
 save(fullfile(outDir,outFileName),'Resp','sortedResp','ExpInfo','ScreenInfo','VSinfo','AudInfo');
 
 %% display leaderoard
@@ -289,7 +295,7 @@ Screen('TextSize',windowPtr,25);
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
     [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
 DrawFormattedText(windowPtr, leaderboardText,...
-    'center',ScreenInfo.yaxis-ScreenInfo.liftingYaxis,[255 255 255]);
+    'center',ScreenInfo.yaxis-400,[255 255 255]);
 Screen('Flip',windowPtr);
 KbWait(-3);
 ShowCursor;
