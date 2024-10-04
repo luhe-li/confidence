@@ -3,7 +3,7 @@ clear; close all; rng('shuffle');
 %% knobs
 
 n_sample = 100; % number of ground-truth samples to generate
-n_run = 3;
+n_run = 5;
 reps = [20, 30, 50, 70, 500]; % number of trials per codnition
 useCluster = true;
 check_fake_data = false; % check the simulated data before fitting
@@ -109,7 +109,7 @@ model.n_cue = numel(model.cue_label);
 
 %         aA,     bA,  sigV1,   sigA,    sigP, sigConf,     pCC
 GT = [     1,    0.1,     1,      10,      10,       1,     0.7];
-OPTIONS.TolMesh = 1e-4;
+OPTIONS.TolMesh = 1e-5;
 
 for mm = model_slc%1:numel(folders)
 
@@ -131,30 +131,31 @@ for mm = model_slc%1:numel(folders)
         addpath(genpath(fullfile(pwd, curr_model_str)));
         curr_func = str2func(['NLL_' curr_model_str]);
 
+
         parfor i_sample = 1:n_sample            
             
+
             %% simulate fake data
 
-            t_curr_func = curr_func;
-            t_model = model;
-            t_model.mode = 'predict';
-            t_data = t_curr_func(GT, t_model);
-            sim_data(mm, rr, i_sample).data = t_data;
+            temp_curr_func = curr_func;
+            model.mode = 'predict';
+            temp_data = temp_curr_func(GT, model);
+            sim_data(mm, rr, i_sample).data = temp_data;
             sim_data(mm, rr, i_sample).gt = GT;
 
             %% fit fake data
 
-            t_model.saveR = 0;
-            t_model.mode = 'initiate';
-            val = t_curr_func([], t_model, []);
-            t_model.initVal = val;
+            model.saveR = 0;
+            model.mode = 'initiate';
+            val = temp_curr_func([], model, []);
+            model.initVal = val;
 
-            t_model.mode = 'optimize';
-            llfun = @(x) t_curr_func(x, t_model, t_data);
+            model.mode = 'optimize';
+            llfun = @(x) temp_curr_func(x, model, temp_data);
             fprintf('[%s] Start parameter recover for model-%s, no. sample-%i \n', mfilename, curr_model_str , i_sample);
 
             test = llfun(GT);
-
+         
             % fit the model multiple times with different initial values
             est_p = nan(model.n_run, val.num_param);
             nll = nan(1, val.num_param);
@@ -167,9 +168,7 @@ for mm = model_slc%1:numel(folders)
             % find the best fits across runs
             [min_nll, best_idx] = min(nll);
             best_p = est_p(best_idx, :);
-            fits(mm, rr, i_sample).est_p = est_p;
             fits(mm, rr, i_sample).best_p = best_p;
-            fits(mm, rr, i_sample).nll = nll;
             fits(mm, rr, i_sample).min_nll = min_nll;
 
         end
@@ -181,6 +180,5 @@ for mm = model_slc%1:numel(folders)
 end
 
 %% save full results
-
 fprintf('[%s] Parameter recovery done! Saving full results.\n', mfilename);
 save(fullfile(out_dir, flnm), 'sim_data','fits');

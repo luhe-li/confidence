@@ -130,23 +130,25 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
         shat_V_C2 = (GRID_X2./CI.J_V + mu_P/CI.J_P)./CI.constC2_2_shat;
 
         % initiate all responses from intermediate posterior of a common cause
-        [sd_A, sd_V] = deal(repmat(sqrt(1/(1/JA+1/JV+1/JP)), [size(Post_C1)]));
+        [sd_A, sd_V] = deal(repmat(sqrt(1/CI.constC1_shat), [size(Post_C1)]));
         [shat_A, shat_V] = deal(shat_C1);
 
         % select the intermediate posterior of separate causes only if post_c1<=0.5
-        slc_indices = (post_C1 <= 0.5);
+        slc_indices = (Post_C1 <= 0.5);
         sd_A(slc_indices) = sqrt(1/CI.constC2_1_shat);
         sd_V(slc_indices) = sqrt(1/CI.constC2_2_shat);
         shat_A(slc_indices) = shat_A_C2(slc_indices);
         shat_V(slc_indices) = shat_V_C2(slc_indices);
+        MAP_MA(1,:,:) = shat_A;
+        MAP_MA(2,:,:) = shat_V;
 
         %--------------------- Confidence radius --------------------------
 
         % simulate posterior pdf for each trial using center coordinate
         post = zeros([2, model.numBins_V, model.numBins_A, numel(model.center_axis)]);
-        for xx = 1:numel(fixP.center_axis)
-            post(1,:,:,xx) = normpdf(fixP.center_axis(xx), shat_A, sd_A);
-            post(2,:,:,xx) = normpdf(fixP.center_axis(xx), shat_V, sd_V);
+        for xx = 1:numel(model.center_axis)
+            post(1,:,:,xx) = normpdf(model.center_axis(xx), shat_A, sd_A);
+            post(2,:,:,xx) = normpdf(model.center_axis(xx), shat_V, sd_V);
         end
 
         % optimal radius given posterior and estimate

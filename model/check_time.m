@@ -2,10 +2,10 @@ clear; close all; rng('shuffle');
 
 %% knobs
 
-n_sample = 100; % number of ground-truth samples to generate
-n_run = 3;
-reps = [20, 30, 50, 70, 500]; % number of trials per codnition
-useCluster = true;
+n_sample = 1; % number of ground-truth samples to generate
+n_run = 1;
+n_rep = 30; % number of trials per condition
+useCluster = false;
 check_fake_data = false; % check the simulated data before fitting
 
 %% model info
@@ -46,7 +46,7 @@ switch useCluster
         model_slc = 5;
 end
 
-%% manege path
+%% manage path
 
 restoredefaultpath;
 [project_dir, ~]= fileparts(pwd);
@@ -105,38 +105,36 @@ model.muP = 0;
 model.cue_label = {'Auditory post-cue','Visual post-cue'};
 model.n_cue = numel(model.cue_label);
 
-%% set simulation parameterss
+%% set simulation parameters
 
 %         aA,     bA,  sigV1,   sigA,    sigP, sigConf,     pCC
 GT = [     1,    0.1,     1,      10,      10,       1,     0.7];
 OPTIONS.TolMesh = 1e-4;
 
-for mm = model_slc%1:numel(folders)
+time_results = zeros(numel(folders), 1);
+sim_data = struct();
+fits = struct();
 
-    curr_model_str = folders{mm};
-    flnm = sprintf('%s-rep%i-%i', curr_model_str, min(reps), max(reps));
+parfor mm = 1:numel(folders)
+    t_sAV = sAV;
+    t_model = model;
+    t_model.bi_sA = t_sAV(1,:); % 1x16
+    t_model.bi_sV = t_sAV(2,:);
+    t_model.sA = sA; %1x4
+    t_model.sV = sA;
+    t_model.n_sA = numel(sA);
+    t_model.bi_nrep = n_rep;
 
-    
-    for rr = 1:numel(reps)
+    addpath(genpath(fullfile(pwd, folders{mm})));
+    curr_func = str2func(['NLL_' folders{mm}]);
 
-        n_rep = reps(rr);
-        t_sAV = sAV;
-        model.bi_sA = t_sAV(1,:); % 1x16
-        model.bi_sV = t_sAV(2,:);
-        model.sA = sA; %1x4
-        model.sV = sA;
-        model.n_sA = numel(sA);
-        model.bi_nrep = n_rep;
-
-        addpath(genpath(fullfile(pwd, curr_model_str)));
-        curr_func = str2func(['NLL_' curr_model_str]);
-
-        parfor i_sample = 1:n_sample            
+    for rr = 1
+        for i_sample = 1:n_sample
+            tic; % Start timing
             
             %% simulate fake data
 
             t_curr_func = curr_func;
-            t_model = model;
             t_model.mode = 'predict';
             t_data = t_curr_func(GT, t_model);
             sim_data(mm, rr, i_sample).data = t_data;
@@ -151,7 +149,7 @@ for mm = model_slc%1:numel(folders)
 
             t_model.mode = 'optimize';
             llfun = @(x) t_curr_func(x, t_model, t_data);
-            fprintf('[%s] Start parameter recover for model-%s, no. sample-%i \n', mfilename, curr_model_str , i_sample);
+            fprintf('[%s] Start parameter recover for model-%s, no. sample-%i \n', mfilename, folders{mm}, i_sample);
 
             test = llfun(GT);
 
@@ -172,15 +170,18 @@ for mm = model_slc%1:numel(folders)
             fits(mm, rr, i_sample).nll = nll;
             fits(mm, rr, i_sample).min_nll = min_nll;
 
+            time_results(mm) = toc; % End timing and store result
         end
-        
-        % save partial results
-        save(fullfile(out_dir, flnm), 'sim_data','fits');
-
     end
 end
 
 %% save full results
 
-fprintf('[%s] Parameter recovery done! Saving full results.\n', mfilename);
-save(fullfile(out_dir, flnm), 'sim_data','fits');
+fprintf('[%s] Timing check done! Saving full results.\n', mfilename);
+flnm = sprintf('%s-rep%i-%i', curr_model_str, n_rep, n_rep);
+save(fullfile(out_dir, flnm), 'sim_data','fits', 'time_results');
+
+% Display timing results
+for mm = 1:numel(folders)
+    fprintf('Model %s took %.2f seconds to fit.\n', folders{mm}, time_results(mm));
+end

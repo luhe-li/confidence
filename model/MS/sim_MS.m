@@ -62,9 +62,9 @@ shat(:,:,1,:) = shat_A;
 shat(:,:,2,:) = shat_V;
 
 % simulate posterior pdf for each trial using center coordinate
-for xx = 1:numel(fixP.center_axis)
-    post(:,:,1,:,xx) = normpdf(fixP.center_axis(xx), shat_A, sd_A);
-    post(:,:,2,:,xx) = normpdf(fixP.center_axis(xx), shat_V, sd_V);
+for xx = 1:numel(model.center_axis)
+    post(:,:,1,:,xx) = normpdf(model.center_axis(xx), shat_A, sd_A);
+    post(:,:,2,:,xx) = normpdf(model.center_axis(xx), shat_V, sd_V);
 end
 
 % optimal radius given posterior and estimate
