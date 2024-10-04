@@ -43,7 +43,7 @@ if isempty(idx)
     
     % Load data and compute coefficients
     [Resp_dir, ~] = fileparts(fileparts(out_dir));
-    addpath(genpath(fullfile(Resp_dir, 'Resp','uniloc')));
+    addpath(genpath(fullfile(Resp_dir, 'data','uniloc')));
     load(sprintf('uniLoc_sub-%s_ses-%s', subjIni,'A'));
     
     % Compute coefficient for degrees
