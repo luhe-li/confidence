@@ -2,26 +2,22 @@
 %% Enter experiment info
 clear; close all;  rng('Shuffle');
 
-% ExpInfo.subjInit = [];
-% while isempty(ExpInfo.subjInit) == 1
-%     try ExpInfo.subjInit = input('Participant Initial:','s') ;
-%         ExpInfo.session = input('Session:# ','s');
-%         ExpInfo.practice  = input('Main expt: 0; Practice: 1:# ');
-%     catch
-%     end
-% end
-
-ExpInfo.subjInit = 'LL';
-ExpInfo.session = 1;
-ExpInfo.practice = 0;
+ExpInfo.subjInit = [];
+while isempty(ExpInfo.subjInit) == 1
+    try ExpInfo.subjInit = input('Participant Initial:','s') ;
+        ExpInfo.session = input('Session:# ','s');
+        ExpInfo.practice  = input('Main expt: 0; Practice: 1:# ');
+    catch
+    end
+end
 
 switch ExpInfo.practice
     case 0
-        outFileName = sprintf('biLoc_sub-%s_ses-%s', ExpInfo.subjInit, ExpInfo.session);
-        ExpInfo.nRep = 20; % number of trial per condition level
+        outFileName = sprintf('biLoc_sub-%s_ses-%i', ExpInfo.subjInit, ExpInfo.session);
+        ExpInfo.nRep = 18; % number of trial per condition level
         ExpInfo.numBlocks = 10;
     case 1
-        outFileName = sprintf('biLoc_practice_sub-%s_ses-%s', ExpInfo.subjInit, ExpInfo.session);
+        outFileName = sprintf('biLoc_practice_sub-%s_ses-%i', ExpInfo.subjInit, ExpInfo.session);
         ExpInfo.nRep = 1; % number of trial per condition level
         ExpInfo.numBlocks = 2;
 end
@@ -118,10 +114,10 @@ ExpInfo.randAudVA     = rad2deg(atan(ExpInfo.randAudCM/ExpInfo.sittingDistance))
 ExpInfo.randAudPixel  = ExpInfo.randAudCM .* ScreenInfo.numPixels_perCM;
 
 % convert visual locations from index to perceptually matching pixel
-[coeff_va_a, coeff_va_b] = transfer_AV_bias(outDir, ExpInfo.subjInit);
+[coeff_px_a, coeff_px_b] = transfer_AV_bias(outDir, ExpInfo.subjInit);
 ExpInfo.randVisIdx    = ExpInfo.randAVIdx(2,:);
 ExpInfo.org_randVisPixel= ExpInfo.speakerLocCM(ExpInfo.randVisIdx)*ScreenInfo.numPixels_perCM;
-ExpInfo.randVisPixel = coeff_va_a.*ExpInfo.org_randVisPixel + coeff_va_b;
+ExpInfo.randVisPixel = coeff_px_a.*ExpInfo.org_randVisPixel + coeff_px_b;
 
 % visual locations in different units
 ExpInfo.randVisCM     = ExpInfo.randVisPixel ./ ScreenInfo.numPixels_perCM;
@@ -164,7 +160,7 @@ our_device=devices(end).DeviceIndex;
 % Gaussian white noise
 AudInfo.fs                  = 44100;
 audioSamples                = linspace(1,AudInfo.fs,AudInfo.fs);
-standardFrequency_gwn       = 60;
+standardFrequency_gwn       = 30;
 AudInfo.tStim               = ExpInfo.tStim ; % in sec
 duration_gwn                = length(audioSamples)*AudInfo.tStim;
 timeline_gwn                = linspace(1,duration_gwn,duration_gwn);
@@ -271,17 +267,10 @@ if exist('Arduino','var')
     fclose(Arduino);
 end
 
-% sort trials by location level
-sortMatrix = [Resp.post_cue(:), Resp.target_idx(:)];
-
-% Get the sorting indices
-[~, order] = sortrows(sortMatrix, [1, 2]);
-
-% Reorder all fields in Resp according to the sorting order
-fields = fieldnames(Resp);
-for i = 1:numel(fields)
-    sortedResp.(fields{i}) = Resp.(fields{i})(order);
-end
+% sort trials by post-cue first (A=1, V=2), and location level next
+sortMatrix = [[Resp.post_cue]; [Resp.target_idx]]';
+[~, order] = sortrows(sortMatrix);
+sortedResp = Resp(order);
 save(fullfile(outDir,outFileName),'Resp','sortedResp','ExpInfo','ScreenInfo','VSinfo','AudInfo');
 
 %% display leaderoard

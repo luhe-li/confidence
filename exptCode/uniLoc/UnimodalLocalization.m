@@ -158,7 +158,7 @@ our_device=devices(end).DeviceIndex;
 % Gaussian white noise
 AudInfo.fs                  = 44100;
 audioSamples                = linspace(1,AudInfo.fs,AudInfo.fs);
-standardFrequency_gwn       = 60;
+standardFrequency_gwn       = 30;
 AudInfo.tStim               = ExpInfo.tStim ; % in sec
 duration_gwn                = length(audioSamples)*AudInfo.tStim;
 timeline_gwn                = linspace(1,duration_gwn,duration_gwn);
