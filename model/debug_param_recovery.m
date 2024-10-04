@@ -5,7 +5,7 @@ clear; close all; rng('shuffle');
 n_sample = 100; % number of ground-truth samples to generate
 n_run = 3;
 reps = [20, 30, 50, 70, 500]; % number of trials per codnition
-useCluster = true;
+useCluster = false;
 check_fake_data = false; % check the simulated data before fitting
 
 %% model info
@@ -43,7 +43,7 @@ switch useCluster
     case false
         % for local debug
         numCores = feature('numcores');
-        model_slc = 5;
+        model_slc = 1;
 end
 
 %% manege path
@@ -117,7 +117,7 @@ for mm = model_slc%1:numel(folders)
     flnm = sprintf('%s-rep%i-%i', curr_model_str, min(reps), max(reps));
 
     
-    for rr = 1:numel(reps)
+    for rr = 1
 
         n_rep = reps(rr);
         t_sAV = sAV;
@@ -131,7 +131,7 @@ for mm = model_slc%1:numel(folders)
         addpath(genpath(fullfile(pwd, curr_model_str)));
         curr_func = str2func(['NLL_' curr_model_str]);
 
-        parfor i_sample = 1:n_sample            
+        for i_sample = 1
             
             %% simulate fake data
 
@@ -153,7 +153,9 @@ for mm = model_slc%1:numel(folders)
             llfun = @(x) t_curr_func(x, t_model, t_data);
             fprintf('[%s] Start parameter recover for model-%s, no. sample-%i \n', mfilename, curr_model_str , i_sample);
 
-            test = llfun(GT);
+            p1 = [2.0966796875 -3.427734375 2.1923828125 7.93701171875 15.72021484375 0.328125 0.78212890625];
+%             p4 =  [1.818359375 -8.4765625 0.0107421875 6.3671875 11.29150390625 0.01171875 0.1361328125];
+            test = llfun(p1);
 
             % fit the model multiple times with different initial values
             est_p = nan(t_model.n_run, val.num_param);

@@ -176,11 +176,11 @@ end
 
 %% save full results
 
-fprintf('[%s] Timing check done! Saving full results.\n', mfilename);
-flnm = sprintf('%s-rep%i-%i', curr_model_str, n_rep, n_rep);
-save(fullfile(out_dir, flnm), 'sim_data','fits', 'time_results');
-
 % Display timing results
 for mm = 1:numel(folders)
     fprintf('Model %s took %.2f seconds to fit.\n', folders{mm}, time_results(mm));
 end
+
+fprintf('[%s] Timing check done! Saving full results.\n', mfilename);
+flnm = sprintf('nrep%i', n_rep);
+save(fullfile(out_dir, flnm), 'sim_data','fits', 'time_results');
