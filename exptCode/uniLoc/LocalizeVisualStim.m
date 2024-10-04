@@ -41,7 +41,7 @@ while 1
         dots_targetLoc_coordinates = dots_targetLoc_coordinates(:,1:end-1);
     end
 end
-Resp.coordinates = {dots_targetLoc_coordinates};
+Resp.coordinates = dots_targetLoc_coordinates;
 Resp.dot_x_mu_pixel =  mean(dots_targetLoc_coordinates(1,:));
 Resp.dot_y_mu_pixel =  mean(dots_targetLoc_coordinates(2,:));
 Resp.dot_x_sd_pixel = sqrt(sum((dots_targetLoc_coordinates(1,:) - Resp.dot_x_mu_pixel).^2)/size(dots_targetLoc_coordinates,2));
