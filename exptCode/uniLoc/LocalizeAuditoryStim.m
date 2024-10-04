@@ -36,8 +36,6 @@ fprintf(Arduino,input_off);
 PsychPortAudio('Stop',pahandle);
 WaitSecs(0.1);
 
-disp(Resp.target_idx)
-
 %% response
 
 % perceptual response

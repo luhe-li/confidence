@@ -2,28 +2,32 @@
 %% Enter experiment info
 clear; close all;  rng('Shuffle');
 
-ExpInfo.subjInit = [];
-while isempty(ExpInfo.subjInit) == 1
-    try ExpInfo.subjInit = input('Participant Initial:','s') ;
-        ExpInfo.session = input('Session:# ','s');
-        ExpInfo.practice  = input('Main expt: 0; Practice: 1:# ');
-    catch
-    end
+% ExpInfo.subjInit = [];
+% while isempty(ExpInfo.subjInit) == 1
+%     try ExpInfo.subjInit = input('Participant Initial:','s') ;
+%         ExpInfo.session = input('Session:# ','s');
+%         ExpInfo.practice  = input('Main expt: 0; Practice: 1:# ');
+%     catch
+%     end
+% end
+
+ExpInfo.subjInit = 'LL';
+ExpInfo.session = 1;
+ExpInfo.practice = 0;
+
+switch ExpInfo.practice
+    case 0
+        outFileName = sprintf('biLoc_sub-%s_ses-%s', ExpInfo.subjInit, ExpInfo.session);
+        ExpInfo.nRep = 20; % number of trial per condition level
+        ExpInfo.numBlocks = 10;
+    case 1
+        outFileName = sprintf('biLoc_practice_sub-%s_ses-%s', ExpInfo.subjInit, ExpInfo.session);
+        ExpInfo.nRep = 1; % number of trial per condition level
+        ExpInfo.numBlocks = 2;
 end
 
- switch ExpInfo.practice
-     case 0
-         outFileName = sprintf('biLoc_sub-%s_ses-%s', ExpInfo.subjInit, ExpInfo.session);
-         ExpInfo.nRep = 20; % number of trial per condition level
-         ExpInfo.numBlocks = 10;
-     case 1
-         outFileName = sprintf('biLoc_practice_sub-%s_ses-%s', ExpInfo.subjInit, ExpInfo.session);
-         ExpInfo.nRep = 2; % number of trial per condition level
-         ExpInfo.numBlocks = 2;
- end
-
- % path control
- curDir = pwd;
+% path control
+curDir = pwd;
 [projectDir, ~]  = fileparts(fileparts(curDir));
 [git_dir, ~] = fileparts(projectDir);
 addpath(genpath(fullfile(git_dir, 'Psychtoolbox-3')))
@@ -39,14 +43,12 @@ if exist(fullfile(outDir, [outFileName '.mat']), 'file')
     end
 end
 
-if strcmp(ExpInfo.session, 'A')
-    if exist('Arduino','var')
-        fclose(Arduino);
-    end
-    Arduino = serial('/dev/cu.usbmodem14301','BaudRate',115200); % make sure this value matches with the baudrate in the arduino code
-    fopen(Arduino);
-    sprintf('Check if system volume is fixed at level 6')
+if exist('Arduino','var')
+    fclose(Arduino);
 end
+Arduino = serial('/dev/cu.usbmodem14301','BaudRate',115200); % make sure this value matches with the baudrate in the arduino code
+fopen(Arduino);
+sprintf('Check if system volume is fixed at level 6')
 
 %% Screen Setup
 PsychDefaultSetup(2);
@@ -54,7 +56,7 @@ AssertOpenGL();
 GetSecs();
 WaitSecs(0.1);
 KbCheck();
-ListenChar(2);
+% ListenChar(2);
 
 Screen('Preference', 'VisualDebugLevel', 1);
 Screen('Preference', 'SkipSyncTests', 1);
@@ -79,7 +81,7 @@ ScreenInfo.numPixels_perCM = ScreenInfo.xaxis/(ScreenInfo.halfScreenSize*2);
 %fixation locations
 ScreenInfo.x1_lb = ScreenInfo.xmid-7; ScreenInfo.x2_lb = ScreenInfo.xmid-1;
 ScreenInfo.x1_ub = ScreenInfo.xmid+7; ScreenInfo.x2_ub = ScreenInfo.xmid+1;
-ScreenInfo.y1_lb = ScreenInfo.yaxis-ScreenInfo.liftingYaxis-1; 
+ScreenInfo.y1_lb = ScreenInfo.yaxis-ScreenInfo.liftingYaxis-1;
 ScreenInfo.y1_ub = ScreenInfo.yaxis-ScreenInfo.liftingYaxis+1;
 ScreenInfo.y2_lb = ScreenInfo.yaxis-ScreenInfo.liftingYaxis-7;
 ScreenInfo.y2_ub = ScreenInfo.yaxis-ScreenInfo.liftingYaxis+7;
@@ -116,10 +118,10 @@ ExpInfo.randAudVA     = rad2deg(atan(ExpInfo.randAudCM/ExpInfo.sittingDistance))
 ExpInfo.randAudPixel  = ExpInfo.randAudCM .* ScreenInfo.numPixels_perCM;
 
 % convert visual locations from index to perceptually matching pixel
-[coeff_va_a, coeff_va_b] = transfer_AV_bias(out_dir, subjIni);
+[coeff_va_a, coeff_va_b] = transfer_AV_bias(outDir, ExpInfo.subjInit);
 ExpInfo.randVisIdx    = ExpInfo.randAVIdx(2,:);
 ExpInfo.org_randVisPixel= ExpInfo.speakerLocCM(ExpInfo.randVisIdx)*ScreenInfo.numPixels_perCM;
-ExpInfo.randVisPixel = temp_rand_px.*ExpInfo.org_randVisPixel + coeff_va_b;
+ExpInfo.randVisPixel = coeff_va_a.*ExpInfo.org_randVisPixel + coeff_va_b;
 
 % visual locations in different units
 ExpInfo.randVisCM     = ExpInfo.randVisPixel ./ ScreenInfo.numPixels_perCM;
@@ -170,24 +172,22 @@ sineWindow_gwn              = sin(standardFrequency_gwn/2*2*pi*timeline_gwn/AudI
 carrierSound_gwn            = randn(1, numel(timeline_gwn));
 AudInfo.intensity_GWN       = 1; % too loud for debugging, originally 15
 AudInfo.GaussianWhiteNoise  = [AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn;...
-                            AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn];
+    AudInfo.intensity_GWN.*sineWindow_gwn.*carrierSound_gwn];
 pahandle                    = PsychPortAudio('Open', our_device, [], [], [], 2); % open device
 
 %% audio test / warm-up
 
-if strcmp(ExpInfo.session, 'A')
-    for i = 8
+for i = 8
     testSpeaker = i;
-    input_on = ['<',num2str(1),':',num2str(testSpeaker),'>']; 
+    input_on = ['<',num2str(1),':',num2str(testSpeaker),'>'];
     fprintf(Arduino,input_on);
-    PsychPortAudio('FillBuffer',pahandle, AudInfo.GaussianWhiteNoise) 
+    PsychPortAudio('FillBuffer',pahandle, AudInfo.GaussianWhiteNoise)
     PsychPortAudio('Start',pahandle,1,0,0);
     WaitSecs(0.1);
     input_off = ['<',num2str(0),':',num2str(testSpeaker),'>'];
     fprintf(Arduino,input_off);
     PsychPortAudio('Stop',pahandle);
     WaitSecs(0.5)
-    end
 end
 
 %% make visual stimuli
@@ -221,7 +221,7 @@ instruction = ['In the following session, you will be presented \nan an audiovis
 %start the experiment
 c                   = clock;
 ExpInfo.start       = sprintf('%04d/%02d/%02d_%02d:%02d:%02d',c(1),c(2),c(3),c(4),c(5) ,ceil(c(6)));
- 
+
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
     [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
 DrawFormattedText(windowPtr, instruction ,...
@@ -233,12 +233,12 @@ WaitSecs(1);
 for i = 1:ExpInfo.nTrials
     
     %% present stimuli
-
+    
     SetMouse(ScreenInfo.xaxis*2, ScreenInfo.yaxis*2, windowPtr);
     HideCursor;
     Resp(i) = LocalizeBothStim(i, ExpInfo,...
         ScreenInfo,AudInfo,VSinfo,Arduino,pahandle,windowPtr);
-
+    
     %% save by trial
     save(fullfile(outDir,outFileName),'Resp','ExpInfo','ScreenInfo','VSinfo','AudInfo');
     
@@ -249,7 +249,7 @@ for i = 1:ExpInfo.nTrials
         idxBlock = find(ExpInfo.breakTrials==i);
         firstTrial = ExpInfo.firstTrial(idxBlock);
         lastTrial = ExpInfo.lastTrial(idxBlock);
-
+        
         blockInfo = sprintf('You''ve finished block %i/%i.',idxBlock,ExpInfo.numBlocks);
         scoreInfo1 = sprintf('\nYour cumulative point is %.2f across %i trials.', sum([Resp(1:i).point]), i);
         scoreInfo2 = sprintf('\nYour maximum possible point is %.2f across %i trials.', sum([Resp(1:i).maxPtPossible]), i);

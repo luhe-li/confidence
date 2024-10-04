@@ -9,14 +9,14 @@ loc_pixel = round(ExpInfo.randVisPixel(i));
 targetLoc = ScreenInfo.xmid + loc_pixel;
 RNcoordinates = randn(2,1);
 dots_targetLoc_coordinates = [targetLoc+(...
-    ScreenInfo.numPixels_perCM.*VSinfo.SD_blob(i).*RNcoordinates(1,:));...
+    ScreenInfo.numPixels_perCM.*VSinfo.SD_blob.*RNcoordinates(1,:));...
     ScreenInfo.liftingYaxis+(ScreenInfo.numPixels_perCM.*...
     VSinfo.SD_yaxis.*RNcoordinates(2,:))];
 while 1
     %randomly draw 10 (x,y) coordinates based on the centroid
     RNcoordinates = randn(2,1);
     new_dot_targetLoc_coordinates = [targetLoc+(...
-        ScreenInfo.numPixels_perCM.*VSinfo.SD_blob(i).*RNcoordinates(1,:));...
+        ScreenInfo.numPixels_perCM.*VSinfo.SD_blob.*RNcoordinates(1,:));...
         ScreenInfo.liftingYaxis+(ScreenInfo.numPixels_perCM.*...
         VSinfo.SD_yaxis.*RNcoordinates(2,:))];
     dots_targetLoc_coordinates = [dots_targetLoc_coordinates,new_dot_targetLoc_coordinates];
@@ -55,13 +55,13 @@ if ExpInfo.randAVIdx(3,i) == 1 % A
     Resp.target_idx = ExpInfo.randAudIdx(i);
     Resp.target_cm = ExpInfo.randAudCM(i);
     Resp.target_deg = ExpInfo.randAudVA(i);
-    Resp.target_px = ExpInfo.randAudPixel(i);
+    Resp.target_pixel = ExpInfo.randAudPixel(i);
     Resp.post_cue = ExpInfo.randAVIdx(3,i);
 else % V
     Resp.target_idx = ExpInfo.randVisIdx(i);
     Resp.target_cm = ExpInfo.randVisCM(i);
     Resp.target_deg = ExpInfo.randVisVA(i);
-    Resp.target_px = ExpInfo.randVisPixel(i);
+    Resp.target_pixel = ExpInfo.randVisPixel(i);
     Resp.post_cue = ExpInfo.randAVIdx(3,i);
 end
 
@@ -84,11 +84,11 @@ Screen('Flip',windowPtr);
 WaitSecs(ExpInfo.tBlank1);
 
 % present both stimulus
+Screen('DrawTexture',windowPtr,dotClouds_targetLoc,[],...
+        [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
 input_on = ['<',num2str(1),':',num2str(ExpInfo.randAudIdx(i)),'>']; %arduino takes input in this format
 fprintf(Arduino,input_on);
 PsychPortAudio('FillBuffer',pahandle, AudInfo.GaussianWhiteNoise);
-Screen('DrawTexture',windowPtr,dotClouds_targetLoc,[],...
-        [0,0,ScreenInfo.xaxis,ScreenInfo.yaxis]);
 vbl = Screen('Flip',windowPtr); % v onset
 PsychPortAudio('Start',pahandle,1,0,0);
 Screen('DrawTexture',windowPtr,VSinfo.grey_texture,[],...
@@ -98,12 +98,14 @@ WaitSecs(0.1);
 input_off = ['<',num2str(0),':',num2str(ExpInfo.randAudIdx(i)),'>'];
 fprintf(Arduino,input_off);
 PsychPortAudio('Stop',pahandle);
+WaitSecs(0.1);
 
 %% response
 
 % perceptual response
 yLoc = ScreenInfo.yaxis-ScreenInfo.liftingYaxis;
 SetMouse(randi(ScreenInfo.xaxis,1), yLoc, windowPtr);
+Screen('TextSize',windowPtr,15);
 HideCursor;
 buttons = 0;
 tic;
@@ -134,7 +136,6 @@ Resp.response_deg   = rad2deg(atan(Resp.response_cm/ExpInfo.sittingDistance));
 HideCursor;
 
 % confidence response
-Screen('TextSize',windowPtr,15);
 SetMouse(x*2, yLoc*2, windowPtr);
 HideCursor;
 WaitSecs(0.2);

@@ -19,7 +19,7 @@ our_device=devices(end).DeviceIndex;
 AudInfo.fs                  = 44100;
 audioSamples                = linspace(1,AudInfo.fs,AudInfo.fs);
 standardFrequency_gwn       = 100;
-AudInfo.stimDura            = 0.3; % sec
+AudInfo.stimDura            = 0.033; % sec
 duration_gwn                = length(audioSamples)*AudInfo.stimDura;
 timeline_gwn                = linspace(1,duration_gwn,duration_gwn);
 sineWindow_gwn              = sin(standardFrequency_gwn/2*2*pi*timeline_gwn/AudInfo.fs);
@@ -40,7 +40,7 @@ for i = aa
     fprintf(Arduino,input_on);
     PsychPortAudio('FillBuffer',pahandle, AudInfo.GaussianWhiteNoise);
     PsychPortAudio('Start',pahandle,1,0,0);
-    WaitSecs(AudInfo.stimDura);
+    WaitSecs(0.1);
     input_off = ['<',num2str(0),':',num2str(i),'>'];
     fprintf(Arduino,input_off);
     PsychPortAudio('Stop',pahandle);
