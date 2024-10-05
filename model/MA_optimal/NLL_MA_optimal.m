@@ -164,13 +164,23 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
             for kk = 1:num_rep
                 % localization probability
                 p_r_given_MAP = norm_dst(locResp_A_V(mm, kk), squeeze(MAP_MA(mm,:,:)),...
-                    sigMotor,realmin);
+                    sigMotor,1e-20);
                 p_conf_given_m = norm_dst(confResp_A_V(mm, kk), squeeze(opt_radius(mm,:,:)),...
-                    sigC, realmin);
+                    sigC, 1e-20);
                 nLL_bimodal = nLL_bimodal - log(sum(sum(p_r_given_MAP.*...
                     p_conf_given_m.*p_mAmV_given_sAsV)));
+                disp([mm,kk,nLL_bimodal])
             end
         end
+
+%         figure
+%         hold on
+%         subplot 131
+%         imagesc(p_mAmV_given_sAsV);
+%         subplot 132
+%         imagesc(p_conf_given_m);
+%         subplot 133
+%         imagesc(p_r_given_MAP)
 
         %----------------------- Save if requested -----------------------
         R = [];

@@ -170,13 +170,13 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
             for kk = 1:num_rep
                 % localization probability
                 if mm == 1
-                    p_r_given_MAP = norm_dst(locResp_A_V(mm, kk),shat_A, sigMotor, realmin);
+                    p_r_given_MAP = norm_dst(locResp_A_V(mm, kk),shat_A, sigMotor, 1e-20);
                 else
-                    p_r_given_MAP = norm_dst(locResp_A_V(mm, kk),shat_V, sigMotor, realmin);
+                    p_r_given_MAP = norm_dst(locResp_A_V(mm, kk),shat_V, sigMotor, 1e-20);
                 end
                 % confidence radius probability
                 p_conf_given_m = norm_dst(confResp_A_V(mm, kk), squeeze(opt_radius(mm,:,:)),...
-                    sigC, realmin);
+                    sigC, 1e-20);
                 nLL_bimodal = nLL_bimodal - log(sum(sum(p_r_given_MAP.*...
                     p_conf_given_m.*p_mAmV_given_sAsV)));
             end

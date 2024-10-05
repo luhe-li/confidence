@@ -2,9 +2,9 @@ clear; close all; rng('shuffle');
 
 %% knobs
 
-n_sample = 100; % number of ground-truth samples to generate
+n_sample = 1; % number of ground-truth samples to generate
 n_run = 3;
-reps = [20, 30, 50, 70, 500]; % number of trials per codnition
+reps = 1000; % number of trials per codnition
 useCluster = false;
 check_fake_data = false; % check the simulated data before fitting
 
@@ -43,7 +43,7 @@ switch useCluster
     case false
         % for local debug
         numCores = feature('numcores');
-        model_slc = 1;
+        model_slc = 2;
 end
 
 %% manege path
@@ -108,7 +108,7 @@ model.n_cue = numel(model.cue_label);
 %% set simulation parameterss
 
 %         aA,     bA,  sigV1,   sigA,    sigP, sigConf,     pCC
-GT = [     1,    0.1,     1,      10,      10,       1,     0.7];
+GT = [     1,    0.1,     1,      7,      10,       1,     0.7];
 OPTIONS.TolMesh = 1e-4;
 
 for mm = model_slc%1:numel(folders)
@@ -116,7 +116,6 @@ for mm = model_slc%1:numel(folders)
     curr_model_str = folders{mm};
     flnm = sprintf('%s-rep%i-%i', curr_model_str, min(reps), max(reps));
 
-    
     for rr = 1
 
         n_rep = reps(rr);
@@ -153,14 +152,16 @@ for mm = model_slc%1:numel(folders)
             llfun = @(x) t_curr_func(x, t_model, t_data);
             fprintf('[%s] Start parameter recover for model-%s, no. sample-%i \n', mfilename, curr_model_str , i_sample);
 
-            p1 = [2.0966796875 -3.427734375 2.1923828125 7.93701171875 15.72021484375 0.328125 0.78212890625];
+%             p1 = [2.0966796875 -3.427734375 2.1923828125 7.93701171875 15.72021484375 0.328125 0.78212890625];
+%             p2 = [2.6728515625 -10 1.615234375 18.1298828125 3.00048828125 0.01171875 0.0116210937500001];
+%             p3 = [-0.2421875 -1.50390625 0.474609375 5.29296875 4.638671875 0.01171875 0.71162109375];
 %             p4 =  [1.818359375 -8.4765625 0.0107421875 6.3671875 11.29150390625 0.01171875 0.1361328125];
-            test = llfun(p1);
+            test = llfun(GT);
 
             % fit the model multiple times with different initial values
             est_p = nan(t_model.n_run, val.num_param);
-            nll = nan(1, val.n_run);
-            for i  = 1:t_model.n_run
+            nll = nan(1, model.n_run);
+            parfor i  = 1:t_model.n_run
                 [est_p(i,:), nll(i)] = bads(llfun,...
                     val.init(i,:), val.lb, val.ub, val.plb, val.pub,[],OPTIONS);
             end
@@ -176,12 +177,15 @@ for mm = model_slc%1:numel(folders)
         end
         
         % save partial results
-        save(fullfile(out_dir, flnm), 'sim_data','fits');
+%         save(fullfile(out_dir, flnm), 'sim_data','fits');
 
     end
 end
 
 %% save full results
 
-fprintf('[%s] Parameter recovery done! Saving full results.\n', mfilename);
-save(fullfile(out_dir, flnm), 'sim_data','fits');
+% fprintf('[%s] Parameter recovery done! Saving full results.\n', mfilename);
+% save(fullfile(out_dir, flnm), 'sim_data','fits');
+
+disp(GT)
+disp(best_p)

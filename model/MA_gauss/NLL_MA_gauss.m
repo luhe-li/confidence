@@ -84,7 +84,6 @@ end
 
 end
 
-
 function [nLL_bimodal, R] = calculateNLL_bimodal(...
     aA, bA, sigA, sigV, sigC, pCommon, ...
     CI, mu_P, sigMotor, data_resp, data_conf, model)
@@ -165,9 +164,9 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
             for kk = 1:num_rep
                 % localization probability
                 p_r_given_MAP = norm_dst(locResp_A_V(mm, kk), squeeze(MAP_MA(mm,:,:)),...
-                    sigMotor,realmin);
+                    sigMotor,1e-20);
                 p_conf_given_m = norm_dst(confResp_A_V(mm, kk), squeeze(opt_radius(mm,:,:)),...
-                    sigC, realmin);
+                    sigC, 1e-20);
                 nLL_bimodal = nLL_bimodal - log(sum(sum(p_r_given_MAP.*...
                     p_conf_given_m.*p_mAmV_given_sAsV)));
             end

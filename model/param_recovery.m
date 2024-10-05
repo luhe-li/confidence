@@ -4,7 +4,7 @@ clear; close all; rng('shuffle');
 
 n_sample = 100; % number of ground-truth samples to generate
 n_run = 3;
-reps = [20, 30, 50, 70, 500]; % number of trials per codnition
+reps = [20, 30, 50, 500]; % number of trials per codnition
 useCluster = true;
 check_fake_data = false; % check the simulated data before fitting
 
