@@ -4,7 +4,7 @@ clear; close all; rng('shuffle');
 
 n_sample = 1; % number of ground-truth samples to generate
 n_run = 3;
-reps = 1000; % number of trials per codnition
+reps = 500; % number of trials per codnition
 useCluster = false;
 check_fake_data = false; % check the simulated data before fitting
 
@@ -108,8 +108,8 @@ model.n_cue = numel(model.cue_label);
 %% set simulation parameterss
 
 %         aA,     bA,  sigV1,   sigA,    sigP, sigConf,     pCC
-GT = [     1,    0.1,     1,      7,      10,       1,     0.7];
-OPTIONS.TolMesh = 1e-4;
+GT = [     1,    0.1,     1,      7,      5,       1,     0.7];
+OPTIONS.TolMesh = 1e-3;
 
 for mm = model_slc%1:numel(folders)
 
@@ -137,7 +137,7 @@ for mm = model_slc%1:numel(folders)
             t_curr_func = curr_func;
             t_model = model;
             t_model.mode = 'predict';
-            t_data = t_curr_func(GT, t_model);
+            t_data = NLL_MA_local(GT, t_model);
             sim_data(mm, rr, i_sample).data = t_data;
             sim_data(mm, rr, i_sample).gt = GT;
 
@@ -151,11 +151,6 @@ for mm = model_slc%1:numel(folders)
             t_model.mode = 'optimize';
             llfun = @(x) t_curr_func(x, t_model, t_data);
             fprintf('[%s] Start parameter recover for model-%s, no. sample-%i \n', mfilename, curr_model_str , i_sample);
-
-%             p1 = [2.0966796875 -3.427734375 2.1923828125 7.93701171875 15.72021484375 0.328125 0.78212890625];
-%             p2 = [2.6728515625 -10 1.615234375 18.1298828125 3.00048828125 0.01171875 0.0116210937500001];
-%             p3 = [-0.2421875 -1.50390625 0.474609375 5.29296875 4.638671875 0.01171875 0.71162109375];
-%             p4 =  [1.818359375 -8.4765625 0.0107421875 6.3671875 11.29150390625 0.01171875 0.1361328125];
             test = llfun(GT);
 
             % fit the model multiple times with different initial values

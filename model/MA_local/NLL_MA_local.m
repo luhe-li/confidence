@@ -12,12 +12,12 @@ switch model.mode
         paraH.bA     = [-10, 10];      % intercept
         paraH.sigV   = [1e-2, 5];      % cm
         paraH.sigA   = [1, 20];        % cm
-        paraH.sigP   = [3, 30];
+        paraH.sigP   = [0.01, 10];
         paraH.sigC   = [0.01, 10];      % measurement noise of confidence
         paraH.pC1    = [1e-3, 1-1e-3]; % weight
 
         % soft bounds, the range for PLB, PUB
-        paraS.aA     = [-0.5, 1.5];      % scale
+        paraS.aA     = [-1.5, 1.5];      % scale
         paraS.bA     = [-5, 5];      % intercept
         paraS.sigV   = [1, 3];         % cm
         paraS.sigA   = [5, 10];        % cm
@@ -47,8 +47,7 @@ switch model.mode
         sigV                         = freeParam(3);
         sigA                         = freeParam(4);
         sigP                         = freeParam(5);
-        sigC                         = freeParam(6);
-        pCommon                      = freeParam(7);
+        pCommon                      = freeParam(6);
 
         sigMotor = model.sigMotor;
         muP = model.muP;
@@ -76,6 +75,7 @@ switch model.mode
 
         elseif strcmp(model.mode, 'predict')
 
+            sigC = 3;
             out = sim_MA(aA, bA,  sigV, sigA, sigP, sigC, pCommon, model);
 
         end
@@ -83,7 +83,6 @@ switch model.mode
 end
 
 end
-
 
 function [nLL_bimodal, R] = calculateNLL_bimodal(...
     aA, bA, sigA, sigV, sigC, pCommon, ...
@@ -102,7 +101,6 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
         sA_prime(p) + model.num_SD*sigA,...
         model.numBins_A);
     mDist_AV_A = norm_dst(x1_grid, sA_prime(p), sigA, 0);
-
 
     for q = 1:length(sV_prime) %for each AV pair with s_V' = s_V_prime(q)
 
@@ -141,9 +139,9 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
         post = zeros([2, model.numBins_V, model.numBins_A, numel(model.center_axis)]);
         for xx = 1:numel(model.center_axis)
             post(1,:,:,xx) = Post_C1.*norm_dst(model.center_axis(xx), shat_C1, sqrt(1/CI.constC1_shat), 0)...
-                + Post_C2.*norm_dst(model.center_axis(xx), squeeze(shat_C2(1,:,:)), sqrt(1/CI.constC2_1_shat), 1e-20);
+                + Post_C2.*norm_dst(model.center_axis(xx), squeeze(shat_C2(1,:,:)), sqrt(1/CI.constC2_1_shat), 0);
             post(2,:,:,xx) = Post_C1.*norm_dst(model.center_axis(xx), shat_C1, sqrt(1/CI.constC1_shat), 0)...
-                + Post_C2.*norm_dst(model.center_axis(xx), squeeze(shat_C2(2,:,:)), sqrt(1/CI.constC2_2_shat), 1e-20);
+                + Post_C2.*norm_dst(model.center_axis(xx), squeeze(shat_C2(2,:,:)), sqrt(1/CI.constC2_2_shat), 0);
         end
 
         % optimal radius given posterior and estimate
@@ -163,39 +161,39 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
 
         for mm = 1:num_modality
             for kk = 1:num_rep
-                % localization probability
+                
                 p_r_given_MAP = norm_dst(locResp_A_V(mm, kk), squeeze(MAP_MA(mm,:,:)),...
                     sigMotor,1e-20);
                 p_conf_given_m = norm_dst(confResp_A_V(mm, kk), squeeze(opt_radius(mm,:,:)),...
                     sigC, 1e-20);
                 nLL_bimodal = nLL_bimodal - log(sum(sum(p_r_given_MAP.*...
                     p_conf_given_m.*p_mAmV_given_sAsV)));
+                
             end
         end
 
-        % %         elseif strcmp(model.strategy_loc,'MS') %Model selection
-        %             for mm = 1:num_modality
-        %                 for kk = 1:num_rep
-        %                     % localization probability
-        %                     if Post_C1(mm,kk) > 0.5
-        %                         p_r_given_MAP = norm_dst(locResp_A_V(mm, kk),shat_C1,sigMotor,1e-20);
-        %                     else
-        %                         p_r_given_MAP = norm_dst(locResp_A_V(mm, kk),squeeze(shat_C2(mm,:,:)),sigMotor,1e-20);
-        %                     end
-        %                     % confidence probability
-        %                     if confResp_A_V(mm, kk) == 1
-        %                         p_conf_given_m = squeeze(p1_conf(mm,:,:));
-        %                     elseif confResp_A_V(mm, kk) == 2
-        %                         p_conf_given_m = squeeze(p2_conf(mm,:,:));
-        %                     elseif confResp_A_V(mm, kk) == 3
-        %                         p_conf_given_m = squeeze(p3_conf(mm,:,:));
-        %                     elseif confResp_A_V(mm, kk) == 4
-        %                         p_conf_given_m = squeeze(p4_conf(mm,:,:));
-        %                     end
-        %                     nLL_bimodal = nLL_bimodal - log(sum(sum(p_r_given_MAP.*...
-        %                         p_conf_given_m.*p_mAmV_given_sAsV)));
-        %                 end
-        %             end
+%         %% check figure
+%         figure;
+% 
+%         subplot(1,3,1)
+%         imagesc(x1_grid, x2_grid, p_mAmV_given_sAsV)
+%         xlabel('x1')
+%         ylabel('x2')
+%         colorbar
+% 
+%         subplot(1,3,2)
+%         imagesc(x1_grid, x2_grid, squeeze(MAP_MA(2,:,:)))
+%         xlabel('x1')
+%         ylabel('x2')
+%         colorbar
+% 
+%         subplot(1,3,3)
+%         imagesc(x1_grid, x2_grid, squeeze(opt_radius(2,:,:)))
+%         xlabel('x1')
+%         ylabel('x2')
+%         colorbar
+
+        %%
 
         %----------------------- Save if requested -----------------------
         R = [];
@@ -206,13 +204,6 @@ for p = 1:length(sA_prime)   %for each AV pair with s_A' = s_A_prime(p)
 
             %save predictions on location estimates
             R.loc(p,q,:,:,:) = MAP_MA;
-
-            %             elseif strcmp(model.strategy_loc,'MS')
-            %                 for mm = 1:length(model.modality)
-            %                     R.loc(p,q,mm,:,:) = shat_C1;
-            %                     R.loc(p,q,mm,Post_C1 < 0.5) = squeeze(shat_C2(mm,Post_C1 < 0.5));
-            %                 end
-            %             end
 
             %save predictions on confidence radius
             R.conf(p,q,:,:,:) = opt_radius;
@@ -236,6 +227,14 @@ Post_C2  = 1 - Post_C1;
 end
 
 function p = norm_dst(x,mu,sigma,t)
-p = 1/sqrt(2*pi*sigma^2).*exp(-(x-mu).^2./(2*sigma^2)) + t;
+    p = 1/sqrt(2*pi*sigma^2).*exp(-(x-mu).^2./(2*sigma^2)) + t;
 end
 
+function log_p = log_norm_dst(x, mu, sigma)
+    log_p = -0.5 * ((x - mu).^2) / (sigma^2) - log(sqrt(2 * pi) * sigma);
+end
+
+function result = log_sum_exp(log_probs)
+    max_log_prob = max(log_probs(:));
+    result = max_log_prob + log(sum(exp(log_probs - max_log_prob), 'all'));
+end
