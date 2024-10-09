@@ -51,8 +51,8 @@ else
 
     if strcmp(model.mode, 'optimize')
 
-        s_A_prime_uni = model.uni_sA .* aA + bA;
-        s_V_prime_uni = model.uni_sV .* model.aV + model.bV;
+        s_A_prime_uni = repmat(model.uni_sA',[1, model.uni_nrep]).* aA + bA;
+        s_V_prime_uni = repmat(model.uni_sV',[1, model.uni_nrep]) .* model.aV + model.bV;
 
         %calculate the mean of the response distributions
         c_A                = (1/sigma_A^2)/(1/sigma_A^2+1/sigma_P^2);
@@ -61,8 +61,8 @@ else
         f_V                = (mu_P/sigma_P^2)/(1/sigma_V^2+1/sigma_P^2);
 
         %the means of estimate distributions
-        mu_shat_A_uni      = c_A.*s_A_prime_uni + f_A;
-        mu_shat_V_uni      = c_V.*s_V_prime_uni + f_V;
+        mu_shat_A_uni      = reshape(c_A.*s_A_prime_uni + f_A, [1, numel(model.uni_sA)*model.uni_nrep]);
+        mu_shat_V_uni      = reshape(c_V.*s_V_prime_uni + f_V, [1, numel(model.uni_sV)*model.uni_nrep]);
 
         %the variances of estimate distributions
         sigma_shat_A       = c_A*sigma_A;
@@ -81,8 +81,7 @@ else
         end
 
         nLL_loc_unimodal    = calculateNLL_unimodal_loc([mu_shat_A_uni; mu_shat_V_uni], ...
-            [sigma_a_loc_resp; sigma_v_loc_resp], ...
-            uni_loc_2d);
+            [sigma_a_loc_resp; sigma_v_loc_resp], uni_loc_2d);
 
         % simulate optimal confidence radius, which is independent of
         % measurement
@@ -104,11 +103,14 @@ end
         %with variance equal to (sigma_shat^2 + sigma_motor^2)
         %mu, sig, x all consist of 2 rows (1st row: A; 2nd row: V)
 
-        LL = arrayfun(@(idx) length(mu(idx,:))*(-0.5*log(2*pi*sig(idx)^2))-...
-            sum((x(idx,:) - mu(idx,:)).^2)./(2*sig(idx)^2), 1:2);
+%         LL = arrayfun(@(idx) length(mu(idx,:))*(-0.5*log(2*pi*sig(idx)^2))-...
+%             sum((x(idx,:) - mu(idx,:)).^2)./(2*sig(idx)^2), 1:2);
         %log(1/sqrt(2*pi*sigma^2)*e^(-(x-mu)^2/(2*sigma^2))) =
         %-0.5log(2*pi*sigma^2) - (x-mu)^2/(2*sigma^2)
-        nLL_loc_unimodal = -LL;
+        LL = arrayfun(@(idx) log(2*pi*sig(idx)^2)-...
+            (x(idx,:) - mu(idx,:)).^2./(2*sig(idx)^2), 1:2, 'UniformOutput',false);
+
+        nLL_loc_unimodal = -cell2mat(LL(:));
 
     end
 
