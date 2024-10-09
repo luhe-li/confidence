@@ -72,17 +72,12 @@ else
         sigma_a_loc_resp = sqrt(sigma_shat_A^2 + model.sigma_motor^2);
         sigma_v_loc_resp = sqrt(sigma_shat_V^2 + model.sigma_motor^2);
 
-        sim = sim_uni(aA, bA, sigma_A, sigma_V, sigma_P, mu_P, sigma_C, model);
-        data = sim;
         % reshape data into 2 rows (1st row: A localization responses,
         % location and nrep flattened; 2end row: V localization responses)
-        for mm = 1:model.modality
-            uni_loc_2d(mm,:) = reshape(data.uni_loc(:,mm,:),[1, numel(model.uni_sA)*model.uni_nrep]);
-        end
 
         nLL_loc_unimodal    = calculateNLL_unimodal_loc([mu_shat_A_uni; mu_shat_V_uni], ...
             [sigma_a_loc_resp; sigma_v_loc_resp], ...
-            uni_loc_2d);
+            [data.unimodal(2,:,1);data.unimodal(2,:,2)]);
 
         % simulate optimal confidence radius, which is independent of
         % measurement

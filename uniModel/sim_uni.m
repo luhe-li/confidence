@@ -16,20 +16,26 @@ shat(:,1,:) = shatA;
 shat(:,2,:) = shatV;
 
 % simulate posterior pdf for each trial using center coordinate
-for xx = 1:numel(model.center_axis)
-    post(:,1,:,xx) = normpdf(model.center_axis(xx), shatA, sqrt(1/(JA + JP)));
-    post(:,2,:,xx) = normpdf(model.center_axis(xx), shatV, sqrt(1/(JV + JP)));
-end
-post_2d = reshape(post, [prod([n_sA, 2, n_rep]), numel(model.center_axis)]);
-shat_1d = reshape(shat, [prod(n_sA, 2, n_rep), 1]);
+% only use 1 trial for each location because optimal confidence radius 
+% only depends on the variance of posterior and elbow, is independent 
+% of stimulus locations, and is the same across trials
+% dimension of post_2d: 2(example trial for postcue each) x posterior axis
+post_2d(1,:) = normpdf(model.center_axis, shatA(1,1), sqrt(1/(JA + JP)));
+post_2d(2,:) = normpdf(model.center_axis, shatV(1,1), sqrt(1/(JV + JP)));
+shat_1d = [shatA(1,1); shatV(1,1)];
+
 [opt_radius, opt_gain, ~]= eGain_MAP(post_2d, shat_1d, model.maxScore, model.minScore, model.elbow, model.center_axis);
 
 % location x post-cue/response x repetition
 out.uni_loc = randn(size(shat)).*model.sigma_motor + shat;
 
+% replicate radius for all locations and trials
+expanded_radius = repmat(opt_radius', [n_sA, 1]);
+uni_conf = repmat(expanded_radius, [1,1,n_rep]);
+expanded_gain = repmat(opt_gain',[n_sA, 1]);
+out.opt_gain = repmat(expanded_gain, [1,1,n_rep]);
+
 % adjustment noise to confidence radius
-uni_conf = randn(size(opt_radius)).*sigC + opt_radius;
-out.uni_conf = reshape(uni_conf, [n_sA, 2, n_rep]);
-out.opt_gain = reshape(opt_gain, [n_sA, 2, n_rep]);
+out.uni_conf = randn(size(uni_conf)).*sigC + uni_conf;
 
 end
