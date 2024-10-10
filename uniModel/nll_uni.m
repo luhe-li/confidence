@@ -9,10 +9,10 @@ if strcmp(model.mode, 'initiate')
     param_h.aA = [-3, 3];
     param_h.bA = [-10, 10];
     param_h.sigA = [1, 20];
-    param_h.sigV = [1e-2, 5];
+    param_h.sigV = [1e-2, 10];
     param_h.sigC = [1e-2, 10];
-    param_h.sigP = [0.01, 10];
-    param_h.muP = [-5, 5];
+    param_h.sigP = [0.01, 20];
+    param_h.muP = [-10, 10];
 
     % soft bounds, the range for plb, pub
     param_s.aA = [-1.5, 1.5];
