@@ -1,6 +1,6 @@
 function out = nll_uni(free_param, model, data)
 
-if strcmp(model.mode, 'initialize')
+if strcmp(model.mode, 'initiate')
 
     out.param_id = {'aA','bA','\sigma_{A}','\sigma_{V]','\sigma_C','\sigma_{P}','\mu_P'};
     out.num_param = length(out.param_id);
@@ -51,6 +51,7 @@ else
 
     if strcmp(model.mode, 'optimize')
 
+        %------------------------ localization-----------------------------
         s_A_prime_uni = repmat(model.uni_sA',[1, model.uni_nrep]).* aA + bA;
         s_V_prime_uni = repmat(model.uni_sV',[1, model.uni_nrep]) .* model.aV + model.bV;
 
@@ -72,22 +73,24 @@ else
         sigma_a_loc_resp = sqrt(sigma_shat_A^2 + model.sigma_motor^2);
         sigma_v_loc_resp = sqrt(sigma_shat_V^2 + model.sigma_motor^2);
 
-        sim = sim_uni(aA, bA, sigma_A, sigma_V, sigma_P, mu_P, sigma_C, model);
-        data = sim;
         % reshape data into 2 rows (1st row: A localization responses,
         % location and nrep flattened; 2end row: V localization responses)
-        for mm = 1:model.modality
-            uni_loc_2d(mm,:) = reshape(data.uni_loc(:,mm,:),[1, numel(model.uni_sA)*model.uni_nrep]);
-        end
+        uni_loc_2d = reshape(permute(data.uni_loc, [2, 1, 3]), model.modality, []);
+        uni_conf_2d = reshape(permute(data.uni_conf, [2, 1, 3]), model.modality, []);
 
-        nLL_loc_unimodal    = calculateNLL_unimodal_loc([mu_shat_A_uni; mu_shat_V_uni], ...
+        nLL_loc_unimodal    = calculateNLL_unimodal([mu_shat_A_uni; mu_shat_V_uni], ...
             [sigma_a_loc_resp; sigma_v_loc_resp], uni_loc_2d);
 
+        %------------------------ confidence -----------------------------
         % simulate optimal confidence radius, which is independent of
         % measurement
         sim = sim_uni(aA, bA, sigma_A, sigma_V, sigma_P, mu_P, sigma_C, model);
+        opt_radius = reshape(permute(sim.opt_radius, [2, 1, 3]), model.modality, []);
 
-        out = nll;
+        nLL_conf_unimodal    = calculateNLL_unimodal(opt_radius, ...
+            [sigma_C; sigma_C], uni_conf_2d);
+
+        out = nLL_loc_unimodal+nLL_conf_unimodal;
 
     elseif strcmp(model.mode, 'predict')
 
@@ -96,21 +99,16 @@ else
     end
 end
 
-    function nLL_loc_unimodal = calculateNLL_unimodal_loc(mu, sig, x)
+    function nLL_unimodal = calculateNLL_unimodal(mu, sig, x)
 
         % --------------------- Localization ------------------------------
         %we assume that response distributions are Gaussian, centered at mu
         %with variance equal to (sigma_shat^2 + sigma_motor^2)
         %mu, sig, x all consist of 2 rows (1st row: A; 2nd row: V)
 
-%         LL = arrayfun(@(idx) length(mu(idx,:))*(-0.5*log(2*pi*sig(idx)^2))-...
-%             sum((x(idx,:) - mu(idx,:)).^2)./(2*sig(idx)^2), 1:2);
-        %log(1/sqrt(2*pi*sigma^2)*e^(-(x-mu)^2/(2*sigma^2))) =
-        %-0.5log(2*pi*sigma^2) - (x-mu)^2/(2*sigma^2)
-        LL = arrayfun(@(idx) log(2*pi*sig(idx)^2)-...
-            (x(idx,:) - mu(idx,:)).^2./(2*sig(idx)^2), 1:2, 'UniformOutput',false);
-
-        nLL_loc_unimodal = -cell2mat(LL(:));
+        LL = arrayfun(@(idx) length(mu(idx,:))*(-0.5*log(2*pi*sig(idx)^2))-...
+            sum((x(idx,:) - mu(idx,:)).^2)./(2*sig(idx)^2), 1:2);
+        nLL_unimodal = sum(-LL(:));
 
     end
 

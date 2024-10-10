@@ -36,6 +36,7 @@ expanded_gain = repmat(opt_gain',[n_sA, 1]);
 out.opt_gain = repmat(expanded_gain, [1,1,n_rep]);
 
 % adjustment noise to confidence radius
+out.opt_radius = uni_conf;
 out.uni_conf = randn(size(uni_conf)).*sigC + uni_conf;
 
 end

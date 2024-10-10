@@ -16,16 +16,14 @@ model_info = table((1:n_model)', specifications', folders', 'VariableNames', {'N
 [project_dir, ~]= fileparts(pwd);
 [git_dir, ~] = fileparts(project_dir);
 addpath(genpath(fullfile(project_dir, 'data','uniLoc')));
-addpath(genpath(fullfile(project_dir, 'func')));
+addpath(genpath(fullfile(project_dir, 'util')));
 addpath(genpath(fullfile(git_dir, 'bads'))); % add optimization tool, here we use BADS for example
 out_dir = fullfile(pwd, folders{i_model}); % output will be saved to the model folder
 if ~exist(out_dir, 'dir'); mkdir(out_dir); end
 
 %% organize data
 
-%  --------------------- organize data here -------------------------------
-data = []; % organize data as a struct
-% -------------------------------------------------------------------------
+
 
 %% experiment info
 
@@ -61,7 +59,6 @@ model.minScore = 0.01;
 model.elbow = screen_cm/4; % point goes to 0.01 when confidence range is 1/4 of screen
 model.dropRate = (model.maxScore - model.minScore)/model.elbow;
 model.center_axis = linspace(-screen_cm/2, screen_cm/2, 1e3);
-model.n_run = 3; % number of initiation
 model.num_SD = 5;
 model.numBins_A = 15;
 model.numBins_V = 15;
@@ -85,12 +82,6 @@ curr_model = str2func(['nll_' fit_str]);
 model.mode = 'initialize';
 val = curr_model([], model, []);
 model.init_val = val;
-
-model.mode = 'optimize';
-val = curr_model(val.init(1,:), model, []);
-
-%%
-
 
 model.mode = 'optimize';
 llfun = @(x) curr_model(x, model, i_data);
