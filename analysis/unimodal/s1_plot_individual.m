@@ -11,43 +11,13 @@ cur_dir                          = pwd;
 [project_dir, ~]                 = fileparts(fileparts(cur_dir));
 out_dir                          = fullfile(cur_dir, mfilename);
 addpath(genpath(fullfile(project_dir, 'data','uniLoc')));
+addpath(genpath(fullfile(project_dir, 'util')));
 if ~exist(out_dir,'dir') mkdir(out_dir); end
 
 %% clean
 
-all_ses = {'A','V'};
-
-for s = 1:numel(all_ses)
-
-    load(sprintf('uniLoc_sub-%s_ses-%s', sub, all_ses{s}));
-
-    % basic info
-    nRep = ExpInfo.nRep;
-    nLevel = ExpInfo.nLevel;
-
-    % modality x location level x repetiton
-    loc_rep =  reshape([sortedResp(1:end).target_cm],[nRep, nLevel]); 
-    loc(s,:) = loc_rep(1,:); 
-    est(s,:,:) = reshape([sortedResp(1:end).response_cm],[nRep, nLevel]);
-
-    % estimate bias and variance
-    estMu(s,:) = mean(squeeze(est(s,:,:)), 1);
-    sdMu(s,:) = std(squeeze(est(s,:,:)), [], 1);
-
-end
-
-% 
-% % sort by level
-% locRep = reshape([sortedResp(1:end).target_deg],[nRep,nLevel]);
-% loc = locRep(1,:);
-% est = reshape([sortedResp(1:end).response_deg],[nRep,nLevel]);
-% 
-% % estimate bias and variance
-% estMu = mean(est, 1);
-% sdMu = std(est, [], 1);
-% 
-% % overall variance
-% sd = std(est - locRep, [],"all");
+[org, exp_info] = org_resp(sub, {'A','V'}, 'uniLoc');
+target = org.uni_target;
 
 %% plot
 
@@ -64,30 +34,21 @@ hold on
 title(sprintf('%s', sub))
 axis equal
 
-for s = 1:numel(all_ses)
+for s = 1:2
 
-    plot(loc(s,:), loc(s,:), 'k--','LineWidth',lw)
-    e = errorbar(loc(s,:), estMu(s,:), sdMu(s,:),'Color',clt(s,:),'LineWidth',lw);
+    plot(target(s,:), target(s,:), 'k--','LineWidth',lw,'HandleVisibility','off')
+    e = errorbar(target(s,:), org.uni_loc_mu(s,:), org.uni_loc_sd(s,:),'Color',clt(s,:),'LineWidth',lw);
     e.CapSize = 0; e.Color = clt(s,:);
-    xlim([min(loc(s,:))-5, max(loc(s,:))+5])
-    ylim([min(loc(s,:))-5, max(loc(s,:))+5])
+    xlim([min(target(s,:))-5, max(target(s,:))+5])
+    ylim([min(target(s,:))-5, max(target(s,:))+5])
 
 end
 
-maxlim = 50;
+maxlim = 65;
 xlim([-maxlim, maxlim])
 ylim([-maxlim, maxlim])
 title(sprintf('S%i', sub))
 
-switch ses
-
-    case '-A'
-        xlabel('Auditory stimulus location (dva)')
-        ylabel('Estimate location (dva)')
-
-end
-
-if save_fig
-    flnm = sprintf('sub%i_cond%s',sub, ses);
-    saveas(gca, fullfile(out_dir, flnm),'png')
-end
+xlabel('Stimulus location (cm)')
+ylabel('Estimate location (cm)')
+legend('A','V')
